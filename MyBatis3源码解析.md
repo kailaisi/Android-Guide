@@ -339,4 +339,103 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
   }
 ```
 
-可以看到，最终是通过代理方法中的方法来执行的。
+可以看到，最终是通过代理方法中的方法来执行又交给了 **SqlSession** 来进行处理CRUD。我们来跟踪一个方法insert()
+
+```
+  @Override
+  public int insert(String statement, Object parameter) {
+    return update(statement, parameter);
+  }
+  
+  //update 核心代码
+  @Override
+  public int update(String statement, Object parameter) {
+    try {
+      //每次要更新之前，dirty标志设为true
+      dirty = true;
+      MappedStatement ms = configuration.getMappedStatement(statement);
+      //最终由executor来执行语句
+      return executor.update(ms, wrapCollection(parameter));
+    } catch (Exception e) {
+      throw ExceptionFactory.wrapException("Error updating database.  Cause: " + e, e);
+    } finally {
+      ErrorContext.instance().reset();
+    }
+  }
+```
+
+继续跟踪executor
+
+```
+@Override
+public int update(MappedStatement ms, Object parameter) throws SQLException {
+  ErrorContext.instance().resource(ms.getResource()).activity("executing an update").object(ms.getId());
+  if (closed) {
+    throw new ExecutorException("Executor was closed.");
+  }
+  //先清理缓存，再更新
+  clearLocalCache();
+  return doUpdate(ms, parameter);
+}
+```
+
+利用 **建造者模式** ，将具体的处理操作，交给子类来处理。我们来看一下子类的实现
+
+```
+ SimpleExecutor.java
+ 
+ @Override
+  public int doUpdate(MappedStatement ms, Object parameter) throws SQLException {
+    Statement stmt = null;
+    try {
+      Configuration configuration = ms.getConfiguration();
+      //新建一个StatementHandler
+      //这里看到ResultHandler传入的是null
+      StatementHandler handler = configuration.newStatementHandler(this, ms, parameter, RowBounds.DEFAULT, null, null);
+      //生成一个Statement
+      stmt = prepareStatement(handler, ms.getStatementLog());
+      //由StatementHandler来执行stmt语句
+      return handler.update(stmt);
+    } finally {
+      closeStatement(stmt);
+    }
+  }
+  
+ private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
+    Statement stmt;
+    //获取一个connect连接
+    Connection connection = getConnection(statementLog);
+    stmt = handler.prepare(connection, transaction.getTimeout());
+    handler.parameterize(stmt);
+    return stmt;
+  }
+```
+
+SimpleStatementHandler.java代码
+
+```
+  @Override
+  public int update(Statement statement) throws SQLException {
+    String sql = boundSql.getSql();
+    Object parameterObject = boundSql.getParameterObject();
+    KeyGenerator keyGenerator = mappedStatement.getKeyGenerator();
+    int rows;
+    if (keyGenerator instanceof Jdbc3KeyGenerator) {
+      statement.execute(sql, Statement.RETURN_GENERATED_KEYS);
+      rows = statement.getUpdateCount();
+      keyGenerator.processAfter(executor, mappedStatement, statement, parameterObject);
+    } else if (keyGenerator instanceof SelectKeyGenerator) {
+      statement.execute(sql);
+      rows = statement.getUpdateCount();
+      keyGenerator.processAfter(executor, mappedStatement, statement, parameterObject);
+    } else {
+      statement.execute(sql);
+      rows = statement.getUpdateCount();
+    }
+    return rows;
+  }
+```
+
+可以看到，在执行器中，通过Connection创建一个Statement对象，然后通过调用Statement的execute方法执行sql语句。
+
+到现在为止，我们的sql语句执行完毕了~~~
