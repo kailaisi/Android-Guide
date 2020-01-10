@@ -1,5 +1,7 @@
 ## RxJava2源码解析
 
+### 基础解析
+
 我们看下RxJava最简单的写法
 
 ```java
@@ -57,11 +59,11 @@ public final class ObservableCreate<T> extends Observable<T> {
     }
 ```
 
-### 观察者的创建
+#### 观察者的创建
 
 这里很简单，只是通过new方法生成了一个简单的Observer对象。
 
-### 订阅
+#### 订阅
 
 订阅是通过subscribe方法来执行的，我们来跟踪一下，这个方法是属于Observable类的
 
@@ -103,7 +105,7 @@ public final void subscribe(Observer<? super T> observer) {
 ```java
 @Override
 protected void subscribeActual(Observer<? super T> observer) {
-    //这里将我们传入的被观察者进行了一层封装，里面实现了ObservableEmitter<T>, Disposable等接口
+    //这里将我们传入的被观察者进行了一层封装，里面实现了ObservableEmitter<T>, Disposable等接口->装饰者模式
     CreateEmitter<T> parent = new CreateEmitter<T>(observer);
     //调用被观察者的onSubscribe方法（这里很神奇，调起者是observer，而不是被订阅者，是为了兼容Rxajva1么？）
     observer.onSubscribe(parent);
@@ -115,7 +117,6 @@ protected void subscribeActual(Observer<? super T> observer) {
         parent.onError(ex);
     }
 }
-
 
 Observable.create(new ObservableOnSubscribe<String>() {
       	    //看到了哈，实际是执行的这个方法，这里面的emitter是我们封装之后的CreateEmitter,那么这里面的onNext()，onComplete()又是谁呢？
@@ -169,3 +170,109 @@ implements ObservableEmitter<T>, Disposable {
 ```
 
 到这里为知，最简单的一个流程基本已经走通了。。
+
+### 高级用法
+
+#### 线程切换
+
+RxJava中我们使用的最多的应该就是进行线程切换了吧？通过 **subscribeOn()** 方法来进行线程的随意切换，舒舒服服，再也不用进行恶心的线程处理了。
+
+```java
+Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(ObservableEmitter<String> emitter) throws Exception {
+                emitter.onNext("1");
+                emitter.onComplete();
+            }
+        }).observeOn(Schedulers.io())
+```
+
+ **observeOn()** 方法是属于Observable这个类的。我们跟踪进去这个方法去看看。
+
+```java
+public final Observable<T> observeOn(Scheduler scheduler, boolean delayError, int bufferSize) {
+        //进行空校验
+        ObjectHelper.requireNonNull(scheduler, "scheduler is null");
+        ObjectHelper.verifyPositive(bufferSize, "bufferSize");
+        return RxJavaPlugins.onAssembly(new ObservableObserveOn<T>(this, scheduler, delayError, bufferSize));
+    }
+```
+
+这里创建了一个 **ObservableObserveOn** 对象，所以和之前基础里面将的一样，当调用 **subscribe()** 方法的时候，会调用这个类里面的 **subscribeActual()** 方法。
+
+```java
+@Override
+protected void subscribeActual(Observer<? super T> observer) {
+    if (scheduler instanceof TrampolineScheduler) {//如果传入的scheduler是TrampolineScheduler，那么线程不需要切换，直接调用subscribe方法即可
+        source.subscribe(observer);
+    } else {
+        //根据传入的scheduler，创建Worker
+        Scheduler.Worker w = scheduler.createWorker();
+        //将传入的observer进行包装，包装为ObserveOnObserver类。
+        source.subscribe(new ObserveOnObserver<T>(observer, w, delayError, bufferSize));
+    }
+}
+```
+
+这里可以依据基础篇的进行整理一下，其实是对自定义的create()方法里面执行的代码块进行了封装。
+
+ 
+
+这里看到，跟我们基础篇里面的 **create()** 方法有异曲同工之妙，这里面生成了一个ObservableSubscribeOn类，这个类也是继承Observable类的，我们跟踪进去看一下。
+
+```java
+public final class ObservableObserveOn<T> extends AbstractObservableWithUpstream<T, T> {
+    final Scheduler scheduler;
+
+    public ObservableSubscribeOn(ObservableSource<T> source, Scheduler scheduler) {
+        super(source);
+        this.scheduler = scheduler;
+    }
+
+    @Override
+    public void subscribeActual(final Observer<? super T> observer) {
+        final SubscribeOnObserver<T> parent = new SubscribeOnObserver<T>(observer);
+        //调用订阅者的onSubscribe方法，这里的线程还未进行切换
+        observer.onSubscribe(parent);
+        //进行线程的切换处理
+        //1.创造一个SubscribeTask的Runable方法
+        //2.通过scheduler的scheduleDirect进行线程的切换
+        //3.通过parent.setDisposable来进行Disposable的切换
+        parent.setDisposable(scheduler.scheduleDirect(new SubscribeTask(parent)));
+    }
+```
+
+看起来是不是很像？在基础篇我们知道了，这个 **subscribeActual** 方法里面的参数就是我们的观察者。
+
+我们看一下里面和之前分析所不同的地方，也就是线程的切换
+
+```java
+final class SubscribeTask implements Runnable {
+    ...
+    @Override
+    public void run() {
+        //source是我们上一层的被观察者，parent是包装之后的观察者
+        source.subscribe(parent);
+    }
+}
+```
+
+然后看一下这里面最重要的 **scheduler.scheduleDirect** 这个方法
+
+```java
+    @NonNull
+    public Disposable scheduleDirect(@NonNull Runnable run) {
+        return scheduleDirect(run, 0L, TimeUnit.NANOSECONDS);
+    }
+    @NonNull
+    public Disposable scheduleDirect(@NonNull Runnable run, long delay, @NonNull TimeUnit unit) {
+        final Worker w = createWorker();
+        final Runnable decoratedRun = RxJavaPlugins.onSchedule(run);
+        DisposeTask task = new DisposeTask(decoratedRun, w);
+        w.schedule(task, delay, unit);
+        return task;
+    }
+```
+
+
+
