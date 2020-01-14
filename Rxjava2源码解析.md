@@ -1,6 +1,6 @@
-## RxJava2源码解析
+# RxJava2源码解析
 
-### 基础解析
+## 基础解析
 
 我们看下RxJava最简单的写法
 
@@ -42,7 +42,7 @@
 
 一个个来看  
 
-#### 被观察者的创建
+### 被观察者的创建
 
 ```java
 public static <T> Observable<T> create(ObservableOnSubscribe<T> source) {
@@ -59,11 +59,11 @@ public final class ObservableCreate<T> extends Observable<T> {
     }
 ```
 
-#### 观察者的创建
+### 观察者的创建
 
 这里很简单，只是通过new方法生成了一个简单的Observer对象。
 
-#### 订阅
+### 订阅
 
 订阅是通过subscribe方法来执行的，我们来跟踪一下，这个方法是属于Observable类的
 
@@ -171,11 +171,13 @@ implements ObservableEmitter<T>, Disposable {
 
 到这里为知，最简单的一个流程基本已经走通了。。
 
-### 高级用法
+## 高级用法
 
-#### 线程切换
+### 线程切换
 
-RxJava中我们使用的最多的应该就是进行线程切换了吧？通过 **subscribeOn()** 方法来进行线程的随意切换，舒舒服服，再也不用进行恶心的线程处理了。
+#### 下层切换
+
+RxJava中我们使用的最多的应该就是进行线程切换了吧？通过 **observeOn()** 方法来进行线程的随意切换，舒舒服服，再也不用进行恶心的线程处理了。
 
 ```java
 Observable.create(new ObservableOnSubscribe<String>() {
@@ -198,7 +200,7 @@ public final Observable<T> observeOn(Scheduler scheduler, boolean delayError, in
     }
 ```
 
-这里创建了一个 **ObservableObserveOn** 对象，所以和之前基础里面将的一样，当调用 **subscribe()** 方法的时候，会调用这个类里面的 **subscribeActual()** 方法。
+这里创建了一个 **ObservableObserveOn** 对象，所以和之前基础里面将的一样，当调用 **subscribe()** 方法的时候，会先调用观察者的 **onSubscribe()** 方法，然后通过subscribe的层层处理，调用这个被观察者里面的 **subscribeActual()** 方法。
 
 ```java
 @Override
@@ -214,14 +216,168 @@ protected void subscribeActual(Observer<? super T> observer) {
 }
 ```
 
-这里可以依据基础篇的进行整理一下，其实是对自定义的create()方法里面执行的代码块进行了封装。
+这里可以依据基础篇的进行整理一下，这里将观察者进行了一层包装，也就是我们的观察者由原来的observaer变为了ObserveOnObserver对象。而被观察者还是之前的ObservableCreate（注意，这里只是依据基础中.create()创建的类，所以是ObservableCreate，如果是其他方式创建的被观察者，那么这里可能就是另一个具体的实现类了），并未改变。之前我们讲过，当调用subscribe方法的onNext()，onComplete()方法，其实是调用的观察者的方法。我们现在看一下ObserveOnObserver的onNext和onComplete方法又是做了什么神奇的操作。
 
- 
+```java
+@Override
+public void onNext(T t) {
+    if (done) {//如果已经完成，直接返回
+        return;
+    }
+    if (sourceMode != QueueDisposable.ASYNC) {
+        //将onNext的数据放入队列queue
+        queue.offer(t);
+    }
+    //进行线程切换
+    schedule();
+}
+
+void schedule() {
+    if (getAndIncrement() == 0) {
+        //调用了worker的方法，这里通过调用线程池，调用了自身的run方法
+        worker.schedule(this);
+    }
+}
+```
+
+这里我们使用的是IO线程，那么在 **scheduler.createWorker()** 中的生成worker时
+
+```java
+@NonNull
+@Override
+public Worker createWorker() {
+    return new EventLoopWorker(pool.get());
+}
+```
+
+那么跟到这个类里面的 **schedule** 方法
+
+```java
+@Override
+public Disposable schedule(@NonNull Runnable action, long delayTime, @NonNull TimeUnit unit) {
+    if (tasks.isDisposed()) {
+        // don't schedule, we are unsubscribed
+        return EmptyDisposable.INSTANCE;
+    }
+    //这里调用了线程worker的scheduleActual方法，并把Runable对象传进去
+    return threadWorker.scheduleActual(action, delayTime, unit, tasks);
+}
+
+public ScheduledRunnable scheduleActual(final Runnable run, long delayTime, @NonNull TimeUnit unit, @Nullable DisposableContainer parent) {
+        //留下钩子
+        Runnable decoratedRun = RxJavaPlugins.onSchedule(run);
+        ScheduledRunnable sr = new ScheduledRunnable(decoratedRun, parent);
+        ....
+        Future<?> f;
+        try {
+            if (delayTime <= 0) {
+                //在线程池中调用封装之后的Runnable
+                f = executor.submit((Callable<Object>)sr);
+            } else {
+                f = executor.schedule((Callable<Object>)sr, delayTime, unit);
+            }
+            sr.setFuture(f);
+        } catch (RejectedExecutionException ex) {
+            if (parent != null) {
+                parent.remove(sr);
+            }
+            RxJavaPlugins.onError(ex);
+        }
+        return sr;
+    }
+```
+
+可以看到，其实最终是通过线程池调用了 **ObserveOnObserver** 本身，这个类实现了 **Runnable** 接口，我们看一下run方法里面做了什么。
+
+```java
+@Override
+public void run() {
+    if (outputFused) {
+        drainFused();
+    } else {
+        drainNormal();
+    }
+}
+//具体的操作
+void drainNormal() {
+     int missed = 1;
+     //被观察者onNext发送的数据队列
+     final SimpleQueue<T> q = queue;
+     //实际的观察者
+     final Observer<? super T> a = downstream;
+     for (;;) {
+         //检测是否有异常信息
+         if (checkTerminated(done, q.isEmpty(), a)) {
+             return;
+         }
+         //遍历
+         for (;;) {
+             boolean d = done;
+             T v;
+             //取出队列中的数据
+             try {
+                 v = q.poll();
+             } catch (Throwable ex) {
+                 //发生异常，则直接调用dispose()和onError()方法
+                 Exceptions.throwIfFatal(ex);
+                 disposed = true;
+                 upstream.dispose();
+                 q.clear();
+                 a.onError(ex);
+                 worker.dispose();
+                 return;
+             }
+             ....
+             //调用实际的观察者的onNext()方法
+             a.onNext(v);
+         }
+         ...
+     }
+ }
+```
+
+因为这个操作最终是在scheduler.createWorker()创建的地方进行了处理，才实现了对于之后代码处理都在io线程中进行了调用。从而实现线程的切换功能。这里我们对之前的测试代码流程做一个总结。
+
+先看一下对于观察者的onSubscribe()方法的调用流程：
+
+![image-20200114090701177](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20200114090701177.png)
+
+这里面我们自己定义的观察者通过subscribe()方法层层往上调用，最后调用了我们定义的被观察者里面的onSubscribe方法，再一层层的往下调用，最后到我们自己定义的onSubscribe()方法，里面很少有线程的切换处理，所以这段代码在哪儿执行，那么这段代码在那里执行，这个onSubscribe()方法就是在哪个线程执行。
+
+继续，我们看一下onNext()方法
+
+![image-20200114094904024](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20200114094904024.png)
+
+#### 上层切换
+
+除了 **observeOn** 方法来处理我们操作流的下层线程处理之外，我们也可以通过 **subscribeOn** 方法来进行对上层流的线程处理。
+
+测试用代码：
+
+```java
+Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(ObservableEmitter<String> emitter) throws Exception {
+                emitter.onNext("1");
+                emitter.onComplete();
+            }
+}).subscribeOn(Schedulers.io())
+```
+
+现在我们跟踪进 **subscribeOn** 方法
+
+```java
+public final Observable<T> subscribeOn(Scheduler scheduler) {
+    ObjectHelper.requireNonNull(scheduler, "scheduler is null");
+    //
+    return RxJavaPlugins.onAssembly(new ObservableSubscribeOn<T>(this, scheduler));
+}
+```
 
 这里看到，跟我们基础篇里面的 **create()** 方法有异曲同工之妙，这里面生成了一个ObservableSubscribeOn类，这个类也是继承Observable类的，我们跟踪进去看一下。
 
 ```java
-public final class ObservableObserveOn<T> extends AbstractObservableWithUpstream<T, T> {
+public final class ObservableSubscribeOn<T> extends AbstractObservableWithUpstream<T, T> {
     final Scheduler scheduler;
 
     public ObservableSubscribeOn(ObservableSource<T> source, Scheduler scheduler) {
@@ -251,7 +407,9 @@ final class SubscribeTask implements Runnable {
     ...
     @Override
     public void run() {
-        //source是我们上一层的被观察者，parent是包装之后的观察者
+        //source是我们上一层的被观察者，parent是包装之后的观察者.
+        //所以会在相关的worker里面调用source的subscribe方法，
+        //即上层的数据调用已经在woker里面了（如果是IoScheduler，那么这里就是在RxCachedThreadScheduler线程池调用了这个方法 ）
         source.subscribe(parent);
     }
 }
@@ -266,6 +424,7 @@ final class SubscribeTask implements Runnable {
     }
     @NonNull
     public Disposable scheduleDirect(@NonNull Runnable run, long delay, @NonNull TimeUnit unit) {
+        //创建一个Worker，这个是有具体的实现类来实现的，比如我们的IOScheduler,ImmediateThinScheduler等，具体要看我们切换传参
         final Worker w = createWorker();
         final Runnable decoratedRun = RxJavaPlugins.onSchedule(run);
         DisposeTask task = new DisposeTask(decoratedRun, w);
@@ -274,5 +433,15 @@ final class SubscribeTask implements Runnable {
     }
 ```
 
+这里我们对上层切换的流程做一个总结：当调用 **subscribeOn** 方法的时候，会在创建的调度器中来执行被观察者的执行代码，从而实现了对上层的线程切换功能。
 
+先看一下测试代码中的onNext()方法的调用流程：
+
+![image-20200114173137935](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20200114173137935.png)
+
+#### 汇总
+
+其实对于线程的切换，主要是根据里面传递的线程切换函数，将上游或者下游的代码在指定的线程里面去执行来实现。
+
+![RxJava的线程切换 (1)](C:\Users\wu\Downloads\RxJava的线程切换 (1).png)
 
