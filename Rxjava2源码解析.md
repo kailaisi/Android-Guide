@@ -340,13 +340,13 @@ void drainNormal() {
 
 先看一下对于观察者的onSubscribe()方法的调用流程：
 
-![image-20200114090701177](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20200114090701177.png)
+![企业微信截图_15789953155616](http://cdn.qiniu.kailaisii.com/Fm9Z3E3xdP4PTm--hNoqjGDL_taU)
 
 这里面我们自己定义的观察者通过subscribe()方法层层往上调用，最后调用了我们定义的被观察者里面的onSubscribe方法，再一层层的往下调用，最后到我们自己定义的onSubscribe()方法，里面很少有线程的切换处理，所以这段代码在哪儿执行，那么这段代码在那里执行，这个onSubscribe()方法就是在哪个线程执行。
 
 继续，我们看一下onNext()方法
 
-![image-20200114094904024](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20200114094904024.png)
+![企业微信截图_1578995357300](http://cdn.qiniu.kailaisii.com/FqjxHFz5yTB1_WUvmmkWF7Pqwvq1)
 
 #### 上层切换
 
@@ -437,11 +437,15 @@ final class SubscribeTask implements Runnable {
 
 先看一下测试代码中的onNext()方法的调用流程：
 
-![image-20200114173137935](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20200114173137935.png)
+
+
+
+
+![企业微信截图_15789953986768](http://cdn.qiniu.kailaisii.com/FohhhFj4QpCxzBA2KQirdLj3klq_)
 
 #### 汇总
 
 其实对于线程的切换，主要是根据里面传递的线程切换函数，将上游或者下游的代码在指定的线程里面去执行来实现。
 
-![RxJava的线程切换 (1)](C:\Users\wu\Downloads\RxJava的线程切换 (1).png)
+![image](http://www.kailaisii.com/upload/2020/1/image-129665d8e81c452d85ad26f017080dff.png)
 
