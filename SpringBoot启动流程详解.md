@@ -272,10 +272,9 @@ refreshContext(context);
 				// 发布对应事件
 				finishRefresh();
 			}
-            ...
-```
+	        ...
 回到run方法，最后的逻辑就是发布启动完成的事件，并调用监听者的方法。
-```
+
 	...
 	afterRefresh(context, applicationArguments);//给实现类留的钩子，这里是一个空方法。
 			stopWatch.stop();//停止计时器
@@ -289,7 +288,7 @@ refreshContext(context);
 			handleRunFailure(context, ex, exceptionReporters, listeners);
 			throw new IllegalStateException(ex);
 		}
-
+	
 		try {
 			listeners.running(context);//发布ApplicationStartedEvent事件
 		}
@@ -299,4 +298,6 @@ refreshContext(context);
 		}
 		return context;
 	}
+```
+
 ```
