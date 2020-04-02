@@ -561,3 +561,7 @@ public void setView(View view, WindowManager.LayoutParams attrs, View panelParen
 这里主要进行了一下对象的初始化工作，然后调用**requestLayout()**方法来进行当前view的绘制工作。最后通过IPC机制，执行相关加载Window的操作。
 
 到此为止页面的加载以及绘制，显示工作完成。
+
+![image-20200402172735906](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20200402172735906.png)
+
+图片来源[https://www.cnblogs.com/tiger-wang-ms/p/6517048.html]
