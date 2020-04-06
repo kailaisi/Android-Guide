@@ -346,3 +346,12 @@ View的事件处理比较简单。
 2. 如果设置了**onTouchListener**，那么调用**onTouchListener**方法
 3. 如果没有**onTouchListener**，就调用**onTouchEvent**方法。
 4. 最后将result返回。
+
+
+
+> 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
+>
+> 同步公众号[开了肯]
+
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)
+

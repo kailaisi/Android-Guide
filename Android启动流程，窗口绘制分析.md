@@ -2,7 +2,7 @@
 
 ## Activity的启动
 
-在之前的分析中，我们了解到，当使用**startActivity()**以后，经过一些流程的处理之后，会通过跨进程的方式调用**AcitivtyThread.handleLauncherActivity()**方法来进行Activity的启动。那么，我们这里的绘制就从这个方法来入手，进行源码的解析。
+在之前的分析中，我们了解到，当使用 **startActivity()** 以后，经过一些流程的处理之后，会通过跨进程的方式调用 **AcitivtyThread.handleLauncherActivity()** 方法来进行Activity的启动。那么，我们这里的绘制就从这个方法来入手，进行源码的解析。
 
 ## handleLaunchActivity
 
@@ -36,7 +36,7 @@ public Activity handleLaunchActivity(ActivityClientRecord r,PendingTransactionAc
 }
 ```
 
-这里主要进行了准备工作，初始化了windowmanager，然后通过**performLaunchActivity()**来进行主要的加载工作。如果加载出现异常，就通过调用**finishActivity**来结束acitivity。我们看一下**performLaunchActivity()**中主要做了什么工作
+这里主要进行了准备工作，初始化了windowmanager，然后通过 **performLaunchActivity()** 来进行主要的加载工作。如果加载出现异常，就通过调用 **finishActivity** 来结束acitivity。我们看一下 **performLaunchActivity()** 中主要做了什么工作
 
 #### performLaunchActivity
 
@@ -116,7 +116,7 @@ private Activity performLaunchActivity(ActivityClientRecord r, Intent customInte
 
 1. 通过反射创建了一个activity对象
 2. 调用activity的attach方法，创建其对应的PhoneWindow对象
-3. 通过**IPC**机制，调用**callActivityOnCreate**方法。
+3. 通过**IPC**机制，调用 **callActivityOnCreate**方法。
 
 我们这里主要看一下后面两个做的一些处理。也就是attach方法和调用的
 
@@ -196,7 +196,7 @@ public void callActivityOnCreate(Activity activity, Bundle icicle) {
 
 ## setContentView
 
-当我们实现**onCreate**方法的时候，需要使用**setConteView()**方法来进行页面的设置。那么这时候是如何将我们的布局文件加载显示出来的呢？还有我们设置的一些titlebar等，又是如何实现的呢？
+当我们实现 **onCreate** 方法的时候，需要使用 **setConteView()** 方法来进行页面的设置。那么这时候是如何将我们的布局文件加载显示出来的呢？还有我们设置的一些titlebar等，又是如何实现的呢？
 
 ```java
     #Activity.java 
@@ -269,7 +269,7 @@ public void callActivityOnCreate(Activity activity, Bundle icicle) {
 
 ```
 
-当我们第一次启动的activity的时候，mDecor会为空，然后通过**generateDecor()**进行mDecor的创建。在创建完成以后，根据主题等一些信息来绘制一个根布局，然后在根布局中找到一个id为content的布局，命名为mContentParent，用来放置我们的setContentView中的布局文件。
+当我们第一次启动的activity的时候，mDecor会为空，然后通过 **generateDecor()** 进行mDecor的创建。在创建完成以后，根据主题等一些信息来绘制一个根布局，然后在根布局中找到一个id为content的布局，命名为mContentParent，用来放置我们的setContentView中的布局文件。
 
 ### generateDecor
 
@@ -283,7 +283,7 @@ protected DecorView generateDecor(int featureId) {
 }
 ```
 
-**generateDecor()**方法比较简单，主要是通过new方法进行对象的创建。
+ **generateDecor()** 方法比较简单，主要是通过new方法进行对象的创建。
 
 ### generateLayout()
 
@@ -373,9 +373,9 @@ public void handleResumeActivity(IBinder token, boolean finalStateRequest, boole
     }
 ```
 
-在**handleResumeActivity()** 方法中需要主要的方法有2个：
+在  **handleResumeActivity()** 方法中需要主要的方法有2个：
 
-1. 通过**performResumeActivity()**进行了相关生命周期的调用。
+1. 通过 **performResumeActivity()** 进行了相关生命周期的调用。
 2. 通过**wm.addView()**方法将activity的decor(也就是包含了我们的布局的一个整体文件)添加到**wm**中，通过这种方式将**Window**和我们的**DecorView**进行了关联，从而能够显示出我们的页面。
 
 现在我们先看看**performResumeActivity()**中做了什么处理
@@ -511,7 +511,7 @@ public void addView(View view, ViewGroup.LayoutParams params, Display display, W
 
 在**addView()**方法中，会首先创建**ViewRootImpl**对象，然后通过ViewRootImpl.setView方法将我们的view设置进去。这里的panelParentView参数是空。
 
-我们继续跟踪一下**setView()**方法
+我们继续跟踪一下 **setView()** 方法
 
 ```java
 #ViewRootImpl.java
@@ -562,6 +562,6 @@ public void setView(View view, WindowManager.LayoutParams attrs, View panelParen
 
 到此为止页面的加载以及绘制，显示工作完成。
 
-![image-20200402172735906](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20200402172735906.png)
+![image-20200406092622588](https://user-gold-cdn.xitu.io/2020/4/6/1714d1728f293578?w=946&h=675&f=png&s=87941)
 
 图片来源[https://www.cnblogs.com/tiger-wang-ms/p/6517048.html]
