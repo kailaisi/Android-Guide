@@ -627,73 +627,296 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
 
 同样的，我们也只跟踪主要代码 **startActivityUnchecked()** 
 
-    private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
-                              IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
-                              int startFlags, boolean doResume, ActivityOptions options, TaskRecord inTask,
-                              ActivityRecord[] outActivity, boolean restrictedBgActivity) {
-        int result = START_CANCELED;
-        final ActivityStack startedActivityStack;
-        try {
-    		//通知暂停布局，因为启动的过程中会有多个更改会会触发到surfacelayout。通过这种方式，能够避免重复刷新，在最后通过continueSurfaceLayout进行布局的统一刷新。
-    		//相当于进行了优化工作
-            mService.mWindowManager.deferSurfaceLayout();
-    		//重点方法      启动activity。这里不会再进行繁琐的检测工作了。
-            result = startActivityUnchecked(r, sourceRecord, voiceSession, voiceInteractor,
-                    startFlags, doResume, options, inTask, outActivity, restrictedBgActivity);
-        } finally {
-    		//获取当前的Activity栈
-            final ActivityStack currentStack = r.getActivityStack();
-            startedActivityStack = currentStack != null ? currentStack : mTargetStack;
-            if (ActivityManager.isStartResultSuccessful(result)) {
-    			//如果启动成功了  做一些处理  todo
-                if (startedActivityStack != null) {
-                    // If there is no state change (e.g. a resumed activity is reparented to
-                    // top of another display) to trigger a visibility/configuration checking,
-                    // we have to update the configuration for changing to different display.
-                    final ActivityRecord currentTop =startedActivityStack.topRunningActivityLocked();
-                    if (currentTop != null && currentTop.shouldUpdateConfigForDisplayChanged()) {
-                        mRootActivityContainer.ensureVisibilityAndConfig(currentTop, currentTop.getDisplayId(),
-                                true /* markFrozenIfConfigChanged */, false /* deferResume */);
+        //这个方法只能从startActivity调用，这个方法就是几种启动模式的，在栈内的清空处理
+        private int startActivityUnchecked(final ActivityRecord r, ActivityRecord sourceRecord,
+                                           IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
+                                           int startFlags, boolean doResume, ActivityOptions options, TaskRecord inTask,
+                                           ActivityRecord[] outActivity, boolean restrictedBgActivity) {
+            //初始化一些状态，这里主要是根据启动模式的相关设置进行了一些变量的处理。比如newtask，document等等
+            //初始化Activity启动状态，获取launchmode flag 同时解决一些falg和launchmode的冲突
+            setInitialState(r, options, inTask, doResume, startFlags, sourceRecord, voiceSession,voiceInteractor, restrictedBgActivity);
+    		//获取显示windows的样式
+            final int preferredWindowingMode = mLaunchParams.mWindowingMode;
+    		//根据是否存在指定的目标task来设定启动flag。 比如说指定的task不存在，那么就直接设置flag是否为newtask，如果存在则根据其启动模式来进行变化处理 
+            computeLaunchingTaskFlags();
+    		//处理调用方的任务栈信息。通过mSourceRecord获取到调用方的任务栈。如果调用方已经finish了，那么启动一个newtask任务栈来作为调用方任务栈
+            computeSourceStack();
+    		//设置启动flag
+            mIntent.setFlags(mLaunchFlags);
+    		//查找可以复用的activityrecord，比如singleTop，singleTask等，都是可以进行复用的，不能每次都创建新的实例。
+            ActivityRecord reusedActivity = getReusableIntentActivity();
+    
+            mSupervisor.getLaunchParamsController().calculate(reusedActivity != null ? reusedActivity.getTaskRecord() : mInTask,r.info.windowLayout, r, sourceRecord, options, PHASE_BOUNDS, mLaunchParams);
+    		//设置显示屏幕id
+            mPreferredDisplayId =mLaunchParams.hasPreferredDisplay() ? mLaunchParams.mPreferredDisplayId: DEFAULT_DISPLAY;
+    
+            // Do not start home activity if it cannot be launched on preferred display. We are not
+            // doing this in ActivityStackSupervisor#canPlaceEntityOnDisplay because it might
+            // fallback to launch on other displays.
+            if (r.isActivityTypeHome() && !mRootActivityContainer.canStartHomeOnDisplay(r.info,mPreferredDisplayId, true /* allowInstrumenting */)) {
+                Slog.w(TAG, "Cannot launch home on display " + mPreferredDisplayId);
+                return START_CANCELED;
+            }
+    
+            if (reusedActivity != null) {
+    			//存在可复用的resueActivity
+                // When the flags NEW_TASK and CLEAR_TASK are set, then the task gets reused but
+                // still needs to be a lock task mode violation since the task gets cleared out and
+                // the device would otherwise leave the locked task.
+                if (mService.getLockTaskController().isLockTaskModeViolation(reusedActivity.getTaskRecord(),(mLaunchFlags & (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK))== (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK))) {
+                    Slog.e(TAG, "startActivityUnchecked: Attempt to violate Lock Task Mode");
+                    return START_RETURN_LOCK_TASK_MODE_VIOLATION;
+                }
+    
+                // True if we are clearing top and resetting of a standard (default) launch mode
+                // ({@code LAUNCH_MULTIPLE}) activity. The existing activity will be finished.
+                //是否清空可复用的activity上面的表示
+                final boolean clearTopAndResetStandardLaunchMode =(mLaunchFlags & (FLAG_ACTIVITY_CLEAR_TOP | FLAG_ACTIVITY_RESET_TASK_IF_NEEDED))== (FLAG_ACTIVITY_CLEAR_TOP | FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)&& mLaunchMode == LAUNCH_MULTIPLE;
+    
+                // If mStartActivity does not have a task associated with it, associate it with the
+                // reused activity's task. Do not do so if we're clearing top and resetting for a
+                // standard launchMode activity.
+                //mStartActivity是我们要启动的acitivity
+                if (mStartActivity.getTaskRecord() == null && !clearTopAndResetStandardLaunchMode) {
+    				//如果我们的目标activity没有目标栈。则将复用的栈信息赋值给我们的目标activity
+                    mStartActivity.setTask(reusedActivity.getTaskRecord());
+                }
+    
+                if (reusedActivity.getTaskRecord().intent == null) {
+                    // This task was started because of movement of the activity based on affinity...
+                    // Now that we are actually launching it, we can assign the base intent.
+                    reusedActivity.getTaskRecord().setIntent(mStartActivity);
+                } else {
+                	//FLAG_ACTIVITY_TASK_ON_HOME :把当前新启动的任务置于Home任务之上，也就是按back键从这个任务返回的时候会回到home，即使这个不是他们最后看见的activity。注意这个标记必须和FLAG_ACTIVITY_NEW_TASK一起使用。
+                    final boolean taskOnHome =(mStartActivity.intent.getFlags() & FLAG_ACTIVITY_TASK_ON_HOME) != 0;
+                    if (taskOnHome) {
+                        reusedActivity.getTaskRecord().intent.addFlags(FLAG_ACTIVITY_TASK_ON_HOME);
+                    } else {
+                        reusedActivity.getTaskRecord().intent.removeFlags(FLAG_ACTIVITY_TASK_ON_HOME);
                     }
                 }
-            } else {
-            	//启动失败了。做一些处理  todo
-                // If we are not able to proceed, disassociate the activity from the task.
-                // Leaving an activity in an incomplete state can lead to issues, such as
-                // performing operations without a window container.
-                final ActivityStack stack = mStartActivity.getActivityStack();
-                if (stack != null) {
-                    stack.finishActivityLocked(mStartActivity, RESULT_CANCELED,null /* intentResultData */, "startActivity", true /* oomAdj */);
+    
+                // This code path leads to delivering a new intent, we want to make sure we schedule it
+                // as the first operation, in case the activity will be resumed as a result of later
+                // operations.
+                // 清除task中复用的activity上面的activity
+                if ((mLaunchFlags & FLAG_ACTIVITY_CLEAR_TOP) != 0|| isDocumentLaunchesIntoExisting(mLaunchFlags)|| isLaunchModeOneOf(LAUNCH_SINGLE_INSTANCE, LAUNCH_SINGLE_TASK)) {
+    				//获取复用的activity的堆栈信息
+                    final TaskRecord task = reusedActivity.getTaskRecord();
+    
+                    // In this situation we want to remove all activities from the task up to the one
+                    // being started. In most cases this means we are resetting the task to its initial
+                    // state.
+                    //执行清除目标activity上面所有的activitys的操作。
+                    //函数内部如果和mStartActivity相同compoentname的activity的启动模式是默认的ret.launchMode == ActivityInfo.LAUNCH_MULTIPLE，则也会将这个activity销毁
+    				//对于SingleInstance || SingleTask|| singleTop启动模式的则不会被销毁。
+    				//对于要启动的activity的启动模式为LAUNCH_MULTIPLE的，performClearTaskForReuseLocked返回值top肯定是空的
+    				final ActivityRecord top = task.performClearTaskForReuseLocked(mStartActivity,mLaunchFlags);
+    
+                    // The above code can remove {@code reusedActivity} from the task, leading to the
+                    // the {@code ActivityRecord} removing its reference to the {@code TaskRecord}. The
+                    // task reference is needed in the call below to
+                    // {@link setTargetStackAndMoveToFrontIfNeeded}.
+                    if (reusedActivity.getTaskRecord() == null) {
+    					//重新进行赋值
+                        reusedActivity.setTask(task);
+                    }
+    
+                    if (top != null) {
+                        if (top.frontOfTask) {
+                            //如果是任务栈的root activity
+                            // Activity aliases may mean we use different intents for the top activity,
+                            // so make sure the task now has the identity of the new intent.
+                            top.getTaskRecord().setIntent(mStartActivity);
+                        }
+    					//调用onNewIntent方法
+                        deliverNewIntent(top);
+                    }
+                }
+    			
+                mRootActivityContainer.sendPowerHintForLaunchStartIfNeeded(false /* forceSend */, reusedActivity);
+    			//复用的task所在的stack设置为fourceStack并且把复用的task拿到栈顶
+                reusedActivity = setTargetStackAndMoveToFrontIfNeeded(reusedActivity);
+    
+                final ActivityRecord outResult =outActivity != null && outActivity.length > 0 ? outActivity[0] : null;
+    
+                // When there is a reused activity and the current result is a trampoline activity,
+                // set the reused activity as the result.
+                if (outResult != null && (outResult.finishing || outResult.noDisplay)) {
+    				//如果需要返回值，那么设置复用的activity作为启动返回值
+                    outActivity[0] = reusedActivity;
+                }
+    			//START_FLAG_ONLY_IF_NEEDED这种情况不需要去真的启动activity，只需要使task放到前台就可以了，这种情况多是从桌面点击图标恢复task的情况。                
+    			if ((mStartFlags & START_FLAG_ONLY_IF_NEEDED) != 0) {
+    				 // We don't need to start a new activity, and the client said not to do anything
+                    // if that is the case, so this is it!  And for paranoia, make sure we have
+                    // correctly resumed the top activity.
+                    //resume显示到前台
+                    resumeTargetStackIfNeeded();
+                    return START_RETURN_INTENT_TO_CALLER;
                 }
     
-                // Stack should also be detached from display and be removed if it's empty.
-                if (startedActivityStack != null && startedActivityStack.isAttached()&& startedActivityStack.numActivities() == 0&& !startedActivityStack.isActivityTypeHome()) {
-                    startedActivityStack.remove();
+                if (reusedActivity != null) {
+    				//根据复用情况设置task
+                    setTaskFromIntentActivity(reusedActivity);
+    				//mAddingToTask为true表示要新建，mReuseTask为空表示task被清除了
+                    if (!mAddingToTask && mReuseTask == null) {
+                        // We didn't do anything...  but it was needed (a.k.a., client don't use that
+                        // intent!)  And for paranoia, make sure we have correctly resumed the top activity.
+                        //调用显示到前台
+                        resumeTargetStackIfNeeded();
+                        if (outActivity != null && outActivity.length > 0) {
+                            // The reusedActivity could be finishing, for example of starting an
+                            // activity with FLAG_ACTIVITY_CLEAR_TOP flag. In that case, return the
+                            // top running activity in the task instead.
+                            outActivity[0] = reusedActivity.finishing? reusedActivity.getTaskRecord().getTopActivity() : reusedActivity;
+                        }
+    
+                        return mMovedToFront ? START_TASK_TO_FRONT : START_DELIVERED_TO_TOP;
+                    }
                 }
             }
-    		//恢复暂停的布局
-            mService.mWindowManager.continueSurfaceLayout();
+    
+            //这里对packageName为空做处理，直接返回调用出错
+            if (mStartActivity.packageName == null) {
+                final ActivityStack sourceStack = mStartActivity.resultTo != null? mStartActivity.resultTo.getActivityStack() : null;
+                if (sourceStack != null) {
+                    //如果知道调用方的信息，那么
+                    sourceStack.sendActivityResultLocked(-1 /* callingUid */, mStartActivity.resultTo,mStartActivity.resultWho, mStartActivity.requestCode, RESULT_CANCELED, null /* data */);
+                }
+                ActivityOptions.abort(mOptions);
+                return START_CLASS_NOT_FOUND;
+            }
+    
+            // If the activity being launched is the same as the one currently at the top, then
+            // we need to check if it should only be launched once.
+            //如果要启动的activity和当前栈顶的activity是一样的，安么我们需要检测是否只需要启动一次
+            final ActivityStack topStack = mRootActivityContainer.getTopDisplayFocusedStack();
+            final ActivityRecord topFocused = topStack.getTopActivity();
+            final ActivityRecord top = topStack.topRunningNonDelayedActivityLocked(mNotTop);
+            //是否需要启动新的标记为
+            final boolean dontStart = top != null && mStartActivity.resultTo == null
+                    && top.mActivityComponent.equals(mStartActivity.mActivityComponent)
+                    && top.mUserId == mStartActivity.mUserId
+                    && top.attachedToProcess()
+                    && ((mLaunchFlags & FLAG_ACTIVITY_SINGLE_TOP) != 0
+                    || isLaunchModeOneOf(LAUNCH_SINGLE_TOP, LAUNCH_SINGLE_TASK))
+                    // This allows home activity to automatically launch on secondary display when
+                    // display added, if home was the top activity on default display, instead of
+                    // sending new intent to the home activity on default display.
+                    && (!top.isActivityTypeHome() || top.getDisplayId() == mPreferredDisplayId);
+            if (dontStart) {//不需要重新启动，那么使用复用逻辑，将当前activity显示到前端即可
+                // For paranoia, make sure we have correctly resumed the top activity.
+                topStack.mLastPausedActivity = null;
+                if (mDoResume) {
+                    mRootActivityContainer.resumeFocusedStacksTopActivities();
+                }
+                ActivityOptions.abort(mOptions);
+                if ((mStartFlags & START_FLAG_ONLY_IF_NEEDED) != 0) {
+                    // We don't need to start a new activity, and the client said not to do
+                    // anything if that is the case, so this is it!
+                    return START_RETURN_INTENT_TO_CALLER;
+                }
+    
+                deliverNewIntent(top);
+    
+                // Don't use mStartActivity.task to show the toast. We're not starting a new activity
+                // but reusing 'top'. Fields in mStartActivity may not be fully initialized.
+                mSupervisor.handleNonResizableTaskIfNeeded(top.getTaskRecord(), preferredWindowingMode,mPreferredDisplayId, topStack);
+    
+                return START_DELIVERED_TO_TOP;
+            }
+    
+            boolean newTask = false;
+            final TaskRecord taskToAffiliate = (mLaunchTaskBehind && mSourceRecord != null)? mSourceRecord.getTaskRecord() : null;
+    
+            // Should this be considered a new task?
+            int result = START_SUCCESS;
+            if (mStartActivity.resultTo == null && mInTask == null && !mAddingToTask
+                    && (mLaunchFlags & FLAG_ACTIVITY_NEW_TASK) != 0) {
+                newTask = true;
+                result = setTaskFromReuseOrCreateNewTask(taskToAffiliate);
+            } else if (mSourceRecord != null) {
+                result = setTaskFromSourceRecord();
+            } else if (mInTask != null) {
+                result = setTaskFromInTask();
+            } else {
+                // This not being started from an existing activity, and not part of a new task...
+                // just put it in the top task, though these days this case should never happen.
+                result = setTaskToCurrentTopOrCreateNewTask();
+            }
+            if (result != START_SUCCESS) {
+                return result;
+            }
+    
+            mService.mUgmInternal.grantUriPermissionFromIntent(mCallingUid, mStartActivity.packageName,
+                    mIntent, mStartActivity.getUriPermissionsLocked(), mStartActivity.mUserId);
+            mService.getPackageManagerInternalLocked().grantEphemeralAccess(
+                    mStartActivity.mUserId, mIntent, UserHandle.getAppId(mStartActivity.appInfo.uid),
+                    UserHandle.getAppId(mCallingUid));
+            if (newTask) {
+                EventLog.writeEvent(EventLogTags.AM_CREATE_TASK, mStartActivity.mUserId,mStartActivity.getTaskRecord().taskId);
+            }
+            ActivityStack.logStartActivity(EventLogTags.AM_CREATE_ACTIVITY, mStartActivity, mStartActivity.getTaskRecord());
+            mTargetStack.mLastPausedActivity = null;
+    
+            mRootActivityContainer.sendPowerHintForLaunchStartIfNeeded(
+                    false /* forceSend */, mStartActivity);
+    
+            mTargetStack.startActivityLocked(mStartActivity, topFocused, newTask, mKeepCurTransition,
+                    mOptions);
+            if (mDoResume) {
+                final ActivityRecord topTaskActivity =mStartActivity.getTaskRecord().topRunningActivityLocked();
+                if (!mTargetStack.isFocusable()|| (topTaskActivity != null && topTaskActivity.mTaskOverlay&& mStartActivity != topTaskActivity)) {
+                    // If the activity is not focusable, we can't resume it, but still would like to
+                    // make sure it becomes visible as it starts (this will also trigger entry
+                    // animation). An example of this are PIP activities.
+                    // Also, we don't want to resume activities in a task that currently has an overlay
+                    // as the starting activity just needs to be in the visible paused state until the
+                    // over is removed.
+                    mTargetStack.ensureActivitiesVisibleLocked(mStartActivity, 0, !PRESERVE_WINDOWS);
+                    // Go ahead and tell window manager to execute app transition for this activity
+                    // since the app transition will not be triggered through the resume channel.
+                    mTargetStack.getDisplay().mDisplayContent.executeAppTransition();
+                } else {
+                    // If the target stack was not previously focusable (previous top running activity
+                    // on that stack was not visible) then any prior calls to move the stack to the
+                    // will not update the focused stack.  If starting the new activity now allows the
+                    // task stack to be focusable, then ensure that we now update the focused stack
+                    // accordingly.
+                    if (mTargetStack.isFocusable()
+                            && !mRootActivityContainer.isTopDisplayFocusedStack(mTargetStack)) {
+                        mTargetStack.moveToFront("startActivityUnchecked");
+                    }
+                    mRootActivityContainer.resumeFocusedStacksTopActivities(
+                            mTargetStack, mStartActivity, mOptions);
+                }
+            } else if (mStartActivity != null) {
+                mSupervisor.mRecentTasks.add(mStartActivity.getTaskRecord());
+            }
+            mRootActivityContainer.updateUserStack(mStartActivity.mUserId, mTargetStack);
+    
+            mSupervisor.handleNonResizableTaskIfNeeded(mStartActivity.getTaskRecord(),
+                    preferredWindowingMode, mPreferredDisplayId, mTargetStack);
+    
+            return START_SUCCESS;
         }
     
-        postStartActivityProcessing(r, result, startedActivityStack);
-    
-        return result;
-    }
 
 
 
 
 学习到的知识点：
 
-1. 启动模式  如果intent中的和mainfest中的冲突，那么manfest的启动模式优先
+1. 启动模式如果intent中的和mainfest中的冲突，那么manfest的启动模式优先
 
-2. newIntent启动模式是无法获取result结果的
+2. **newIntent**启动模式是无法获取result结果的
 
-3. 一个`ActivityRecord`对应一个`Activity`，保存了一个`Activity`的所有信息;但是一个`Activity`可能会有多个`ActivityRecord`,因为`Activity`可以被多次启动，这个主要取决于其启动模式。
+3. 一个**ActivityRecord**对应一个**Activity**，保存了一个**Activity**的所有信息;但是一个**Activity**可能会有多个**ActivityRecord**,因为**Activity**可以被多次启动，这个主要取决于其启动模式。
 
-4. 一个`TaskRecord`由一个或者多个`ActivityRecord`组成，这就是我们常说的任务栈，具有后进先出的特点。
+4. 一个**TaskRecord**由一个或者多个**ActivityRecord**组成，这就是我们常说的任务栈，具有后进先出的特点。
 
-5. `ActivityStack`则是用来管理`TaskRecord`的，包含了多个`TaskRecord`。
+5. **ActivityStack**则是用来管理**TaskRecord**的，包含了多个**TaskRecord**。
 
 6. **singleTask** 和 **singleTop** 模式的都会去任务栈中遍历寻找是否已经启动了相应实例
 
