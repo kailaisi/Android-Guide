@@ -618,6 +618,7 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
     return result;
 }
 ```
+
 这里有一个优化的点，就是进行activity的启动调用之前，暂停了布局的绘制，然后在方法调用完成后，统一进行绘制工作。
 
 该方法的重点方法是对 **startActivityUnchecked()** 方法的调用，然后对启动的结果进行了处理。
@@ -901,7 +902,7 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
     
             return START_SUCCESS;
         }
-    
+
 
 
 
@@ -920,8 +921,12 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
 
 6. **singleTask** 和 **singleTop** 模式的都会去任务栈中遍历寻找是否已经启动了相应实例
 
-7. 
+7. **ActivityStackSupervisor** 用来管理 **ActivityStack** 的。
 
-   
+8. APP与 **ActivityStack** 之间并无必然的联系。有可能是一个APP对应一个 **ActivityStack** ，有可能是一个APP对应多个 **ActivityStack** ，也有可能是多个APP共用一个 **ActivityStack** 。
 
-   
+9.  **ActivityDisplay** 表示一个屏幕，Android支持三种屏幕：主屏幕，外接屏幕（HDMI等），虚拟屏幕（投屏）。一般情况下，即只有主屏幕时， **ActivityStackSupervisor** 与 **ActivityDisplay** 都是系统唯一。
+
+10. ActivityStackSupervisor是ActivityStack的管理者，内部管理了mHomeStack、mFocusedStack和mLastFocusedStack三个ActivityStack。其中，mHomeStack管理的是Launcher相关的Activity栈， stackId为0；mFocusedStack管理的是当前显示在前台Activity的Activity栈；mLastFocusedStack管理的是上一次显示在前台Activity的Activity栈。
+
+11. 
