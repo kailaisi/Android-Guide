@@ -910,23 +910,13 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
 学习到的知识点：
 
 1. 启动模式如果intent中的和mainfest中的冲突，那么manfest的启动模式优先
-
 2. **newIntent**启动模式是无法获取result结果的
-
 3. 一个**ActivityRecord**对应一个**Activity**，保存了一个**Activity**的所有信息;但是一个**Activity**可能会有多个**ActivityRecord**,因为**Activity**可以被多次启动，这个主要取决于其启动模式。
-
 4. 一个**TaskRecord**由一个或者多个**ActivityRecord**组成，这就是我们常说的任务栈，具有后进先出的特点。
-
 5. **ActivityStack**则是用来管理**TaskRecord**的，包含了多个**TaskRecord**。
-
 6. **singleTask** 和 **singleTop** 模式的都会去任务栈中遍历寻找是否已经启动了相应实例
-
 7. **ActivityStackSupervisor** 用来管理 **ActivityStack** 的。
-
 8. APP与 **ActivityStack** 之间并无必然的联系。有可能是一个APP对应一个 **ActivityStack** ，有可能是一个APP对应多个 **ActivityStack** ，也有可能是多个APP共用一个 **ActivityStack** 。
-
-9.  **ActivityDisplay** 表示一个屏幕，Android支持三种屏幕：主屏幕，外接屏幕（HDMI等），虚拟屏幕（投屏）。一般情况下，即只有主屏幕时， **ActivityStackSupervisor** 与 **ActivityDisplay** 都是系统唯一。
-
-10. ActivityStackSupervisor是ActivityStack的管理者，内部管理了mHomeStack、mFocusedStack和mLastFocusedStack三个ActivityStack。其中，mHomeStack管理的是Launcher相关的Activity栈， stackId为0；mFocusedStack管理的是当前显示在前台Activity的Activity栈；mLastFocusedStack管理的是上一次显示在前台Activity的Activity栈。
-
-11. 
+9. **ActivityDisplay** 表示一个屏幕，Android支持三种屏幕：主屏幕，外接屏幕（HDMI等），虚拟屏幕（投屏）。一般情况下，即只有主屏幕时， **ActivityStackSupervisor** 与 **ActivityDisplay** 都是系统唯一。 **ActivityDisplay** 持有着当前屏幕的 **ActivityStack** 列表信息。
+10.  **RootActivityContainer** 则是持有者屏幕 **ActivityDisplay** 信息。用来分担ActivityStackSupervisor的部分职责的，主要目的是使ActivityContainer的结构和WindowContainer的结构保持一致。
+11. ![image-20200408150308700](http://cdn.qiniu.kailaisii.com/typora/202004/08/153428-322821.png)
