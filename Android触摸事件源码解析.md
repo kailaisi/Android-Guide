@@ -91,7 +91,7 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
             // Check for cancelation.
             //检测当前事件是否取消了，万一有单身20年手速快的呢。。。
             final boolean canceled = resetCancelNextUpFlag(this)|| actionMasked == MotionEvent.ACTION_CANCEL;
-            // Update list of touch targets for pointer down, if needed.
+ 
             final boolean split = (mGroupFlags & FLAG_SPLIT_MOTION_EVENTS) != 0;
             TouchTarget newTouchTarget = null;
             boolean alreadyDispatchedToNewTouchTarget = false;
@@ -347,7 +347,18 @@ View的事件处理比较简单。
 3. 如果没有**onTouchListener**，就调用**onTouchEvent**方法。
 4. 最后将result返回。
 
+### 总结
 
+只有不断的总结才能不断的成长。对于事件分发机制，平时很少去接触，但是只要遇到了滑动冲突，那么就肯定会需要这部分的知识去解决。
+
+1. 在一次事件发生过程中，Down->Move->Up属于一次触摸事件。每次Down事件触发的时候，会清空之前的一系列拦截记录、触发事件的控件记录等等。
+2. 如果子控件设置了 **requestdisallowInterceptTouchEvent(true)** ，那么当前布局就不会再进行 **onInterceptTouchEvent()** 的判断，而是直接分发交给子控件。
+3. 如果ViewGroup拦截了 **Down** 事件或者上一次事件没有对应的子控件处理事件，那么后面的一系列事件就不会再进行下发了，直接按照拦截处理。
+
+其实这几点知识也引出来了对于滑动冲突的解决方案。
+
+1. 由父控件来决定是由谁来处理滑动事件(外部拦截法)：在父控件中的 **onIntercepter** 中，对 **Move** 事件判断是当前控件，还是子控件进行处理。如果当前控件处理，则 **onIntercepter** 返回true。否则返回false。这时候父控件的Down事件必须不能拦截(对应总结的第3点)。
+2. 由子控件来决定是由谁来处理滑动事件(内部拦截法)：在子控件中的 **dispatchTouchEvent** 方法中，对于 **Move** 事件，判断是由父控件还是子控件来处理。如果当前控件处理，则使用 **requestdisallowInterceptTouchEvent(true)** ，如果是由父控件处理，则使用 **requestdisallowInterceptTouchEvent(false)** 。这时候的父控件需要做一些处理。在 **onIntercepter** 方法中 **Down** 事件不拦截 (理由如总结3)，其他事件需要拦截(拦截才会进行onTouchEvent的调用)。
 
 > 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
 >
