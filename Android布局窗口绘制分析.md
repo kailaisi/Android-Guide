@@ -1,4 +1,4 @@
-# Android启动流程，窗口绘制分析
+# Android布局窗口绘制分析
 
 ## Activity的启动
 
