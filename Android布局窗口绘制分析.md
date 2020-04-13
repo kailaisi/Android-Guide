@@ -322,7 +322,7 @@ protected ViewGroup generateLayout(DecorView decor) {
 
 generateLayout方法主要就是根据我们设置的主题信息，获取到对应的最重要展示的布局样式。然后将布局样式加载进mDecor中，然后在布局中找到一个id为ID_ANDROID_CONTENT(R.id.content)的区域，用来放置我们自己的布局文件。这里会根据主题，对PhoneWindow进行一些列的配置操作，也会根据主题进行背景，titlebar等的设置处理。
 
-到这里为止，**intsallDecor**的操作已经完成了，剩下的就是通过mLayoutInflater.inflate(layoutResID, mContentParent)方法将用户传入的布局转化为view再加入到mContentParent上。这样就完成了setContentView()流程。
+到这里为止，**intsallDecor**的操作已经完成了，剩下的就是通过mLayoutInflater.inflate(layoutResID, mContentParent)方法将用户传入的xml布局转化为view再加入到mContentParent上。这样就完成了setContentView()流程。
 
 到这里，Activity的整个视图结构就已经准备好了，但是这时候它还只是一个View，并没有添加到Window上。下面就是通过**handleResumeActivity()**来展示到Window上了。
 
@@ -538,7 +538,8 @@ public void setView(View view, WindowManager.LayoutParams attrs, View panelParen
             }
             mAdded = true;
             int res; /* = WindowManagerImpl.ADD_OKAY; */
-            // 这里调用异步刷新请求，最终会调用performTraversals方法来完成View的绘制
+            //***重点方法： 这里调用异步刷新请求，最终会调用performTraversals方法来完成View的绘制
+            //重点方法  这里面会进行view的 测量，layout，以及绘制工作
             requestLayout();
             ...
             try {
@@ -561,6 +562,14 @@ public void setView(View view, WindowManager.LayoutParams attrs, View panelParen
 这里主要进行了一下对象的初始化工作，然后调用**requestLayout()**方法来进行当前view的绘制工作。最后通过IPC机制，执行相关加载Window的操作。
 
 到此为止页面的加载以及绘制，显示工作完成。
+
+
+
+
+
+### 汇总
+
+1. 对于将xml转化为View所调用 **LayoutInflater.inflater()** 的方法，是在onCreate中调用的。而将View进行测量、布局、绘制所调用的 **requestLayout()** 方法则是在 **performResume()** 中调用的。这就是为什么我们在onCreate方法中获取控件的宽高无法获取的原因。
 
 ![image-20200406092622588](https://user-gold-cdn.xitu.io/2020/4/6/1714d1728f293578?w=946&h=675&f=png&s=87941)
 

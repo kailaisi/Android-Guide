@@ -308,3 +308,9 @@ private static void prepare(boolean quitAllowed) {
 这就是我们Handler的整个执行机制。如果感觉难以理解的话，我觉得开头的那个比喻就比较形象了。
 
 好了，到此为止~~
+
+
+
+### 总结
+
+1. 对于message的获取，最好使用obtainMessage方法，这种方式会从池中获取可以使用的消息，而不需要每次都new对象出来。
