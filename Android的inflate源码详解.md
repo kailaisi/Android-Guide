@@ -51,7 +51,7 @@
 
 这里生成的 **parser** 是通过 **getLayout** 方法来生成的。我们看一下具体的实现。
 
-```
+```java
 //Resouces.java
     public XmlResourceParser getLayout(@LayoutRes int id) throws NotFoundException {
         return loadXmlResourceParser(id, "layout");
@@ -86,7 +86,7 @@
 
 ##### 获取相关资源getValue()
 
-```
+```java
 //ResourcesImpl.java
     void getValue(@AnyRes int id, TypedValue outValue, boolean resolveRefs)throws NotFoundException {
         //mAssets是一个AssetManager对象，
@@ -129,7 +129,7 @@ native方法等以后再继续分析（这个outValue中的data会保存layout/*
 
 ##### 文件资源解析器的获取
 
-```
+```java
 //Resources.java
 XmlResourceParser loadXmlResourceParser(@NonNull String file, @AnyRes int id, int assetCookie,@NonNull String type)
         throws NotFoundException {
@@ -256,7 +256,7 @@ XmlResourceParser loadXmlResourceParser(@NonNull String file, @AnyRes int id, in
 
 先从createViewFromTag开始，这个方法主要是进行第一个控件的绘制。而且有很多我们可以操作的地方
 
-```
+```java
 //LayoutInflater.java
 	View createViewFromTag(View parent, String name, Context context, AttributeSet attrs,boolean ignoreThemeAttr) {
         if (name.equals("view")) {
@@ -330,7 +330,7 @@ XmlResourceParser loadXmlResourceParser(@NonNull String file, @AnyRes int id, in
 
 在之前的源码中我们了解到，外层控件绘制完成以后，会通过 **rInflater** 方法来进行其子控件的绘制，然后通过循环来创建整个布局文件对应的View树。
 
-```
+```java
     //递归方法，用于向下传递xml层次结构并实例化视图、实例化其子视图，然后调用onfinishinfl()
     void rInflate(XmlPullParser parser, View parent, Context context,AttributeSet attrs, boolean finishInflate) throws XmlPullParserException, IOException {
 
