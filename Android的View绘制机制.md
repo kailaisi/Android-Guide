@@ -106,7 +106,8 @@ void scheduleTraversals() {
 对于一个将近千行的代码，我们只能逐一拆分来进行解析了。
 
 ```java
-    private void performTraversals() {
+//ViewRootImpl.java
+		private void performTraversals() {
         //将mView缓存，用final修饰，避免运行过程中修改
         final View host = mView;
 		//如果没有添加到DecorView,则直接返回
@@ -198,7 +199,8 @@ void scheduleTraversals() {
 我们继续看第二段代码。
 
 ```java
-		 // 如果窗口不可见了，去掉可访问性焦点
+//ViewRootImpl.java
+		// 如果窗口不可见了，去掉可访问性焦点
         if (mAttachInfo.mWindowVisibility != View.VISIBLE) {
             host.clearAccessibilityFocus();
         }
@@ -251,7 +253,8 @@ void scheduleTraversals() {
 这里面的 **measureHierarchy()** 方法使我们可以研究的一个地方
 
 ```java
-    //测量层次结构
+//ViewRootImpl.java
+	//测量层次结构
     private boolean measureHierarchy(final View host, final WindowManager.LayoutParams lp,final Resources res, final int desiredWindowWidth, final int desiredWindowHeight) {
         //用于描述最终宽度的spec
         int childWidthMeasureSpec;
@@ -320,10 +323,13 @@ void scheduleTraversals() {
 
 到现在为止，一切的准备工作都做完了，那么后面就是进入主题，进行顶层View树的测量、布局和绘制工作了。
 
-#### 测量
+### 测量
+
+#### 进行测量的条件
 
 ```java
-        //清除layoutRequested，这样如果再有layoutRequested=true的情况，我们就可以认为是有了新的layout请求。
+//ViewRootImpl.java
+//清除layoutRequested，这样如果再有layoutRequested=true的情况，我们就可以认为是有了新的layout请求。
         if (layoutRequested) {
             mLayoutRequested = false;
         }
@@ -358,13 +364,21 @@ void scheduleTraversals() {
 
 有时候我们的界面没有必要进行测量工作，毕竟测量属于一个比较耗时而又繁琐的工作。所以对于测量工作的进行，是有一定的执行条件的，而上面的代码就能够告诉我们什么情况下才会进行整个页面的测量工作。
 
-* 第一次绘制
+* mFirst为true。表示窗口是第一次执行测量、布局和绘制操作。
 * windowShouldResize标志位为true。而这个标志位主要就是判断窗口大小是否发生了变化。
-* viewVisibilityChanged为true。这个标志位是
+* insetsChanged为true。这个表示此次窗口overscan等一些边衬区域发生了改变
+* viewVisibilityChanged为true。这个标志位是View的可见性发生了变化
+* params说明窗口的属性发生了变化。
+* mForceNextWindowRelayout为true。表示设置了要强制了layout操作
+
+当我们确定需要进行测量的话，下一步就是进行具体的测量工作了。
+
+#### 测量的执行
 
 
-```
-            ...
+```java
+//ViewRootImpl.java
+				...
 				//请求WMS计算Activity窗口大小及边衬区域大小
                 relayoutResult = relayoutWindow(params, viewVisibility, insetsPending);
 
@@ -391,89 +405,24 @@ void scheduleTraversals() {
                 mWidth = frame.width();
                 mHeight = frame.height();
             }
-
-			//界面有自己的surface
-            if (mSurfaceHolder != null) {
-                // The app owns the surface; tell it about what is going on.
-                if (mSurface.isValid()) {
-                    // XXX .copyFrom() doesn't work!
-                    //mSurfaceHolder.mSurface.copyFrom(mSurface);
-                    mSurfaceHolder.mSurface = mSurface;
-                }
-                mSurfaceHolder.setSurfaceFrameSize(mWidth, mHeight);
-                mSurfaceHolder.mSurfaceLock.unlock();
-                if (mSurface.isValid()) {
-                    if (!hadSurface) {
-                        mSurfaceHolder.ungetCallbacks();
-
-                        mIsCreating = true;
-                        SurfaceHolder.Callback callbacks[] = mSurfaceHolder.getCallbacks();
-                        if (callbacks != null) {
-                            for (SurfaceHolder.Callback c : callbacks) {
-                                c.surfaceCreated(mSurfaceHolder);
-                            }
-                        }
-                        surfaceChanged = true;
-                    }
-                    if (surfaceChanged || surfaceGenerationId != mSurface.getGenerationId()) {
-                        SurfaceHolder.Callback callbacks[] = mSurfaceHolder.getCallbacks();
-                        if (callbacks != null) {
-                            for (SurfaceHolder.Callback c : callbacks) {
-                                c.surfaceChanged(mSurfaceHolder, lp.format,
-                                        mWidth, mHeight);
-                            }
-                        }
-                    }
-                    mIsCreating = false;
-                } else if (hadSurface) {
-                    notifySurfaceDestroyed();
-                    mSurfaceHolder.mSurfaceLock.lock();
-                    try {
-                        mSurfaceHolder.mSurface = new Surface();
-                    } finally {
-                        mSurfaceHolder.mSurfaceLock.unlock();
-                    }
-                }
-            }
-
-            final ThreadedRenderer threadedRenderer = mAttachInfo.mThreadedRenderer;
-            if (threadedRenderer != null && threadedRenderer.isEnabled()) {
-                if (hwInitialized
-                        || mWidth != threadedRenderer.getWidth()
-                        || mHeight != threadedRenderer.getHeight()
-                        || mNeedsRendererSetup) {
-                    threadedRenderer.setup(mWidth, mHeight, mAttachInfo,
-                            mWindowAttributes.surfaceInsets);
-                    mNeedsRendererSetup = false;
-                }
-            }
+			....
 			//当前页面处于非暂停状态，或者接收到了绘制的请求
             if (!mStopped || mReportNextDraw) {
 				//获取焦点
                 boolean focusChangedDueToTouchMode = ensureTouchModeLocally((relayoutResult & WindowManagerGlobal.RELAYOUT_RES_IN_TOUCH_MODE) != 0);
 				//宽高有变化了
                 if (focusChangedDueToTouchMode || mWidth != host.getMeasuredWidth()|| mHeight != host.getMeasuredHeight() || contentInsetsChanged ||updatedConfiguration) {
+                    //获得view宽高的测量规格，lp.width和lp.height表示DecorView根布局宽和高
                     int childWidthMeasureSpec = getRootMeasureSpec(mWidth, lp.width);
                     int childHeightMeasureSpec = getRootMeasureSpec(mHeight, lp.height);
-
-                    if (DEBUG_LAYOUT) Log.v(mTag, "Ooops, something changed!  mWidth="
-                            + mWidth + " measuredWidth=" + host.getMeasuredWidth()
-                            + " mHeight=" + mHeight
-                            + " measuredHeight=" + host.getMeasuredHeight()
-                            + " coveredInsetsChanged=" + contentInsetsChanged);
-
-                    // Ask host how big it wants to be
                     //执行测量工作
                     performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);
-
-                    // Implementation of weights from WindowManager.LayoutParams
-                    // We just grow the dimensions as needed and re-measure if
-                    // needs be
                     int width = host.getMeasuredWidth();
                     int height = host.getMeasuredHeight();
                     //需要重新测量标记
                     boolean measureAgain = false;
-                    //如果测量出来的水平宽度需要拉伸（设置了weight） 需要重新测量
+                    //lp.horizontalWeight表示将多少额外空间水平地(在水平方向上)分配给与这些LayoutParam关联的视图。如果
+                    //视图不应被拉伸，请指定0。否则，将在所有权重大于0的视图中分配额外的像素。
                     if (lp.horizontalWeight > 0.0f) {
                         width += (int) ((mWidth - width) * lp.horizontalWeight);
                         childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(width,MeasureSpec.EXACTLY);
@@ -484,9 +433,8 @@ void scheduleTraversals() {
                         childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(height,MeasureSpec.EXACTLY);
                         measureAgain = true;
                     }
-
+                    //有变化了，就再次执行测量
                     if (measureAgain) {
-                        if (DEBUG_LAYOUT) Log.v(mTag,"And hey let's measure once more: width=" + width + " height=" + height);
                         performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);
                     }
                     //设置请求layout标志位
@@ -494,25 +442,337 @@ void scheduleTraversals() {
                 }
             }
         } else {
-            // Not the first pass and no window/insets/visibility change but the window
-            // may have moved and we need check that and if so to update the left and right
-            // in the attach info. We translate only the window frame since on window move
-            // the window manager tells us only for the new frame but the insets are the
-            // same and we do not want to translate them more than once.
             maybeHandleWindowMove(frame);
         }
 
 ```
 
+在执行测量操作之前做了一系列的边界处理。然后如果页面是可见的，那么就调用 **performMeasure()** 方法进行测量，当测量完成以后再根据是否设置了 **weight** 来确定是否需要执行二次测量。这里我们去看一下 **performMeasure()** 函数执行。这里的两个参数是根据屏幕的宽度以及高度生成的 MeasureSpec。
+
+```java
+	//执行测量工作
+    private void performMeasure(int childWidthMeasureSpec, int childHeightMeasureSpec) {
+        if (mView == null) {
+            return;
+        }
+        try {
+            //调用measure方法
+            mView.measure(childWidthMeasureSpec, childHeightMeasureSpec);
+        }
+    }
+```
+
+这里的mView是DecorView根布局,记录ViewRootImpl管理的View树的根节点，也就是一个 **ViewGroup** 。然后调用了 **measure()** 方法。
+
+```java
+//View.java
+	//测量view使用的具体的宽高，参数是父类的宽高信息
+    public final void measure(int widthMeasureSpec, int heightMeasureSpec) {
+        ...
+        long key = (long) widthMeasureSpec << 32 | (long) heightMeasureSpec & 0xffffffffL;
+        if (mMeasureCache == null) mMeasureCache = new LongSparseLongArray(2);
+
+        final boolean forceLayout = (mPrivateFlags & PFLAG_FORCE_LAYOUT) == PFLAG_FORCE_LAYOUT;
+        //观察spec是否发生了变化
+        final boolean specChanged = widthMeasureSpec != mOldWidthMeasureSpec|| heightMeasureSpec != mOldHeightMeasureSpec;
+        //是否是固定宽高
+        final boolean isSpecExactly = MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY && MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.EXACTLY;
+        //上次测量的高度和现在的最大高度相同
+        final boolean matchesSpecSize = getMeasuredWidth() == MeasureSpec.getSize(widthMeasureSpec)&& getMeasuredHeight() == MeasureSpec.getSize(heightMeasureSpec);
+        //是否需要layout
+        final boolean needsLayout = specChanged&& (sAlwaysRemeasureExactly || !isSpecExactly || !matchesSpecSize);
+        //如果需要绘制或者设置了强制layout
+        if (forceLayout || needsLayout) {
+            // 先清除测量尺寸标记
+            mPrivateFlags &= ~PFLAG_MEASURED_DIMENSION_SET;
+            resolveRtlPropertiesIfNeeded();
+
+            int cacheIndex = forceLayout ? -1 : mMeasureCache.indexOfKey(key);
+            if (cacheIndex < 0 || sIgnoreMeasureCache) {
+                //***重点方法   测量我们自己
+                onMeasure(widthMeasureSpec, heightMeasureSpec);
+                mPrivateFlags3 &= ~PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT;
+            } else {
+                long value = mMeasureCache.valueAt(cacheIndex);
+                setMeasuredDimensionRaw((int) (value >> 32), (int) value);
+                mPrivateFlags3 |= PFLAG3_MEASURE_NEEDED_BEFORE_LAYOUT;
+            }
+            //如果开发者自己设置了onMeasure，但是里面没有调用setMeasuredDimension()方法，这时候就会报错
+            //setMeasuredDimension()方法会将PFLAG_MEASURED_DIMENSION_SET设置进mPrivateFlags
+            if ((mPrivateFlags & PFLAG_MEASURED_DIMENSION_SET) != PFLAG_MEASURED_DIMENSION_SET) {
+                throw new IllegalStateException("View with id " + getId() + ": "+ getClass().getName() + "#onMeasure() did not set the" + " measured dimension by calling"+ " setMeasuredDimension()");
+            }
+            //设置请求layout标志位，为了进行下一步的layout工作
+            mPrivateFlags |= PFLAG_LAYOUT_REQUIRED;
+        }
+        //记录父控件给予的MeasureSpec值，便于以后判断父控件是否变化了
+        mOldWidthMeasureSpec = widthMeasureSpec;
+        mOldHeightMeasureSpec = heightMeasureSpec;
+        //缓存起来
+        mMeasureCache.put(key, ((long) mMeasuredWidth) << 32 |(long) mMeasuredHeight & 0xffffffffL); // suppress sign extension
+    }
+```
+
+可以看到这个方法里面并没有进行任何的测量工作，真正的测量操作是交给了 **onMeasure()** 来进行处理。而这个函数的作用只是对于 **onMeasure** 方法的正确性进行检测
+
+1. 如果上次传过来的父类的宽高信息等各种情况都没发生变化，就不进行测量工作。
+2. 因为 **onMeasure** 方法是可以被子类覆写的，子类在进行覆写的时候，必须调用 **setMeasuredDimension()** 方法，否则就会报错
+3. 这里有个缓存机制，如果不是强制执行测量工作，那么可以从缓存来获取之前的测量信息。
+
+```java
+//View.java
+	//onMeasure方法的具体的实现应该是由子类去重写的，提供更加合理、高效的实现
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        //保存测量结果。
+        setMeasuredDimension(getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec),getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec));
+    }
+```
+
+在View的实现中，onMeasure内部只是调用了 **setMeasuredDimension** 方法。
+
+```java
+//View.java
+	//onMeasue方法必须调用这个方法来进行测量数据的保存
+    protected final void setMeasuredDimension(int measuredWidth, int measuredHeight) {
+        boolean optical = isLayoutModeOptical(this);
+        //有光学边界，则对光学边界做一些处理
+        if (optical != isLayoutModeOptical(mParent)) {
+            Insets insets = getOpticalInsets();
+            int opticalWidth  = insets.left + insets.right;
+            int opticalHeight = insets.top  + insets.bottom;
+
+            measuredWidth  += optical ? opticalWidth  : -opticalWidth;
+            measuredHeight += optical ? opticalHeight : -opticalHeight;
+        }
+        setMeasuredDimensionRaw(measuredWidth, measuredHeight);
+    }
+    
+    private void setMeasuredDimensionRaw(int measuredWidth, int measuredHeight) {
+        //保存测量的宽高信息
+        mMeasuredWidth = measuredWidth;
+        mMeasuredHeight = measuredHeight;
+        //向mPrivateFlags中添加PFALG_MEASURED_DIMENSION_SET，以此证明onMeasure()保存了测量结果
+        mPrivateFlags |= PFLAG_MEASURED_DIMENSION_SET;
+    }
+```
+
+反过来我们看一下 **setMeasuredDimension** 的入参是怎么获取的。也就是 **getDefaultSize** 和 **getSuggestedMinimumWidth** 
+
+```java
+//ViewRootImpl.java	    
+	//返回建议的视图应该使用的最小宽度。
+    protected int getSuggestedMinimumWidth() {
+        //如果没有背景，直接返回最小宽度，如果有背景，那么使用mMinWidth和背景的最小宽度，二者的最大值
+        return (mBackground == null) ? mMinWidth : max(mMinWidth, mBackground.getMinimumWidth());
+    }
+
+    //根据建议的size和当前控件的模式返回最终确定的宽高信息
+    public static int getDefaultSize(int size, int measureSpec) {
+        int result = size;
+        int specMode = MeasureSpec.getMode(measureSpec);
+        int specSize = MeasureSpec.getSize(measureSpec);
+
+        switch (specMode) {
+        case MeasureSpec.UNSPECIFIED://未指明(wrap_content)的情况下，使用建议的size值
+            result = size;
+            break;
+        case MeasureSpec.AT_MOST://设置使用最大值(match_parent)
+        case MeasureSpec.EXACTLY://设置了确定的宽高信息(width="20dp")的情况下，使用父类传入的大小值
+            result = specSize;
+            break;
+        }
+        return result;
+    }
+```
+
+所以这里都计算一次控件的最小宽高值，然后根据父类传入的measureSpec信息来进行不同的取值。
+
+这里面只是对View的测量工作进行了解析，其实在实际使用中，更多的是对ViewGroup的子类的测量，其实现更加复杂一些，这些留在以后进行处理，我们这里只是跟踪View的绘制流程。
+
+到目前为止，整个的的测量工作完成了，我们继续回到主线，看一下当测量完成以后又做了哪些工作。
+
+#### 布局
+
+```java
+//ViewRootImpl.java
+		//非暂停状态或者请求绘制，而且设置了请求layout标志位.
+        final boolean didLayout = layoutRequested && (!mStopped || mReportNextDraw);
+        boolean triggerGlobalLayoutListener = didLayout || mAttachInfo.mRecomputeGlobalAttributes;
+        //需要进行layout布局操作
+        if (didLayout) {
+            //重点方法****执行layout,内部会调用View的layout方法，从而调用onLayout方法来实现布局
+            performLayout(lp, mWidth, mHeight);
+            //到现在为止，所有的view已经进行过了测量和定位。可以计算透明区域了
+            if ((host.mPrivateFlags & View.PFLAG_REQUEST_TRANSPARENT_REGIONS) != 0) {
+                ...
+        }
+        //触发全局的layout监听器，也就是我们设置的mTreeObserver
+        if (triggerGlobalLayoutListener) {
+            mAttachInfo.mRecomputeGlobalAttributes = false;
+            mAttachInfo.mTreeObserver.dispatchOnGlobalLayout();
+        }
+
+```
+
+对于控件的布局操作，代码量还是比较少的。主要就是判断是否需要进行layout操作，然后调用 **performLayout** 方法来进行布局。这里的 **performLayout** 会调用View的 **layout()** 方法，然后调用其 **onLayout()** 方法，具体分析与measure类似。所以这里不再进行分析了，有兴趣的朋友可以自己看一下。或者关注我的github中的[源码解析项目](https://github.com/kailaisi/android-29-framwork.git)，里面会不定期的更新对于源码的注释。
+
+### 绘制
+
+```java
+//ViewRootImpl.java
+        boolean cancelDraw = mAttachInfo.mTreeObserver.dispatchOnPreDraw() || !isViewVisible;
+        //没有取消绘制
+        if (!cancelDraw) {
+            //存在动画则执行动画效果
+            if (mPendingTransitions != null && mPendingTransitions.size() > 0) {
+                for (int i = 0; i < mPendingTransitions.size(); ++i) {
+                    mPendingTransitions.get(i).startChangingAnimations();
+                }
+                mPendingTransitions.clear();
+            }
+			//重点方法 ***执行绘制工作
+            performDraw();
+        } else {//取消了绘制工作。
+            if (isViewVisible) {
+                // Try again
+                //如果当前页面是可见的，那么重新进行调度
+                scheduleTraversals();
+            } else if (mPendingTransitions != null && mPendingTransitions.size() > 0) {
+                //存在动画效果则取消动画
+                for (int i = 0; i < mPendingTransitions.size(); ++i) {
+                    mPendingTransitions.get(i).endChangingAnimations();
+                }
+                mPendingTransitions.clear();
+            }
+        }
+        //清除正在遍历标志位
+        mIsInTraversal = false;
+    }
+```
+
+上面这些代码实现了对于View的绘制工作。里面的重点方法就是 **performDraw()** 。
+
+对于绘制工作，不像测量和布局那么简单，是需要交给 **ThreadedRenderer** 这个线程渲染器来进行渲染工作的，我们跟踪一下主要的流程
+
+```java
+//ViewRootViewImpl 类
+ private void performDraw() {
+    ....
+    draw(fullRedrawNeeded);
+    ....
+ }
+-------------------------------------------------------------------------
+//ViewRootViewImpl 类
+private void draw(boolean fullRedrawNeeded) {
+    ....
+    mAttachInfo.mThreadedRenderer.draw(mView, mAttachInfo, this);
+    ....
+}
+ 
+-------------------------------------------------------------------------
+//ThreadedRenderer 类
+void draw(View view, AttachInfo attachInfo, DrawCallbacks callbacks) {
+    ....
+    updateRootDisplayList(view, callbacks);
+    ....
+}
+-------------------------------------------------------------------------
+//ThreadedRenderer 类
+private void updateRootDisplayList(View view, DrawCallbacks callbacks) {
+    ....
+    updateViewTreeDisplayList(view);
+    ....
+}
+-------------------------------------------------------------------------
+//ThreadedRenderer 类
+private void updateViewTreeDisplayList(View view) {
+    view.mPrivateFlags |= View.PFLAG_DRAWN;
+    view.mRecreateDisplayList = (view.mPrivateFlags & View.PFLAG_INVALIDATED)
+            == View.PFLAG_INVALIDATED;
+    view.mPrivateFlags &= ~View.PFLAG_INVALIDATED;
+    //这里调用了 View 的 updateDisplayListIfDirty 方法 
+    //这个 View 其实就是 DecorView
+    view.updateDisplayListIfDirty();
+    view.mRecreateDisplayList = false;
+}
+```
+
+可以看到，最后会调用其参数view（也就是DecorView）的 **updateDisplayListIfDirty** 方法。
+
+```java
+//View.java
+ public RenderNode updateDisplayListIfDirty() {
+    	...
+        draw(canvas);
+        ...
+    }
+```
+
+在这个方法里会调用View的draw(canvas)绘制方法，由于DecorView方法重写了draw方法，所以先执行DecorView的draw方法。
+
+```
+//DecorView
+	@Override
+    public void draw(Canvas canvas) {
+        super.draw(canvas);
+        if (mMenuBackground != null) {
+            mMenubackground.draw(canvas);
+        }
+    }
+```
+
+所以最终还是调用View类中的draw方法。
+
+```
+    public void draw(Canvas canvas) {
+        final int privateFlags = mPrivateFlags;
+        mPrivateFlags = (privateFlags & ~PFLAG_DIRTY_MASK) | PFLAG_DRAWN;
+        int saveCount;
+        //步骤1  绘制背景
+        drawBackground(canvas);
+        //一般情况下跳过步骤2和步骤5
+        final int viewFlags = mViewFlags;
+        boolean horizontalEdges = (viewFlags & FADING_EDGE_HORIZONTAL) != 0;
+        boolean verticalEdges = (viewFlags & FADING_EDGE_VERTICAL) != 0;
+        if (!verticalEdges && !horizontalEdges) {
+            //步骤3 绘制内容
+            onDraw(canvas);
+            //步骤4 绘制children
+            dispatchDraw(canvas);
+
+            //步骤6 绘制装饰(前景，滚动条)
+            onDrawForeground(canvas);
+
+            // Step 7, draw the default focus highlight
+            //步骤7，绘制默认的焦点突出显示
+            drawDefaultFocusHighlight(canvas);
 
 
+            // we're done...
+            return;
+        }
 
+```
 
+在绘制方法中，将绘制过程分为了7个步骤，其中步骤2和步骤5一般情况下是跳过的
 
+我们看一下里面的执行的步骤。具体的绘制流程不再逐一分析了。
+
+1. 绘制背景。
+2. 如果有必要，保存画布的图层以备淡入
+3.  绘制视图的内容
+4. 画Children
+5. 如有必要，绘制淡入边缘并恢复图层
+6. 绘制装饰(例如，滚动条)
+7. 绘制默认的焦点突出显示
+
+到这里为止，我们的整个View的绘制流程就全部完成了。里面具体的细节还有很多挖掘的地方。等以后有机会慢慢再分析吧。
 
 ### 总结
 
 1. handler是有一种同步屏障机制的，能够屏蔽同步消息(有什么用图以后再开发)。
 2. 对于屏幕的帧绘制是通过choreographer来进行的，它来进行屏幕的刷新，帧的丢弃等工作。
-3. 如果Dialog的宽高设置的wrap，那么会首先用
+3. 如果Dialog的宽高设置的wrap，会先用默认的高度试试是否可行，不可行就(屏幕高+默认高)/2来进行试验，再不行就直接给屏幕高了。
+4. 对于测量工作，在整个过程中会发生很多次。
+5. 在整个View的绘制过程中，都有对于mTreeObserver的回调。这里我们可以根据我们的需要进行各种监听工作
 
