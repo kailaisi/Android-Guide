@@ -1,6 +1,4 @@
-## Android的View分发绘制过程源码解析（待写）
-
-#### 引言
+## 引言
 
 在之前的【Android布局窗口绘制分析】一篇文章中，我们介绍过如何将布局加载到PhoneWindows窗口中并显示。而在【Android的inflate源详解】中，我们则分析了如何将xml的布局文件转化为View树。但是View树具体以何种位置、何种大小展现给我们，没有具体讲解的。那么这篇文章，我们就在上两章的基础上继续研究View是如何进行布局和绘制的。
 
@@ -22,13 +20,13 @@
 
 这句代码就是View的绘制的入口，经过measure,layout,draw最终将我们在【Android的inflate源详解】中所形成的View树绘制出来。当这篇文章完成之后，安卓如何从xml到view树，然后将view树进行绘制，然后将view添加到DecterView并显示出来，这一整套流程就可以结束了。
 
-### 基础知识
+## 基础知识
 
 Android View的绘制过程分为3步： 测量、布局、绘制
 
 
 
-### 源码
+## 源码
 
 ```java
    //ViewRootImpl.java 
@@ -325,7 +323,7 @@ void scheduleTraversals() {
 
 ### 测量
 
-#### 进行测量的条件
+#### 进行测量的条件：
 
 ```java
 //ViewRootImpl.java
@@ -373,7 +371,7 @@ void scheduleTraversals() {
 
 当我们确定需要进行测量的话，下一步就是进行具体的测量工作了。
 
-#### 测量的执行
+#### 测量的执行：
 
 
 ```java
@@ -591,7 +589,7 @@ void scheduleTraversals() {
 
 到目前为止，整个的的测量工作完成了，我们继续回到主线，看一下当测量完成以后又做了哪些工作。
 
-#### 布局
+### 布局
 
 ```java
 //ViewRootImpl.java
@@ -768,11 +766,18 @@ private void updateViewTreeDisplayList(View view) {
 
 到这里为止，我们的整个View的绘制流程就全部完成了。里面具体的细节还有很多挖掘的地方。等以后有机会慢慢再分析吧。
 
-### 总结
+## 总结
 
 1. handler是有一种同步屏障机制的，能够屏蔽同步消息(有什么用图以后再开发)。
 2. 对于屏幕的帧绘制是通过choreographer来进行的，它来进行屏幕的刷新，帧的丢弃等工作。
 3. 如果Dialog的宽高设置的wrap，会先用默认的高度试试是否可行，不可行就(屏幕高+默认高)/2来进行试验，再不行就直接给屏幕高了。
 4. 对于测量工作，在整个过程中会发生很多次。
-5. 在整个View的绘制过程中，都有对于mTreeObserver的回调。这里我们可以根据我们的需要进行各种监听工作
+5. 在整个View的绘制过程中，都有对于mTreeObserver的回调。这里我们可以根据我们的需要进行各种监听工作。
+6. 自定义控件继承View必须覆写onMeasure方法。因为View默认的onMeasure中，如果使用了wrap，那么会MeasureSpec为AT+MOST。而且最大值为父类的高度，也就是相当于match_parent。所以必须重写onMeasure方法。这一点在TextView，Button等控件里面都能看到。我们只需要给自定义的View一个默认的内部宽高，当使用wrap_context的时候设置宽高即可。
+7. 只有onMeasure之后才能获取到控件的宽高值，但是在实际中会存在多次测量，onMeasure又是在onResume中调用。所以如果获取宽高需要通过其他途径。这里提供四种
+   * onWindowFocusChanged中获取
+   * view.post中获取
+   * ViewTreeObserver监听
+   * 手动调用view.measure
+8. 
 
