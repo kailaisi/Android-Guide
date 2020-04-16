@@ -1,6 +1,6 @@
-## 引言
+### 引言
 
-在之前的【Android布局窗口绘制分析】一篇文章中，我们介绍过如何将布局加载到PhoneWindows窗口中并显示。而在【Android的inflate源详解】中，我们则分析了如何将xml的布局文件转化为View树。但是View树具体以何种位置、何种大小展现给我们，没有具体讲解的。那么这篇文章，我们就在上两章的基础上继续研究View是如何进行布局和绘制的。
+在之前的【Android布局窗口绘制分析】一篇文章中，我们介绍过如何将布局加载到PhoneWindows窗口中并显示。而在[Android的inflate源详解](https://mp.weixin.qq.com/s?__biz=MzUzOTE4MTQzNQ==&tempkey=MTA1N19JQmIzc1h5Nm90QVIrV2Z3czBBblN0MWlEY2xLRHpjR0RXVk9aNUphd3liV0tHSGxRQnIyWVdYd1FqSFRQLVdIcTBHOWcwV25sSDd4ektoTGN5Qnc4T2VheVlESmhTS1Q0UjVLM28zNWlELXVQWVd3TEE0NE5Yc0FCaldpYzlvd1R3Ti1lTk5aZ2gtLVpfeWtWMDR1MGxyWklHZ1d1Q2tXZzR0VEpnfn4%3D&chksm=7acd297c4dbaa06a5b3d3cf8e1b07406c763f3a6e3f6de326aa55fb34f288e5d158f0b13a3d7&__mpa_temp_link_flag=1&token=972610219#rd)中，我们则分析了如何将xml的布局文件转化为View树。但是View树具体以何种位置、何种大小展现给我们，没有具体讲解的。那么这篇文章，我们就在上两章的基础上继续研究View是如何进行布局和绘制的。
 
 还记得我们在【Android布局窗口绘制分析】一文中的最后的addView代码块中重点标注的requestLayout()方法么？
 
@@ -20,13 +20,13 @@
 
 这句代码就是View的绘制的入口，经过measure,layout,draw最终将我们在【Android的inflate源详解】中所形成的View树绘制出来。当这篇文章完成之后，安卓如何从xml到view树，然后将view树进行绘制，然后将view添加到DecterView并显示出来，这一整套流程就可以结束了。
 
-## 基础知识
+### 基础知识
 
 Android View的绘制过程分为3步： 测量、布局、绘制
 
 
 
-## 源码
+### 源码
 
 ```java
    //ViewRootImpl.java 
@@ -321,9 +321,9 @@ void scheduleTraversals() {
 
 到现在为止，一切的准备工作都做完了，那么后面就是进入主题，进行顶层View树的测量、布局和绘制工作了。
 
-### 测量
+#### 测量
 
-#### 进行测量的条件：
+##### 进行测量的条件：
 
 ```java
 //ViewRootImpl.java
@@ -371,7 +371,7 @@ void scheduleTraversals() {
 
 当我们确定需要进行测量的话，下一步就是进行具体的测量工作了。
 
-#### 测量的执行：
+##### 测量的执行：
 
 
 ```java
@@ -589,7 +589,7 @@ void scheduleTraversals() {
 
 到目前为止，整个的的测量工作完成了，我们继续回到主线，看一下当测量完成以后又做了哪些工作。
 
-### 布局
+#### 布局
 
 ```java
 //ViewRootImpl.java
@@ -614,7 +614,7 @@ void scheduleTraversals() {
 
 对于控件的布局操作，代码量还是比较少的。主要就是判断是否需要进行layout操作，然后调用 **performLayout** 方法来进行布局。这里的 **performLayout** 会调用View的 **layout()** 方法，然后调用其 **onLayout()** 方法，具体分析与measure类似。所以这里不再进行分析了，有兴趣的朋友可以自己看一下。或者关注我的github中的[源码解析项目](https://github.com/kailaisi/android-29-framwork.git)，里面会不定期的更新对于源码的注释。
 
-### 绘制
+#### 绘制
 
 ```java
 //ViewRootImpl.java
@@ -766,7 +766,7 @@ private void updateViewTreeDisplayList(View view) {
 
 到这里为止，我们的整个View的绘制流程就全部完成了。里面具体的细节还有很多挖掘的地方。等以后有机会慢慢再分析吧。
 
-## 总结
+### 总结
 
 1. handler是有一种同步屏障机制的，能够屏蔽同步消息(有什么用图以后再开发)。
 2. 对于屏幕的帧绘制是通过choreographer来进行的，它来进行屏幕的刷新，帧的丢弃等工作。
@@ -779,5 +779,11 @@ private void updateViewTreeDisplayList(View view) {
    * view.post中获取
    * ViewTreeObserver监听
    * 手动调用view.measure
-8. 
 
+
+
+> 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
+>
+> 同步公众号[开了肯]
+
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)

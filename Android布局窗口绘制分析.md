@@ -1,10 +1,8 @@
-# Android布局窗口绘制分析
-
-## Activity的启动
+### Activity的启动
 
 在之前的分析中，我们了解到，当使用 **startActivity()** 以后，经过一些流程的处理之后，会通过跨进程的方式调用 **AcitivtyThread.handleLauncherActivity()** 方法来进行Activity的启动。那么，我们这里的绘制就从这个方法来入手，进行源码的解析。
 
-## handleLaunchActivity
+handleLaunchActivity
 
 ```java
 #AcitivtyThread.java
@@ -194,7 +192,7 @@ public void callActivityOnCreate(Activity activity, Bundle icicle) {
 
 调用了我们经常写的**onCreate**方法。
 
-## setContentView
+### setContentView
 
 当我们实现 **onCreate** 方法的时候，需要使用 **setConteView()** 方法来进行页面的设置。那么这时候是如何将我们的布局文件加载显示出来的呢？还有我们设置的一些titlebar等，又是如何实现的呢？
 
@@ -242,7 +240,7 @@ public void callActivityOnCreate(Activity activity, Bundle icicle) {
 
 这里我们最需要关心的是**installDecor()**，在函数内部会进行Decor的处理工作。
 
-### installDecor()
+#### installDecor()
 
 ```java
    #PhoneWindow.java
@@ -271,7 +269,7 @@ public void callActivityOnCreate(Activity activity, Bundle icicle) {
 
 当我们第一次启动的activity的时候，mDecor会为空，然后通过 **generateDecor()** 进行mDecor的创建。在创建完成以后，根据主题等一些信息来绘制一个根布局，然后在根布局中找到一个id为content的布局，命名为mContentParent，用来放置我们的setContentView中的布局文件。
 
-### generateDecor
+#### generateDecor
 
 这里我们跟踪一下**generateDecor()**方法。
 
@@ -285,7 +283,7 @@ protected DecorView generateDecor(int featureId) {
 
  **generateDecor()** 方法比较简单，主要是通过new方法进行对象的创建。
 
-### generateLayout()
+#### generateLayout()
 
 ```java
 #PhoneWindow.java
@@ -326,7 +324,7 @@ generateLayout方法主要就是根据我们设置的主题信息，获取到对
 
 到这里，Activity的整个视图结构就已经准备好了，但是这时候它还只是一个View，并没有添加到Window上。下面就是通过**handleResumeActivity()**来展示到Window上了。
 
-## handleResumeActivity
+### handleResumeActivity
 
 ```java
 #AcitivityThread.java
@@ -571,6 +569,16 @@ public void setView(View view, WindowManager.LayoutParams attrs, View panelParen
 
 1. 对于将xml转化为View所调用 **LayoutInflater.inflater()** 的方法，是在onCreate中调用的。而将View进行测量、布局、绘制所调用的 **requestLayout()** 方法则是在 **performResume()** 中调用的。这就是为什么我们在onCreate方法中获取控件的宽高无法获取的原因。
 
-![image-20200406092622588](https://user-gold-cdn.xitu.io/2020/4/6/1714d1728f293578?w=946&h=675&f=png&s=87941)
+
+
+![img](http://cdn.qiniu.kailaisii.com/typora/202004/16/082628-812784.png)
+
+
 
 图片来源[https://www.cnblogs.com/tiger-wang-ms/p/6517048.html]
+
+> 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
+>
+> 同步公众号[开了肯]
+
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)
