@@ -189,7 +189,164 @@ OK，到现在整个流程通了，在这3个步骤中，step2就是执行了子
     }
 ```
 
-这里调用LayoutManager的 **onLayoutChildre** 方法，将对于子View的测量和布局工作交给了LayoutManager。这里我们分析 **LinearLayoutManager** 
+这里调用LayoutManager的 **onLayoutChildren** 方法，将对于子View的测量和布局工作交给了LayoutManager。而且我们在自定义LayoutManager的时候也必须要重写这个方法来描述我们的布局错略。这里我们分析最经常使用的 **LinearLayoutManager(后面简称LLM)** 。我们这里只研究垂直方向布局的情况。
+
+```java
+    public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
+        // layout algorithm:
+        // 1) by checking children and other variables, find an anchor coordinate and an anchor
+        //  item position.
+        // 2) fill towards start, stacking from bottom
+        // 3) fill towards end, stacking from top
+        // 4) scroll to fulfill requirements like stack from bottom.
+        // create layout state
+```
+
+在方法的开始位置，直接就仍给了我们一段说明文档，告诉了我们 **LinearLayoutManager** 中的布局策略。简单翻译一下：
+
+1. 通过子控件和其他的变量信息。找到一个锚点和锚点项的位置。
+2. 从锚点的位置开始，往上，填充布局子View，直到填满区域
+3. 从锚点的位置开始，往下，填充布局子View，直到填满区域
+4. 滚动以满足需求，如堆栈从底部
+
+这里有个比较关键的词，就是 **锚点(AnchorInfo)** ，其实 LLM 的布局并不是从上往下一个个进行的。而是很可能从整个布局的中间某个点开始的，然后朝一个方向一个个填充，填满可见区域后，朝另一个方向进行填充。至于先朝哪个方向填充，是根据具体的变量来确定的。
+
+**AnchorInfo** 类需要能够有效的描述一个具体的位置信息。我们看一下内部的属性信息。
+
+```java
+    //简单的数据类来保存锚点信息
+    class AnchorInfo {
+        //锚点参考View在整个数据中的position信息，即它是第几个View
+        int mPosition;
+        //锚点的具体坐标信息，填充子View的起始坐标。当positon=0的时候，如果只有一半View可见，那么这个数据可能为负数
+        int mCoordinate;
+        //是否从底部开始布局
+        boolean mLayoutFromEnd;
+        //是否有效
+        boolean mValid;
+```
+
+### 锚点的选择
+
+我们首先看一下**AnchorInfo** 类，看一下里面包含了什么有效的信息。
+
+```java
+    //简单的数据类来保存锚点信息
+    class AnchorInfo {
+        //锚点参考View在整个数据中的position信息，即它是第几个View
+        int mPosition;
+        //锚点的具体坐标信息，填充子View的起始坐标。当positon=0的时候，如果只有一半View可见，那么这个数据可能为负数
+        int mCoordinate;
+        //是否从底部开始布局
+        boolean mLayoutFromEnd;
+        //是否有效
+        boolean mValid;
+```
+
+可以看到，通过 **AnchorInfo** 就可以准确的定位当前的位置信息了。那么在LLM中，这个锚点的位置是如何确定的呢？
+
+我们从源码中去寻找答案。
+
+```java
+
+    public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
+        ...
+        //确认LayoutState存在
+        ensureLayoutState();
+        //禁止回收
+        mLayoutState.mRecycle = false;
+        //计算是否需要颠倒绘制。是从底部到顶部绘制，还是从顶部到底部绘制（在LLM的构造函数中，其实可以设置反向绘制）
+        resolveShouldLayoutReverse();
+        //如果当前锚点信息非法，滑动到的位置不可用或者有需要恢复的存储的SaveState
+        if (!mAnchorInfo.mValid || mPendingScrollPosition != NO_POSITION || mPendingSavedState != null) {
+            //重置锚点信息
+            mAnchorInfo.reset();
+            //是否从end开始进行布局。因为mShouldReverseLayout和mStackFromEnd默认都是false，那么我们这里可以考虑按照默认的情况来进行分析，也就是mLayoutFromEnd也是false
+            mAnchorInfo.mLayoutFromEnd = mShouldReverseLayout ^ mStackFromEnd;
+            //计算锚点的位置和坐标
+            updateAnchorInfoForLayout(recycler, state, mAnchorInfo);
+            //设置锚点有效
+            mAnchorInfo.mValid = true;
+        }
+```
+
+在需要确定锚点的时候，会先将锚点进行初始化，然后通过 **updateAnchorInfoForLayout** 方法来确定锚点的信息。
+
+```java
+    private void updateAnchorInfoForLayout(RecyclerView.Recycler recycler, RecyclerView.State state, AnchorInfo anchorInfo) {
+        //从挂起的数据更新锚点信息  这个方法一般不会调用到
+        if (updateAnchorFromPendingData(state, anchorInfo)) {
+            return;
+        }
+        //**重点方法 从子View来确定锚点信息（这里会尝试从有焦点的子View或者列表第一个位置的View或者最后一个位置的View来确定）
+        if (updateAnchorFromChildren(recycler, state, anchorInfo)) {
+            return;
+        }
+        //进入这里说明现在都没有确定锚点（比如设置Data后还没有绘制View的情况下），就直接设置RecyclerView的顶部或者底部位置为锚点(按照默认情况，这里的mPosition=0)。
+        anchorInfo.assignCoordinateFromPadding();
+        anchorInfo.mPosition = mStackFromEnd ? state.getItemCount() - 1 : 0;
+    }
+```
+
+锚点的确定方案主要有3个：
+
+1. 从挂起的数据获取锚点信息。一般不会执行。
+2. 从子View来确定锚点信息。比如说notifyDataSetChanged方法的时候，屏幕上原来是有View的，那么就会通过这种方式获取
+3. 如果上面两种方法都无法确定，则直接使用0位置的View作为锚点参考position。
+
+最后一种什么时候会发生呢？其实就是没有子View让我们作为参考。比如说第一次加载数据的时候，RecyclerView一片空白。这时候肯定没有任何子View能够让我们作为参考。
+
+那么当有子View的时候，我们通过 **updateAnchorFromChildren** 方法来确定锚点位置。
+
+```java
+    //从现有子View中确定锚定。大多数情况下，是起始或者末尾的有效子View(一般是未移除，即展示在我们面前的View)。
+    private boolean updateAnchorFromChildren(RecyclerView.Recycler recycler, RecyclerView.State state, AnchorInfo anchorInfo) {
+        //没有数据，直接返回false
+        if (getChildCount() == 0) {
+            return false;
+        }
+        final View focused = getFocusedChild();
+        //优先选取获得焦点的子View作为锚点
+        if (focused != null && anchorInfo.isViewValidAsAnchor(focused, state)) {
+            //保持获取焦点的子view的位置信息
+            anchorInfo.assignFromViewAndKeepVisibleRect(focused);
+            return true;
+        }
+        if (mLastStackFromEnd != mStackFromEnd) {
+            return false;
+        }
+        //根据锚点的设置信息，从底部或者顶部获取子View信息
+        View referenceChild = anchorInfo.mLayoutFromEnd ? findReferenceChildClosestToEnd(recycler, state) : findReferenceChildClosestToStart(recycler, state);
+        if (referenceChild != null) {
+            anchorInfo.assignFromView(referenceChild);
+            ...
+            return true;
+        }
+        return false;
+    }
+```
+
+通过子View确定锚点坐标也是进行了3种情况的处理
+
+1. 没有数据，直接返回获取失败
+2. 如果某个子View持有焦点，那么直接把持有焦点的子View作为锚点参考点
+3. 没有View持有焦点，一般会选择最上（或者最下面）的子View作为锚点参考点
+
+一般情况下，都会使用第三种方案来确定锚点，所以我们这里也主要关注一下这里的方法。按照我们默认的变量信息，这里会通过 **findReferenceChildClosestToStart** 方法获取可见区域中的第一个子View作为锚点的参考View。然后调用 **assignFromView** 方法来确定锚点的几个属性值。
+
+```java
+        public void assignFromView(View child) {
+            if (mLayoutFromEnd) {
+                //如果是从底部布局，那么获取child的底部的位置设置为锚点
+                mCoordinate = mOrientationHelper.getDecoratedEnd(child) + mOrientationHelper.getTotalSpaceChange();
+            } else {
+                //如果是从顶部开始布局，那么获取child的顶部的位置设置为锚点坐标(这里要考虑ItemDecorator的情况)
+                mCoordinate = mOrientationHelper.getDecoratedStart(child);
+            }
+            //mPosition赋值为参考View的position
+            mPosition = getPosition(child);
+        }
+```
 
 
 

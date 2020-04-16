@@ -1,6 +1,6 @@
 ### 引言
 
-在之前的[Android布局窗口绘制分析]一文中，我们知道 **setContentView** 最后是通过 LayoutInflater.from(mContext).inflate(resId, contentParent) 来将我们自己的布局文件加载到窗口中的，那么这个 **inflate** 方法到底是如何将我们编写的布局文件一步步解析，然后进行绘制的呢？本文我们就将对这套源码来一次比较深度的剖析。
+在之前的[Android布局窗口绘制分析](https://mp.weixin.qq.com/s?__biz=MzUzOTE4MTQzNQ==&mid=2247483756&idx=1&sn=864c8dd5815aa0fa4ff973f9f290831d&chksm=facd2978cdbaa06efd6147f373de477554731a4c5bbc55075614bd1f42987b62161944e73cb1&token=617519148&lang=zh_CN#rd)一文中，我们知道 **setContentView** 最后是通过 LayoutInflater.from(mContext).inflate(resId, contentParent) 来将我们自己的布局文件加载到窗口中的，那么这个 **inflate** 方法到底是如何将我们编写的布局文件一步步解析，然后进行绘制的呢？本文我们就将对这套源码来一次比较深度的剖析。
 
 ### 基础知识
 
@@ -14,7 +14,7 @@
 
 ### 测试案例
 
-这里我们也是从最常用的 **inflate(resId, contentParent) ** 来进行分析。
+这里我们也是从最常用的 **inflate(resId, contentParent)** 来进行分析。
 
 ### 深度剖析
 
@@ -326,6 +326,50 @@ XmlResourceParser loadXmlResourceParser(@NonNull String file, @AnyRes int id, in
 
 该方法主要是根据设置的各种Factory，通过其 **onCreateView()** 方法进行View的创建。
 
+在试图通过factory创建view之后，如果返回为空，会调用 **createView** 方法来进行view的绘制工作。
+
+```
+public final View createView(@NonNull Context viewContext, @NonNull String name, @Nullable String prefix, @Nullable AttributeSet attrs) throws ClassNotFoundException, InflateException {
+    //从缓存中获取构造方法
+    Constructor<? extends View> constructor = sConstructorMap.get(name);
+    if (constructor != null && !verifyClassLoader(constructor)) {
+        //如果缓存的类加载器不是根加载器中的不一致
+        constructor = null;
+        sConstructorMap.remove(name);
+    }
+    Class<? extends View> clazz = null;
+    try {
+        if (constructor == null) {
+            //获取clazz文件
+            clazz = Class.forName(prefix != null ? (prefix + name) : name, false,mContext.getClassLoader()).asSubclass(View.class);
+            //获取构造方法，获取的是参数为(Context.class, AttributeSet)的那个构造方法
+            constructor = clazz.getConstructor(mConstructorSignature);
+            constructor.setAccessible(true);
+            sConstructorMap.put(name, constructor);
+        }
+        ...
+        try {
+            //调用构造函数，生成View类，args是两个参数的构造方法，所以也就是我们xml中写的布局，其实最后都会调用两个参数的那个构造方法
+            final View view = constructor.newInstance(args);
+            if (view instanceof ViewStub) {
+                // Use the same context when inflating ViewStub later.
+                //如果是ViewStub类
+                final ViewStub viewStub = (ViewStub) view;
+                viewStub.setLayoutInflater(cloneInContext((Context) args[0]));
+            }
+            return view;
+       ...
+   
+}
+```
+
+在creatView中，主要是通过反射的方法，调用控件的两个参数的构造方法来进行创建。
+
+到这里为止我们的最外层的控件绘制完成了。其主要的流程其实就是两个
+
+1. 通过factory创建，
+2. 如果factory创建为空，那么就通过反射来创建View控件
+
 ##### 循环创建子View
 
 在之前的源码中我们了解到，外层控件绘制完成以后，会通过 **rInflater** 方法来进行其子控件的绘制，然后通过循环来创建整个布局文件对应的View树。
@@ -580,53 +624,9 @@ public abstract class AppCompatDelegate {
 
 明白了么？ **AppCompatActivity** 是通过setFactory方法，将我们使用的 **TextView** 替换为了 **AppCompatTextView** ， **Button** 设置为了 **AppCompatButton** 等，从而做到了兼容的样式。
 
-既然这里是设置了一个Factory了，在刚才的源码中我们看到，其实Factory和Factory2只能设置一次。这时候问题来了，如果我们的类继承了 **AppCompatActivity** 之后，又该如何处理呢？我们会在后面的章节中继续探索。这里就先到此为止。我们继续回到主线来分析我们的 **inflater** 方法。
+既然这里是设置了一个Factory了，在刚才的源码中我们看到，其实Factory和Factory2只能设置一次。这时候问题来了，如果我们的类继承了 **AppCompatActivity** 之后，又该如何处理呢？我们会在后面的章节中继续探索。这里就先到此为止。
 
-在试图通过factory创建view之后，如果返回为空，会调用 **createView** 方法来进行view的绘制工作。
-
-```
-public final View createView(@NonNull Context viewContext, @NonNull String name, @Nullable String prefix, @Nullable AttributeSet attrs) throws ClassNotFoundException, InflateException {
-    //从缓存中获取构造方法
-    Constructor<? extends View> constructor = sConstructorMap.get(name);
-    if (constructor != null && !verifyClassLoader(constructor)) {
-        //如果缓存的类加载器不是根加载器中的不一致
-        constructor = null;
-        sConstructorMap.remove(name);
-    }
-    Class<? extends View> clazz = null;
-    try {
-        if (constructor == null) {
-            //获取clazz文件
-            clazz = Class.forName(prefix != null ? (prefix + name) : name, false,mContext.getClassLoader()).asSubclass(View.class);
-            //获取构造方法，获取的是参数为(Context.class, AttributeSet)的那个构造方法
-            constructor = clazz.getConstructor(mConstructorSignature);
-            constructor.setAccessible(true);
-            sConstructorMap.put(name, constructor);
-        }
-        ...
-        try {
-            //调用构造函数，生成View类，args是两个参数的构造方法，所以也就是我们xml中写的布局，其实最后都会调用两个参数的那个构造方法
-            final View view = constructor.newInstance(args);
-            if (view instanceof ViewStub) {
-                // Use the same context when inflating ViewStub later.
-                //如果是ViewStub类
-                final ViewStub viewStub = (ViewStub) view;
-                viewStub.setLayoutInflater(cloneInContext((Context) args[0]));
-            }
-            return view;
-       ...
-   
-}
-```
-
-在creatView中，主要是通过反射的方法，调用控件的两个参数的构造方法来进行创建。
-
-到这里为止我们的最外层的控件绘制完成了。其主要的流程其实就是两个
-
-1. 通过factory创建，
-2. 如果factory创建为空，那么就通过反射来创建View控件
-
-### 汇总
+### 总结
 
 善于总结，才会不断的积累知识：
 
@@ -638,3 +638,8 @@ public final View createView(@NonNull Context viewContext, @NonNull String name,
 6. <merge>标签必须是布局的根元素
 7. 有一种BlinkLayout布局，是闪烁的布局
 
+> 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
+>
+> 同步公众号[开了肯]
+
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)
