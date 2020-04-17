@@ -226,7 +226,7 @@ OK，到现在整个流程通了，在这3个步骤中，step2就是执行了子
         boolean mValid;
 ```
 
-### 锚点的选择
+#### 锚点的选择
 
 我们首先看一下**AnchorInfo** 类，看一下里面包含了什么有效的信息。
 
@@ -299,7 +299,7 @@ OK，到现在整个流程通了，在这3个步骤中，step2就是执行了子
 那么当有子View的时候，我们通过 **updateAnchorFromChildren** 方法来确定锚点位置。
 
 ```java
-    //从现有子View中确定锚定。大多数情况下，是起始或者末尾的有效子View(一般是未移除，即展示在我们面前的View)。
+    //从现有子View中确定锚定。大多数情况下，是起始或者末尾的有效子View(一般是未移除，展示在我们面前的View)。
     private boolean updateAnchorFromChildren(RecyclerView.Recycler recycler, RecyclerView.State state, AnchorInfo anchorInfo) {
         //没有数据，直接返回false
         if (getChildCount() == 0) {
@@ -330,12 +330,13 @@ OK，到现在整个流程通了，在这3个步骤中，step2就是执行了子
 
 1. 没有数据，直接返回获取失败
 2. 如果某个子View持有焦点，那么直接把持有焦点的子View作为锚点参考点
-3. 没有View持有焦点，一般会选择最上（或者最下面）的子View作为锚点参考点
+3. 没有子View持有焦点，一般会选择最上（或者最下面）的子View作为锚点参考点
 
 一般情况下，都会使用第三种方案来确定锚点，所以我们这里也主要关注一下这里的方法。按照我们默认的变量信息，这里会通过 **findReferenceChildClosestToStart** 方法获取可见区域中的第一个子View作为锚点的参考View。然后调用 **assignFromView** 方法来确定锚点的几个属性值。
 
 ```java
-        public void assignFromView(View child) {
+//LinearLayoutManager.java
+		public void assignFromView(View child) {
             if (mLayoutFromEnd) {
                 //如果是从底部布局，那么获取child的底部的位置设置为锚点
                 mCoordinate = mOrientationHelper.getDecoratedEnd(child) + mOrientationHelper.getTotalSpaceChange();
@@ -348,19 +349,437 @@ OK，到现在整个流程通了，在这3个步骤中，step2就是执行了子
         }
 ```
 
+mPostion这个变量很好理解，就是子View的位置值，那么 **mCoordinate** 是个什么鬼？我们 **getDecoratedStart** 是怎么处理的就知道了。
+
+```java
+        //LinearLayoutManager.java
+        //创建mOrientationHelper。我们按照垂直布局来进行分析
+        if (mOrientationHelper == null) {
+            mOrientationHelper = OrientationHelper.createOrientationHelper(this, mOrientation);
+        }
+        //OrientationHelper.java
+    public static OrientationHelper createVerticalHelper(RecyclerView.LayoutManager layoutManager) {
+        return new OrientationHelper(layoutManager) {
+            @Override
+            @Override
+            public int getDecoratedStart(View view) {
+                final RecyclerView.LayoutParams params =  (RecyclerView.LayoutParams)view.getLayoutParams();
+                //
+                return mLayoutManager.getDecoratedTop(view) - params.topMargin;
+            }
+
+```
+
+比较难理么，我们上个简陋的图解释一下
+
+![image-20200417130157946](http://cdn.qiniu.kailaisii.com/typora/202004/17/130201-526702.png)
+
+可以看到在使用子控件进行锚点信息确认时，一般会选择屏幕中可见的子View的position为锚点。这里会选取屏幕上第一个可见View，也就是positon=1的子View作为参考点， **mCoordinate** 被赋值为1号子View上面的Decor的顶部位置。
+
+#### 布局的填充
+
+回到主线 **onLayoutChildren** 函数。当我们的锚点信息确认以后，剩下的就是从这个位置开始进行布局的填充。
+
+```java
+        if (mAnchorInfo.mLayoutFromEnd) {//从end开始布局
+            //倒着绘制的话，先从锚点往上，绘制完在从锚点往下
+            //设置绘制方向信息为从锚点往上
+            updateLayoutStateToFillStart(mAnchorInfo);
+            mLayoutState.mExtra = extraForStart;
+            fill(recycler, mLayoutState, state, false);
+            startOffset = mLayoutState.mOffset;
+            final int firstElement = mLayoutState.mCurrentPosition;
+            if (mLayoutState.mAvailable > 0) {
+                extraForEnd += mLayoutState.mAvailable;
+            }
+            //设置绘制方向信息为从锚点往下
+            updateLayoutStateToFillEnd(mAnchorInfo);
+            mLayoutState.mExtra = extraForEnd;
+            mLayoutState.mCurrentPosition += mLayoutState.mItemDirection;
+            fill(recycler, mLayoutState, state, false);
+            endOffset = mLayoutState.mOffset;
+
+            if (mLayoutState.mAvailable > 0) {
+                extraForStart = mLayoutState.mAvailable;
+                updateLayoutStateToFillStart(firstElement, startOffset);
+                mLayoutState.mExtra = extraForStart;
+                fill(recycler, mLayoutState, state, false);
+                startOffset = mLayoutState.mOffset;
+            }
+        } else {//从起始位置开始布局
+            // 更新layoutState，设置布局方向朝下
+            updateLayoutStateToFillEnd(mAnchorInfo);
+            mLayoutState.mExtra = extraForEnd;
+            //开始填充布局
+            fill(recycler, mLayoutState, state, false);
+            //结束偏移
+            endOffset = mLayoutState.mOffset;
+            //绘制后的最后一个view的position
+            final int lastElement = mLayoutState.mCurrentPosition;
+            if (mLayoutState.mAvailable > 0) {
+                extraForStart += mLayoutState.mAvailable;
+            }
+            //更新layoutState，设置布局方向朝上
+            updateLayoutStateToFillStart(mAnchorInfo);
+            mLayoutState.mExtra = extraForStart;
+            mLayoutState.mCurrentPosition += mLayoutState.mItemDirection;
+            //再次填充布局
+            fill(recycler, mLayoutState, state, false);
+            //起始位置的偏移
+            startOffset = mLayoutState.mOffset;
+
+            if (mLayoutState.mAvailable > 0) {
+                extraForEnd = mLayoutState.mAvailable;
+                updateLayoutStateToFillEnd(lastElement, endOffset);
+                mLayoutState.mExtra = extraForEnd;
+                fill(recycler, mLayoutState, state, false);
+                endOffset = mLayoutState.mOffset;
+            }
+        }
+```
+
+可以看到，根据不同的绘制方向，这里面做了不同的处理，只是填充的方向相反而已，具体的步骤是相似的。都是从锚点开始往一个方向进行View的填充，填充满以后再朝另一个方向填充。填充子View使用的是 **fill()** 方法。
+
+因为对于绘制方向都按照默认的来处理，所以这里我们看看分析else的代码，而且第一次填充是朝下填充。
+
+```java
+    //在LinearLayoutManager中，进行界面重绘和进行滑动两种情况下，往屏幕上填充子View的工作都是调用fill()进行
+    int fill(RecyclerView.Recycler recycler, LayoutState layoutState, RecyclerView.State state, boolean stopOnFocusable) {
+        //可用区域的像素数
+        final int start = layoutState.mAvailable;
+        if (layoutState.mScrollingOffset != LayoutState.SCROLLING_OFFSET_NaN) {
+            if (layoutState.mAvailable < 0) {
+                layoutState.mScrollingOffset += layoutState.mAvailable;
+            }
+            //将滑出屏幕的View回收掉
+            recycleByLayoutState(recycler, layoutState);
+        }
+        //剩余绘制空间=可用区域+扩展空间。
+        int remainingSpace = layoutState.mAvailable + layoutState.mExtra;
+        LayoutChunkResult layoutChunkResult = mLayoutChunkResult;
+        //循环布局直到没有剩余空间了或者没有剩余数据了
+        while ((layoutState.mInfinite || remainingSpace > 0) && layoutState.hasMore(state)) {
+            //初始化layoutChunkResult
+            layoutChunkResult.resetInternal();
+            //**重点方法  添加一个child，然后将绘制的相关信息保存到layoutChunkResult
+            layoutChunk(recycler, state, layoutState, layoutChunkResult);
+            if (layoutChunkResult.mFinished) {//如果布局结束了(没有view了)，退出循环
+                break;
+            }
+            //根据所添加的child消费的高度更新layoutState的偏移量。mLayoutDirection为+1或者-1，通过乘法来处理是从底部往上布局，还是从上往底部开始布局
+            layoutState.mOffset += layoutChunkResult.mConsumed * layoutState.mLayoutDirection;
+            if (!layoutChunkResult.mIgnoreConsumed || mLayoutState.mScrapList != null || !state.isPreLayout()) {
+                layoutState.mAvailable -= layoutChunkResult.mConsumed;
+                //消费剩余可用空间
+                remainingSpace -= layoutChunkResult.mConsumed;
+            }
+            ...
+        }
+        //返回本次布局所填充的区域
+        return start - layoutState.mAvailable;
+    }
+```
+
+在 **fill** 方法中，会判断当前的是否还有剩余区域可以进行子View的填充。如果没有剩余区域或者没有子View，那么就返回。否则就通过 **layoutChunk** 来进行填充工作，填充完毕以后更新当前的可用区域，然后依次遍历循环，直到不满足条件为止。
+
+循环中的填充是通过 **layoutChunk** 来实现的。
+
+```java
+    void layoutChunk(RecyclerView.Recycler recycler, RecyclerView.State state,LayoutState layoutState, LayoutChunkResult result) {
+        //通过缓存获取当前position所需要展示的ViewHolder的View
+        View view = layoutState.next(recycler);
+        if (view == null) {
+            //如果我们将视图放置在废弃视图中，这可能会返回null，这意味着没有更多的项需要布局。
+            result.mFinished = true;
+            return;
+        }
+        LayoutParams params = (LayoutParams) view.getLayoutParams();
+        if (layoutState.mScrapList == null) {
+            //根据方向调用addView方法添加子View
+            if (mShouldReverseLayout == (layoutState.mLayoutDirection == LayoutState.LAYOUT_START)) {
+                addView(view);
+            } else {
+                addView(view, 0);
+            }
+        } else {
+            if (mShouldReverseLayout == (layoutState.mLayoutDirection == LayoutState.LAYOUT_START)) {
+                //这里是即将消失的View，但是需要设置对应的移除动画
+                addDisappearingView(view);
+            } else {
+                addDisappearingView(view, 0);
+            }
+        }
+        //调用measure测量view。这里会考虑到父类的padding
+        measureChildWithMargins(view, 0, 0);
+        //将本次子View消费的区域设置为子view的高(或者宽)
+        result.mConsumed = mOrientationHelper.getDecoratedMeasurement(view);
+        //找到view的四个边角位置
+        int left, top, right, bottom;
+        ...
+        //调用child.layout方法进行布局(这里会考虑到view的ItemDecorator等信息)
+        layoutDecoratedWithMargins(view, left, top, right, bottom);
+        //如果视图未被删除或更改，则使用可用空间
+        if (params.isItemRemoved() || params.isItemChanged()) {
+            result.mIgnoreConsumed = true;
+        }
+        result.mFocusable = view.isFocusable();
+    }
+```
+
+这里主要做了5个处理
+
+1. 通过 **layoutState** 获取要展示的View
+2. 通过 **addView** 方法将子View添加到布局中
+3. 调用 **measureChildWithMargins** 方法测量子View
+4. 调用 **layoutDecoratedWithMargins** 方法布局子View
+5. 根据处理的结果，填充LayoutChunkResult的相关信息，以便返回之后，能够进行数据的计算。
+
+如果只是考虑第一次数据加载，那么到目前为止，我们的整个页面通过两次 **fill** 就能够将整个屏幕填充完毕了。
 
 
-待研究
 
-1. Recycler的作用
-2. ViewInfoStore类
+### 复用机制
+
+对于RecyclerView的复用机制，我们就不得不提 **RecyclerView.Recycler** 类了。它的职责就是负责对于View的回收以及复用工作。**Recycler** 依次通过 **Scrap、CacheView、ViewCacheExtension还有RecycledViewPool** 四级缓存机制实现对于RecyclerView的快速绘制工作。
+
+#### Scrap
+
+Scrap是RecyclerView中最轻量的缓存，它不参与滑动时的回收复用，只是作为重新布局时的一种临时缓存。它的目的是，缓存当界面重新布局的前后都出现在屏幕上的ViewHolder，以此省去不必要的重新加载与绑定工作。
+
+在RecyclerView重新布局的时候（不包括RecyclerView初始的那次布局，因为初始化的时候屏幕上本来并没有任何View），先调用**detachAndScrapAttachedViews()**将所有当前屏幕上正在显示的View以ViewHolder为单位标记并记录在列表中，在之后的**fill()**填充屏幕过程中，会优先从Scrap列表里面寻找对应的ViewHolder填充。从Scrap中直接返回的ViewHolder内容没有任何的变化，不会进行重新创建和绑定的过程。
+
+Scrap列表存在于Recycler模块中。
+
+```java
+ public final class Recycler {
+        final ArrayList<ViewHolder> mAttachedScrap = new ArrayList<>();
+        ArrayList<ViewHolder> mChangedScrap = null;
+        ...
+}
+```
+
+可以看到，Scrap实际上包括了两个ViewHolder类型的ArrayList。mAttachedScrap负责保存将会原封不动的ViewHolder，而mChangedScrap负责保存位置会发生移动的ViewHolder，注意只是位置发生移动，内容仍旧是原封不动的。
+
+![img](https:////upload-images.jianshu.io/upload_images/7142965-b0656d603b8d445f.png?imageMogr2/auto-orient/strip|imageView2/2/w/451/format/webp)
+
+上图描述的是我们在一个RecyclerView中删除B项，并且调用了**notifyItemRemoved()**时，mAttachedScrap与mChangedScrap分别会临时存储的View情况。此时，A是在删除前后完全没有变化的，它会被临时放入mAttachedScrap。B是我们要删除的，它也会被放进mAttachedScrap，但是会被额外标记REMOVED，并且在之后会被移除。C和D在删除B后会向上移动位置，因此他们会被临时放入mChangedScrap中。E在此次操作前并没有出现在屏幕中，它不属于Scrap需要管辖的，Scrap只会缓存屏幕上已经加载出来的ViewHolder。在删除时，A,B,C,D都会进入Scrap，而在删除后，A,C,D都会回来，其中C,D只进行了位置上的移动，其内容没有发生变化。
+
+RecyclerView的局部刷新，依赖的就是Scrap的临时缓存，我们需要通过**notifyItemRemoved()、notifyItemChanged**()等系列方法通知RecyclerView哪些位置发生了变化，这样RecyclerView就能在处理这些变化的时候，使用Scrap来缓存其它内容没有发生变化的ViewHolder，于是就完成了局部刷新。需要注意的是，如果我们使用**notifyDataSetChanged()**方法来通知RecyclerView进行更新，其会标记所有屏幕上的View为FLAG_INVALID，从而不会尝试使用Scrap来缓存一会儿还会回来的ViewHolder，而是统统直接扔进RecycledViewPool池子里，回来的时候就要重新走一遍绑定的过程。
+
+Scrap只是作为布局时的临时缓存，它和滑动时的缓存没有任何关系，它的detach和重新attach只临时存在于布局的过程中。布局结束时Scrap列表应该是空的，其成员要么被重新布局出来，要么将被移除，总之在布局过程结束的时候，两个Scrap列表中都不应该再存在任何东西。
+
+#### CacheView是什么？
+
+CacheView是一个以ViewHolder为单位，负责在RecyclerView列表位置产生变动的时候，对刚刚移出屏幕的View进行回收复用的缓存列表。
 
 
 
+```java
+ public final class Recycler {
+        ...
+        final ArrayList<ViewHolder> mCachedViews = new ArrayList<ViewHolder>();
+        int mViewCacheMax = DEFAULT_CACHE_SIZE;
+        ...
+}
+```
+
+我们可以看到，在Recycler中，mCachedView与前面的Scrap一样，也是一个以ViewHolder为单位存储的ArrayList。这意味着，它也是对于ViewHolder整个进行缓存，在复用时不需要经过创建和绑定过程，内容不发生改变。而且它有个最大缓存个数限制，默认情况下是2个。
+
+![img](https:////upload-images.jianshu.io/upload_images/7142965-d2b2e4385d10ed8d.png?imageMogr2/auto-orient/strip|imageView2/2/w/652/format/webp)
+
+CacheView.png
+
+从上图中可以看出，CacheView将会缓存刚变为不可见的View。这个缓存工作的进行，是发生在**fill()**调用时的，由于布局更新和滑动时都会调用**fill()**来进行填充，因此这个场景在滑动过程中会反复出现，在布局更新时也可能因为位置变动而出现。**fill()**几经周转最终会调用**recycleViewHolderInternal()**，里面将会出现**mCachedViews.add()**。上面提到，CacheView有最大缓存个数限制，那么如果超过了缓存会怎样呢？
+
+```csharp
+void recycleViewHolderInternal(ViewHolder holder) {
+            ...
+            if (forceRecycle || holder.isRecyclable()) {
+                if (mViewCacheMax > 0
+                        && !holder.hasAnyOfTheFlags(ViewHolder.FLAG_INVALID
+                                | ViewHolder.FLAG_REMOVED | ViewHolder.FLAG_UPDATE)) {
+                    // Retire oldest cached view 回收并替换最先缓存的那个
+                    int cachedViewSize = mCachedViews.size();
+                    if (cachedViewSize >= mViewCacheMax && cachedViewSize > 0) {
+                        recycleCachedViewAt(0);
+                        cachedViewSize--;
+                    }
+                    mCachedViews.add(targetCacheIndex, holder);
+                }
+               ...
+        }
+```
+
+在**recycleViewHolderInternal()**中有这么一段，如果Recycler发现缓存进来一个新ViewHolder时，会超过最大限制，那么它将先调用**recycleCachedViewAt(0)**将最先缓存进来的那个ViewHolder回收进RecycledViewPool池子里，然后再调用**mCachedViews.add()**添加新的缓存。也就是说，我们在滑动RecyclerView的时候，Recycler会不断地缓存刚刚滑过变成不可见的View进入CacheView，在达到CacheView的上限时，又会不断地替换CacheView里的ViewHolder，将它们扔进RecycledViewPool里。如果我们一直朝同一个方向滑动，CacheView其实并没有在效率上产生帮助，它只是不断地在把后面滑过的ViewHolder进行了缓存；而如果我们经常上下来回滑动，那么CacheView中的缓存就会得到很好的利用，毕竟复用CacheView中的缓存的时候，不需要经过创建和绑定的消耗。
+
+#### RecycledViewPool
+
+前面提到，在Srap和CacheView不愿意缓存的时候，都会丢进RecycledViewPool进行回收，因此RecycledViewPool可以说是Recycler中的一个终极回收站。
 
 
-使用了SparseArray(性能更优？)
+
+```java
+ public static class RecycledViewPool {
+        private SparseArray<ArrayList<ViewHolder>> mScrap =
+                new SparseArray<ArrayList<ViewHolder>>();
+        private SparseIntArray mMaxScrap = new SparseIntArray();
+        private int mAttachCount = 0;
+
+        private static final int DEFAULT_MAX_SCRAP = 5;
+```
+
+我们可以在RecyclerView中找到RecycledViewPool，可以看见它的保存形式是和上述的Srap、CacheView都不同的，它是以一个SparseArray嵌套一个ArrayList对ViewHolder进行保存的。原因是RecycledViewPool保存的是以ViewHolder的viewType为区分（我们在重写RecyclerView的**onCreateViewHolder()**时可以发现这里有个viewType参数，可以借助它来实现展示不同类型的列表项）的多个列表。
+
+与前两者不同，RecycledViewPool在进行回收的时候，目标只是回收一个该viewType的ViewHolder对象，并没有保存下原来ViewHolder的内容，在复用时，将会调用**bindViewHolder()按照我们在**onBindViewHolder()**描述的绑定步骤进行重新绑定，从而摇身一变变成了一个新的列表项展示出来。
+
+同样，RecycledViewPool也有一个最大数量限制，默认情况下是5。在没有超过最大数量限制的情况下，Recycler会尽量把将被废弃的ViewHolder回收到RecycledViewPool中，以期能被复用。值得一提的是，RecycledViewPool只会按照ViewType进行区分，只要ViewType是相同的，甚至可以在多个RecyclerView中进行通用的复用，只要为它们设置同一个RecycledViewPool就可以了。
+
+总的来看，RecyclerView着重在两个场景使用缓存与回收复用进行了性能上的优化。一是，在数据更新时，利用Scrap实现局部更新，尽可能地减少没有被更改的View进行无用地重新创建与绑定工作。二是，在快速滑动的时候，重复利用已经滑过的ViewHolder对象，以尽可能减少重新创建ViewHolder对象时带来的压力。总体的思路就是：只要没有改变，就直接重用；只要能不创建或重新绑定，就尽可能地偷懒。
+
+### 滑动处理
+
+在研究滑动前，我们先对 **LayoutState** 这个类的几个变量做一下说明。
+
+* mOffset：布局起始位置的偏移量(应该是锚点里面设置的mCoordinate)
+* mAvailable：在布局方向上的可以填充的像素值，也就是空闲出来的区域
+* mScrollingOffset：不创建新视图的情况下进行滚动的距离。 比如说我某个View上半部分显示了一半，那么这时候我往上滑动一半距离的话以内，是不需要创建新的子View的。这个mScrollingOffset就是我在不创建视图的前提下可以滑动的最大距离。
+
+当滚动发生时，会触发 **scrollHorizontallyBy** 方法
+
+```java
+//LinearLayoutManager.java
+		public int scrollHorizontallyBy(int dx, RecyclerView.Recycler recycler,RecyclerView.State state) {
+        if (mOrientation == VERTICAL) {
+            return 0;
+        }
+        return scrollBy(dx, recycler, state);
+    }
+
+    int scrollBy(int dy, RecyclerView.Recycler recycler, RecyclerView.State state) {
+        if (getChildCount() == 0 || dy == 0) {
+            return 0;
+        }
+        //标记正在滚动
+        mLayoutState.mRecycle = true;
+        ensureLayoutState();
+        //确认滚动方向
+        final int layoutDirection = dy > 0 ? LayoutState.LAYOUT_END : LayoutState.LAYOUT_START;
+        final int absDy = Math.abs(dy);
+        //更新layoutState，会更新其展示的屏幕区域，偏移量等。比如说当往上滑动的时候，底部会有dy距离的空白区域，这时候，需要调用fill来填充这个dy距离的区域
+        updateLayoutState(layoutDirection, absDy, true, state);
+        //调用fill进行填充展示在客户面前的view
+        final int consumed = mLayoutState.mScrollingOffset + fill(recycler, mLayoutState, state, false);
+        ...
+        //记录本次滚动的距离
+        mLayoutState.mLastScrollDelta = scrolled;
+        return scrolled;
+    }
+```
+
+当滚动时主要进行了两个处理
+
+1. 通过 **updateLayoutState** 方法更新layoutState内部的相关属性的。
+2. 调用 **fill** 进行数据的填充。
+
+我们为了更好的理解layoutState内部的属性关系，简单看一下 **updateLayoutState** 内部的实现。
+
+```java
+	//LinearLayoutaManager.java
+	private void updateLayoutState(int layoutDirection, int requiredSpace,boolean canUseExistingSpace, RecyclerView.State state) {
+        int scrollingOffset;
+        if (layoutDirection == LayoutState.LAYOUT_END) {
+            //获取当前显示的最底部的View
+            final View child = getChildClosestToEnd();
+            //设置当前显示的子View的底部的偏移量（包括了Decor的高度）
+            mLayoutState.mOffset = mOrientationHelper.getDecoratedEnd(child);
+            //底部锚点位置减去RecyclerView的高度的话，剩下的就是我们滚动scrollingOffset以内，不会绘制新的View
+            //getEndAfterPadding=RecyclerView的高度-padding的高度
+            scrollingOffset = mOrientationHelper.getDecoratedEnd(child) - mOrientationHelper.getEndAfterPadding();
+        } 
+        ....
+```
+
+方法里面的注释已经很详细了。
+
+有了复用基础和对这几个变量的理解之后，我们重新回到 **fill** 中，去理解LLM是如何进行缓存处理的。
+
+首先看一下View的回收。
+
+```java
+	//LinearLayoutManager.java
+	int fill(RecyclerView.Recycler recycler, LayoutState layoutState, RecyclerView.State state, boolean stopOnFocusable) {
+            //重点方法  ** 将滑出屏幕的View回收掉
+            recycleByLayoutState(recycler, layoutState);
+        }
+
+    private void recycleByLayoutState(RecyclerView.Recycler recycler, LayoutState layoutState) {
+        if (!layoutState.mRecycle || layoutState.mInfinite) {
+            return;
+        }
+        if (layoutState.mLayoutDirection == LayoutState.LAYOUT_START) {
+            //从End端开始回收视图
+            recycleViewsFromEnd(recycler, layoutState.mScrollingOffset);
+        } else {
+            //从Start端开始回收视图
+            recycleViewsFromStart(recycler, layoutState.mScrollingOffset);
+        }
+    }
+```
+
+这里我们考虑手指上滑的情况，也就是 **recycleViewsFromStart** 。另一种情况是相似的，可以自己去理解
+
+```java
+    //从头部回收View
+    private void recycleViewsFromStart(RecyclerView.Recycler recycler, int dt) {
+        //limit表示滑动多少以内不会绘制
+        final int limit = dt;
+        //返回附加到父视图的当前子View的数量
+        final int childCount = getChildCount();
+        ...
+            //遍历子View
+            for (int i = 0; i < childCount; i++) {
+                //获取到子View
+                View child = getChildAt(i);
+                //如果当前的View的底部位置>limit，那么也就是会有View需要绘制，顶部的View也就需要回收了
+                //这里有个逻辑，就是如果底部的View不需要绘制，那么顶部的View就不会进行回收
+                if (mOrientationHelper.getDecoratedEnd(child) > limit || mOrientationHelper.getTransformedEndWithDecoration(child) > limit) {
+                    recycleChildren(recycler, 0, i);
+                    return;
+                }
+            }
+        }
+    }
+
+```
+
+经过跟踪最后会进入到
+
+```java
+    //LinearLayoutManager.java
+	private void recycleChildren(RecyclerView.Recycler recycler, int startIndex, int endIndex) {
+          ...
+                removeAndRecycleViewAt(i, recycler);
+           ...
+        }
+    }
+    
+    //RecyclerView.java
+    public void removeAndRecycleViewAt(int index, Recycler recycler) {
+    	final View view = getChildAt(index);
+    	removeViewAt(index);
+    	recycler.recycleView(view);
+    }
+    
+    //RecyclerView.java
+        public void recycleView(View view) {
+            recycleViewHolderInternal(holder);
+        }
+```
+
+最终的回收操作会通过 **recycleViewHolderInternal** 方法来执行。
 
 总结
 
 1. 在RecyclerView中，内部类Recycler主要负责回收和复用工作。
+2. 当滑动RecyclerView时，是不断的调用 **fill** 去判断是否需要填充的。
+3. LinearLayoutManager可以通过**setReverseLayout**设置反向遍历布局。第一项放置在UI的末尾，第二项放置在它之前。
