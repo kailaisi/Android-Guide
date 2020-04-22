@@ -61,23 +61,43 @@ execution(* com.taotao.Waiter+.*(..))
 
 注意：在包名模式串中，"**.***"表示包下的所有类，而“**..***”表示包、子孙包下的所有类。
 
-```
-execution(* com.taotao.*(..))
-```
+- 任意公共方法的执行：
 
-匹配com.taotao包下所有类的所有方法
+  ```
+  execution(public * *(..))
+  ```
 
-```
-execution(* com.taotao..*(..))
-```
+- 任何一个以“set”开始的方法的执行：
 
-匹配 **com.taotao** 包及其子孙包下所有类的所有方法，如com.taotao.ui,com.taotao.user.fragmeng等包下的所有类的所有方法。
+  ```
+  execution(* set*(..))
+  ```
+
+- `AccountService` 接口的任意方法的执行：
+
+  ```
+  execution(* com.xyz.service.AccountService.*(..))
+  ```
+
+- 定义在service包里的任意方法的执行：
+
+  ```
+  execution(* com.xyz.service.*.*(..))
+  ```
+
+- 定义在service包或者子包里的任意方法的执行：
+
+  ```java
+  execution(* com.xyz.service..*.*(..))
+  ```
+
+  * 匹配以com开头的任何包名下后缀为Dao的类，并且方法名以find为前缀，如com.taotao.UserDao#findByUserId()、com.taotao.dao.ForumDao#findViewById()的方法都是匹配切点。
 
 ```
 execution(* com..*.*Dao.find*(..))
 ```
 
-匹配以com开头的任何包名下后缀为Dao的类，并且方法名以find为前缀，如com.taotao.UserDao#findByUserId()、com.taotao.dao.ForumDao#findViewById()的方法都是匹配切点。
+
 
 ### **通过方法入参定义切点**
 
