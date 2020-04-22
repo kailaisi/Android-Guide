@@ -177,7 +177,7 @@ void scheduleTraversals() {
             if (desiredWindowWidth != mWidth || desiredWindowHeight != mHeight) {
 				//mWidth此时代表的是上一次执行该方法的时候的frame.width()值，如果此时两值不相等，那就说明视图改变需要重新测量绘制了。
                 if (DEBUG_ORIENTATION) Log.v(mTag, "View " + host + " resized to: " + frame);
-				//需要从新绘制标标志位
+				//需要重新绘制标标志位
                 mFullRedrawNeeded = true;
 				//需要执行layout标志位
                 mLayoutRequested = true;
@@ -291,7 +291,7 @@ void scheduleTraversals() {
                     baseSize = (baseSize + desiredWindowWidth) / 2;
                     if (DEBUG_DIALOG) Log.v(mTag, "Window " + mView + ": next baseSize="+ baseSize);
                     childWidthMeasureSpec = getRootMeasureSpec(baseSize, lp.width);
-					//再次这行测量
+					//再次进行测量
                     performMeasure(childWidthMeasureSpec, childHeightMeasureSpec);
                     if (DEBUG_DIALOG) Log.v(mTag, "Window " + mView + ": measured ("+ host.getMeasuredWidth() + "," + host.getMeasuredHeight() + ")");
                     if ((host.getMeasuredWidthAndState() & View.MEASURED_STATE_TOO_SMALL) == 0) {
