@@ -27,3 +27,14 @@ ActivityRecord是最常遇到的一个类了。它代表的是堆栈中的一个
   
   
   ```
+
+## ActivityInfo 详解
+
+ActivityInfo保存着我们定义Activity的信息
+
+```jjava
+        <activity
+            android:name=".ui.choose.ChooseActivity"
+            android:screenOrientation="landscape" />
+```
+
