@@ -628,6 +628,8 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
 
 同样的，我们也只跟踪主要代码 **startActivityUnchecked()** 
 
+###  **startActivityUnchecked()** 
+
 ```java
     //这个方法只能从startActivity调用，这个方法就是几种启动模式的，在栈内的清空处理
     private int startActivityUnchecked(final ActivityRecord r, ActivityRecord sourceRecord,
@@ -637,8 +639,7 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
         //初始化一些状态，这里主要是根据启动模式的相关设置进行了一些变量的处理。比如newtask，document等等
         //初始化Activity启动状态，获取launchmode flag 同时解决一些falg和launchmode的冲突
         setInitialState(r, options, inTask, doResume, startFlags, sourceRecord, voiceSession,voiceInteractor, restrictedBgActivity);
-		//获取显示windows的样式
-        final int preferredWindowingMode = mLaunchParams.mWindowingMode;
+		...
 		//根据是否存在指定的目标task来设定启动flag。 比如说指定的task不存在，那么就直接设置flag是否为newtask，如果存在则根据其启动模式来进行变化处理 
         computeLaunchingTaskFlags();
 		//处理调用方的任务栈信息。通过mSourceRecord获取到调用方的任务栈。如果调用方已经finish了，那么启动一个newtask任务栈来作为调用方任务栈
@@ -651,132 +652,14 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
         mSupervisor.getLaunchParamsController().calculate(reusedActivity != null ? reusedActivity.getTaskRecord() : mInTask,r.info.windowLayout, r, sourceRecord, options, PHASE_BOUNDS, mLaunchParams);
 		//设置显示屏幕id
         mPreferredDisplayId =mLaunchParams.hasPreferredDisplay() ? mLaunchParams.mPreferredDisplayId: DEFAULT_DISPLAY;
-
-        // Do not start home activity if it cannot be launched on preferred display. We are not
-        // doing this in ActivityStackSupervisor#canPlaceEntityOnDisplay because it might
-        // fallback to launch on other displays.
         if (r.isActivityTypeHome() && !mRootActivityContainer.canStartHomeOnDisplay(r.info,mPreferredDisplayId, true /* allowInstrumenting */)) {
             Slog.w(TAG, "Cannot launch home on display " + mPreferredDisplayId);
             return START_CANCELED;
         }
 
         if (reusedActivity != null) {
-			//存在可复用的resueActivity
-            // When the flags NEW_TASK and CLEAR_TASK are set, then the task gets reused but
-            // still needs to be a lock task mode violation since the task gets cleared out and
-            // the device would otherwise leave the locked task.
-            if (mService.getLockTaskController().isLockTaskModeViolation(reusedActivity.getTaskRecord(),(mLaunchFlags & (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK))== (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK))) {
-                Slog.e(TAG, "startActivityUnchecked: Attempt to violate Lock Task Mode");
-                return START_RETURN_LOCK_TASK_MODE_VIOLATION;
-            }
-
-            // True if we are clearing top and resetting of a standard (default) launch mode
-            // ({@code LAUNCH_MULTIPLE}) activity. The existing activity will be finished.
-            //是否清空可复用的activity上面的表示
-            final boolean clearTopAndResetStandardLaunchMode =(mLaunchFlags & (FLAG_ACTIVITY_CLEAR_TOP | FLAG_ACTIVITY_RESET_TASK_IF_NEEDED))== (FLAG_ACTIVITY_CLEAR_TOP | FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)&& mLaunchMode == LAUNCH_MULTIPLE;
-
-            // If mStartActivity does not have a task associated with it, associate it with the
-            // reused activity's task. Do not do so if we're clearing top and resetting for a
-            // standard launchMode activity.
-            //mStartActivity是我们要启动的acitivity
-            if (mStartActivity.getTaskRecord() == null && !clearTopAndResetStandardLaunchMode) {
-				//如果我们的目标activity没有目标栈。则将复用的栈信息赋值给我们的目标activity
-                mStartActivity.setTask(reusedActivity.getTaskRecord());
-            }
-
-            if (reusedActivity.getTaskRecord().intent == null) {
-                // This task was started because of movement of the activity based on affinity...
-                // Now that we are actually launching it, we can assign the base intent.
-                reusedActivity.getTaskRecord().setIntent(mStartActivity);
-            } else {
-            	//FLAG_ACTIVITY_TASK_ON_HOME :把当前新启动的任务置于Home任务之上，也就是按back键从这个任务返回的时候会回到home，即使这个不是他们最后看见的activity。注意这个标记必须和FLAG_ACTIVITY_NEW_TASK一起使用。
-                final boolean taskOnHome =(mStartActivity.intent.getFlags() & FLAG_ACTIVITY_TASK_ON_HOME) != 0;
-                if (taskOnHome) {
-                    reusedActivity.getTaskRecord().intent.addFlags(FLAG_ACTIVITY_TASK_ON_HOME);
-                } else {
-                    reusedActivity.getTaskRecord().intent.removeFlags(FLAG_ACTIVITY_TASK_ON_HOME);
-                }
-            }
-
-            // This code path leads to delivering a new intent, we want to make sure we schedule it
-            // as the first operation, in case the activity will be resumed as a result of later
-            // operations.
-            // 清除task中复用的activity上面的activity
-            if ((mLaunchFlags & FLAG_ACTIVITY_CLEAR_TOP) != 0|| isDocumentLaunchesIntoExisting(mLaunchFlags)|| isLaunchModeOneOf(LAUNCH_SINGLE_INSTANCE, LAUNCH_SINGLE_TASK)) {
-				//获取复用的activity的堆栈信息
-                final TaskRecord task = reusedActivity.getTaskRecord();
-
-                // In this situation we want to remove all activities from the task up to the one
-                // being started. In most cases this means we are resetting the task to its initial
-                // state.
-                //执行清除目标activity上面所有的activitys的操作。
-                //函数内部如果和mStartActivity相同compoentname的activity的启动模式是默认的ret.launchMode == ActivityInfo.LAUNCH_MULTIPLE，则也会将这个activity销毁
-				//对于SingleInstance || SingleTask|| singleTop启动模式的则不会被销毁。
-				//对于要启动的activity的启动模式为LAUNCH_MULTIPLE的，performClearTaskForReuseLocked返回值top肯定是空的
-				final ActivityRecord top = task.performClearTaskForReuseLocked(mStartActivity,mLaunchFlags);
-
-                // The above code can remove {@code reusedActivity} from the task, leading to the
-                // the {@code ActivityRecord} removing its reference to the {@code TaskRecord}. The
-                // task reference is needed in the call below to
-                // {@link setTargetStackAndMoveToFrontIfNeeded}.
-                if (reusedActivity.getTaskRecord() == null) {
-					//重新进行赋值
-                    reusedActivity.setTask(task);
-                }
-
-                if (top != null) {
-                    if (top.frontOfTask) {
-                        //如果是任务栈的root activity
-                        // Activity aliases may mean we use different intents for the top activity,
-                        // so make sure the task now has the identity of the new intent.
-                        top.getTaskRecord().setIntent(mStartActivity);
-                    }
-					//调用onNewIntent方法
-                    deliverNewIntent(top);
-                }
-            }
-			
-            mRootActivityContainer.sendPowerHintForLaunchStartIfNeeded(false /* forceSend */, reusedActivity);
-			//复用的task所在的stack设置为fourceStack并且把复用的task拿到栈顶
-            reusedActivity = setTargetStackAndMoveToFrontIfNeeded(reusedActivity);
-
-            final ActivityRecord outResult =outActivity != null && outActivity.length > 0 ? outActivity[0] : null;
-
-            // When there is a reused activity and the current result is a trampoline activity,
-            // set the reused activity as the result.
-            if (outResult != null && (outResult.finishing || outResult.noDisplay)) {
-				//如果需要返回值，那么设置复用的activity作为启动返回值
-                outActivity[0] = reusedActivity;
-            }
-			//START_FLAG_ONLY_IF_NEEDED这种情况不需要去真的启动activity，只需要使task放到前台就可以了，这种情况多是从桌面点击图标恢复task的情况。                
-			if ((mStartFlags & START_FLAG_ONLY_IF_NEEDED) != 0) {
-				 // We don't need to start a new activity, and the client said not to do anything
-                // if that is the case, so this is it!  And for paranoia, make sure we have
-                // correctly resumed the top activity.
-                //resume显示到前台
-                resumeTargetStackIfNeeded();
-                return START_RETURN_INTENT_TO_CALLER;
-            }
-
-            if (reusedActivity != null) {
-				//根据复用情况设置task
-                setTaskFromIntentActivity(reusedActivity);
-				//mAddingToTask为true表示要新建，mReuseTask为空表示task被清除了
-                if (!mAddingToTask && mReuseTask == null) {
-                    // We didn't do anything...  but it was needed (a.k.a., client don't use that
-                    // intent!)  And for paranoia, make sure we have correctly resumed the top activity.
-                    //调用显示到前台
-                    resumeTargetStackIfNeeded();
-                    if (outActivity != null && outActivity.length > 0) {
-                        // The reusedActivity could be finishing, for example of starting an
-                        // activity with FLAG_ACTIVITY_CLEAR_TOP flag. In that case, return the
-                        // top running activity in the task instead.
-                        outActivity[0] = reusedActivity.finishing? reusedActivity.getTaskRecord().getTopActivity() : reusedActivity;
-                    }
-
-                    return mMovedToFront ? START_TASK_TO_FRONT : START_DELIVERED_TO_TOP;
-                }
-            }
+			//**重点关注内容**   存在可复用的resueActivity
+            ....
         }
 
         //这里对packageName为空做处理，直接返回调用出错
@@ -1145,11 +1028,11 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
 
 可以看到，如果调用方没有结束的话，直接是从ActivityRecord拿到ActivityStack对象。而如果调用方已经结束了，则添加newTask标识来启动新的任务。
 
-### getReusableIntentActivity 找到可复用Activity
+#### getReusableIntentActivity 找到可复用Activity
 
 这个方法主要是获取一个能够复用的Activity，一般情况下对于singleTask和singleTop这种栈内唯一的启动模式，ActivityRecord肯定是需要复用的，而不能直接创建新的ActivityRecord。
 
-```
+```java
     private ActivityRecord getReusableIntentActivity() {
 
         //标识是否可以放入一个已经存在的栈。
@@ -1195,7 +1078,7 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
 
 对于任务栈的查找后面会单独开一张进行分析。这里就不再进行深入讲解了。
 
-### 可复用reuseActivity不为空
+#### 可复用reuseActivity不为空
 
 ```java
         if (reusedActivity != null) {//存在可复用的resueActivity
@@ -1207,20 +1090,7 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
 				//如果我们的目标activity没有目标栈。则将复用的栈信息赋值给我们的目标activity
                 mStartActivity.setTask(reusedActivity.getTaskRecord());
             }
-
-            //如果复用的activityrecord对应的任务栈的intent为空，则将要启动的activityRecord的intent赋值
-            if (reusedActivity.getTaskRecord().intent == null) {
-                reusedActivity.getTaskRecord().setIntent(mStartActivity);
-            } else {
-            	//FLAG_ACTIVITY_TASK_ON_HOME :把当前新启动的任务置于Home任务之上，也就是按back键从这个任务返回的时候会回到home，即使这个不是他们最后看见的activity。注意这个标记必须和FLAG_ACTIVITY_NEW_TASK一起使用。
-                final boolean taskOnHome =(mStartActivity.intent.getFlags() & FLAG_ACTIVITY_TASK_ON_HOME) != 0;
-                if (taskOnHome) {
-                    reusedActivity.getTaskRecord().intent.addFlags(FLAG_ACTIVITY_TASK_ON_HOME);
-                } else {
-                    reusedActivity.getTaskRecord().intent.removeFlags(FLAG_ACTIVITY_TASK_ON_HOME);
-                }
-            }
-
+			...
             // 清除task中复用的activity上面的activity
             if ((mLaunchFlags & FLAG_ACTIVITY_CLEAR_TOP) != 0|| isDocumentLaunchesIntoExisting(mLaunchFlags)|| isLaunchModeOneOf(LAUNCH_SINGLE_INSTANCE, LAUNCH_SINGLE_TASK)) {
 				//获取复用的activity的堆栈信息
@@ -1230,11 +1100,6 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
 				//对于SingleInstance || SingleTask|| singleTop启动模式的则不会被销毁。
 				//对于要启动的activity的启动模式为LAUNCH_MULTIPLE的，performClearTaskForReuseLocked返回值top肯定是空的
 				final ActivityRecord top = task.performClearTaskForReuseLocked(mStartActivity,mLaunchFlags);
-
-                // The above code can remove {@code reusedActivity} from the task, leading to the
-                // the {@code ActivityRecord} removing its reference to the {@code TaskRecord}. The
-                // task reference is needed in the call below to
-                // {@link setTargetStackAndMoveToFrontIfNeeded}.
                 if (reusedActivity.getTaskRecord() == null) {
 					//重新进行赋值
                     reusedActivity.setTask(task);
@@ -1243,8 +1108,6 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
                 if (top != null) {
                     if (top.frontOfTask) {
                         //如果是任务栈的root activity
-                        // Activity aliases may mean we use different intents for the top activity,
-                        // so make sure the task now has the identity of the new intent.
                         top.getTaskRecord().setIntent(mStartActivity);
                     }
 					//调用onNewIntent方法
@@ -1257,18 +1120,12 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
             reusedActivity = setTargetStackAndMoveToFrontIfNeeded(reusedActivity);
 
             final ActivityRecord outResult =outActivity != null && outActivity.length > 0 ? outActivity[0] : null;
-
-            // When there is a reused activity and the current result is a trampoline activity,
-            // set the reused activity as the result.
             if (outResult != null && (outResult.finishing || outResult.noDisplay)) {
 				//如果需要返回值，那么设置复用的activity作为启动返回值
                 outActivity[0] = reusedActivity;
             }
 			//START_FLAG_ONLY_IF_NEEDED这种情况不需要去真的启动activity，只需要使task放到前台就可以了，这种情况多是从桌面点击图标恢复task的情况。                
 			if ((mStartFlags & START_FLAG_ONLY_IF_NEEDED) != 0) {
-				 // We don't need to start a new activity, and the client said not to do anything
-                // if that is the case, so this is it!  And for paranoia, make sure we have
-                // correctly resumed the top activity.
                 //resume显示到前台
                 resumeTargetStackIfNeeded();
                 return START_RETURN_INTENT_TO_CALLER;
@@ -1279,14 +1136,9 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
                 setTaskFromIntentActivity(reusedActivity);
 				//mAddingToTask为true表示要新建，mReuseTask为空表示task被清除了
                 if (!mAddingToTask && mReuseTask == null) {
-                    // We didn't do anything...  but it was needed (a.k.a., client don't use that
-                    // intent!)  And for paranoia, make sure we have correctly resumed the top activity.
                     //调用显示到前台
                     resumeTargetStackIfNeeded();
-                    if (outActivity != null && outActivity.length > 0) {
-                        // The reusedActivity could be finishing, for example of starting an
-                        // activity with FLAG_ACTIVITY_CLEAR_TOP flag. In that case, return the
-                        // top running activity in the task instead.
+
                         outActivity[0] = reusedActivity.finishing? reusedActivity.getTaskRecord().getTopActivity() : reusedActivity;
                     }
 
@@ -1301,18 +1153,257 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
 1. 如果当前的启动模式是LAUNCH_MULTIPLE 而且开启了FLAG_ACTIVITY_CLEAR_TOP和FLAG_ACTIVITY_RESET_TASK_IF_NEEDED标识，那么说明我们需要清空所有可复用的ActivityRecord到栈顶的所有数据。这时候设置了 **clearTopAndResetStandardLaunchMode** 这个标志位。
 2. 当打开了FLAG_ACTIVITY_CLEAR_TOP标志位，或者打开了document标志位，或者打开了singleTask / singleInstance说明此时需要清掉TaskRecord的数据。这时候会调用 **performClearTaskForReuseLocked** 方法将目标Activity上面的所有的activity，并将当前activity置顶并返回顶部的ActivityRecord信息。最后调用 **deliverNewIntent** () 方法。
 
+我们这里深入跟踪一下 **performClearTaskForReuseLocked** 方法。
 
+##### **performClearTaskForReuseLocked** 
+
+```java
+ //TaskRecord.java
+	ActivityRecord performClearTaskForReuseLocked(ActivityRecord newR, int launchFlags) {
+        mReuseTask = true;
+        //真正的执行代码
+        final ActivityRecord result = performClearTaskLocked(newR, launchFlags);
+        mReuseTask = false;
+        return result;
+    }
+
+    final ActivityRecord performClearTaskLocked(ActivityRecord newR, int launchFlags) {
+        int numActivities = mActivities.size();
+        //从顶部开始遍历
+        for (int activityNdx = numActivities - 1; activityNdx >= 0; --activityNdx) {
+            ActivityRecord r = mActivities.get(activityNdx);
+            if (r.finishing) {
+                continue;
+            }
+            if (r.mActivityComponent.equals(newR.mActivityComponent)) {
+				//获取到了目标activity，那么所有位于它上面的目标都需要结束
+                final ActivityRecord ret = r;
+                //查找到以后从当前位置开始朝顶部开始遍历关闭
+                for (++activityNdx; activityNdx < numActivities; ++activityNdx) {
+                    r = mActivities.get(activityNdx);
+                    if (r.finishing) {
+                        continue;
+                    }
+				   ...
+                    if (mStack != null && mStack.finishActivityLocked(r, Activity.RESULT_CANCELED, null, "clear-task-stack", false)) {
+                        --activityNdx;
+                        --numActivities;
+                    }
+                }
+
+                //如果要启动的activity是multi模式，那么也会调用finish结束掉
+                if (ret.launchMode == ActivityInfo.LAUNCH_MULTIPLE&& (launchFlags & Intent.FLAG_ACTIVITY_SINGLE_TOP) == 0&& !ActivityStarter.isDocumentLaunchesIntoExisting(launchFlags)) {
+                    if (!ret.finishing) {
+                        if (mStack != null) {
+                            mStack.finishActivityLocked(ret, Activity.RESULT_CANCELED, null, "clear-task-top", false);
+                        }
+                        return null;
+                    }
+                }
+
+                return ret;
+            }
+        }
+
+        return null;
+    }
+
+```
+
+这里的 **mActivities** 是当前的任务栈中所保存的ActivityRecord的列表。进行遍历清除的方法为：
+
+1. 从mActivities的尾部开始遍历，查找到被复用的Activity
+2. 找到被复用的Activity以后，往尾部一次循环，调用ActivityStack的 **finishActivityLocked** 方法来结束掉对应的Activity，并减少引用数。
+
+可以看到最后的位置是有一个特殊的处理的，也就是SingleTop标识打开的话，也会结束掉当前这个复用的Activity。并且返回null，如果这个返回了null的话，就不会调用复用的activity的 **deliverNewIntent** 方法，相当于会重新启动。
+
+经过上面两步以后，不管是否进行了栈顶数据的清除。接下来就要将我们可以复用的Activity所在的TaskRecord移动到其所在的ActivityStack的顶部。
+
+##### setTargetStackAndMoveToFrontIfNeeded
+
+这个方法属于重中之重了，它展现了如何将我们启动的Activity通过堆栈的各种处理，展现在我们的面前。
+
+```java
+    private ActivityRecord setTargetStackAndMoveToFrontIfNeeded(ActivityRecord intentActivity) {
+        //获取到其所在的ActivityStack
+        mTargetStack = intentActivity.getActivityStack();
+        mTargetStack.mLastPausedActivity = null;
+        //标记位，标记当前顶部的栈是否与我们所复用的activity所在的栈不同
+        final boolean differentTopTask;
+        if (mPreferredDisplayId == mTargetStack.mDisplayId) {
+			//获取当前屏幕栈顶的ActivityStack
+            final ActivityStack focusStack = mTargetStack.getDisplay().getFocusedStack();
+			//获取当前正在显示的activityRecord
+            final ActivityRecord curTop = (focusStack == null)? null : focusStack.topRunningNonDelayedActivityLocked(mNotTop);
+			//当前正在显示的ActivityRecord所属的TaskRecord
+            final TaskRecord topTask = curTop != null ? curTop.getTaskRecord() : null;
+			//判断顶部的栈是否符合要求(即判断现在栈顶的栈是否为能够复用的activityrecord所在的栈)
+            differentTopTask = topTask != intentActivity.getTaskRecord()|| (focusStack != null && topTask != focusStack.topTask());
+        } else {
+            //表明要复用的task与正在显示的信息不在同一个栈中
+            differentTopTask = true;
+        }
+        //如果当前栈顶的任务栈并不是我们可以复用的activity所在的任务栈，那么就需要将activity所在的任务栈移动到顶部（前面）
+        if (differentTopTask && !mAvoidMoveToFront) {
+			//增加一个标记，标识这个task是从任务栈的后面移动上来的
+            mStartActivity.intent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
+            //判断合法性
+            if (mSourceRecord == null || (mSourceStack.getTopActivity() != null &&mSourceStack.getTopActivity().getTaskRecord()== mSourceRecord.getTaskRecord())) {
+                //willclearTask表明是否同时使用了 NEW_TASK 和 CLEAR_TASK的flag
+                final boolean willClearTask =(mLaunchFlags & (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK))== (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
+                if (!willClearTask) {//不需要清空，那么就需要将复用的task移至栈顶
+                	//****重点方法****获取当前要启动activity所属的ActivityStack栈
+                    final ActivityStack launchStack = getLaunchStack(mStartActivity, mLaunchFlags, mStartActivity.getTaskRecord(), mOptions);
+                    //获取当前要启动activity所属的任务栈
+                    final TaskRecord intentTask = intentActivity.getTaskRecord();
+                    if (launchStack == null || launchStack == mTargetStack) {
+                        //当要启动的栈与目标一致，或者要启动的栈为空。这是我们一般的标准流程。会调用moveTaskToFrontLocked方法，将当前栈移动到与用户交互的栈顶
+                        mTargetStack.moveTaskToFrontLocked(intentTask, mNoAnimation, mOptions,mStartActivity.appTimeTracker, "bringingFoundTaskToFront");
+                        mMovedToFront = true;
+                    } else if (launchStack.inSplitScreenWindowingMode()) {
+						//分屏模式下，
+                        ...
+                    }
+                    mOptions = null;
+		...
+         mTargetStack = intentActivity.getActivityStack();
+        mSupervisor.handleNonResizableTaskIfNeeded(intentActivity.getTaskRecord(),WINDOWING_MODE_UNDEFINED, DEFAULT_DISPLAY, mTargetStack);
+        if ((mLaunchFlags & FLAG_ACTIVITY_RESET_TASK_IF_NEEDED) != 0) {
+            return mTargetStack.resetTaskIfNeededLocked(intentActivity, mStartActivity);
+        }
+        return intentActivity;
+    }
+```
+
+我们先说下这个方法的大体流程，然后再逐个展开。
+
+1. 从当前正在和用户交互的ActivityStack中找到正在和用户交互的ActivityRecord。同时找到其所在的任务栈（TaskRecord）。
+
+2. 当发现当前栈顶的TaskRecord和我们要启动的Activity所使用的TaskRecord不是同一个时，这时候如果设置的标志位不会清空栈顶的信息的话，需要将要目标TaskRecord移动到栈顶位置。但是这个移动也需要分情况来进行。
+
+   1. 首先通过 **getLaunchStack** 方法获取目标ActivityStcak信息intentTask。
+   2. 这时候会比较我们要启动的ActivityStack和当前复用的ActivityRecord所对应的ActivityStack作比较。
+      * 当要启动的栈（launchStack）与目标（mTargetStack）一致，或者要启动的栈为空。则调用 **moveTaskToFrontLocked** 将对应的TaskRecord移动到栈顶位置。
+      * 当要启动的栈（launchStack）为分屏模式。
+      * 要启动的栈displayId和目标栈的ActivityRecord不一致
+      * 要启动的栈是Home，而当前的ActivityRecord不是。
+   
+   
+   对于上述的不同情况，2-3会通过 **reparent()** ，将复用的Activity所在的Task迁移到 **lauchStack** 中。而1和4则直接使用 **moveTaskToFrontLocked** 将对应的TaskRecord移动到栈顶位置。
+
+我们这里分析一下 **moveTaskToFrontLocked** 方法。
+
+```java
+    //ActivityStack.java
+	//将任务栈（TaskRecord）移动到当前ActivityStack的栈顶位置
+    final void moveTaskToFrontLocked(TaskRecord tr, boolean noAnimation, ActivityOptions options, AppTimeTracker timeTracker, String reason) {
+        ...
+        //获取到ActivityStack的栈顶activity
+        final ActivityRecord topActivity = topStack != null ? topStack.getTopActivity() : null;
+        //从taskHistory中查找到要移动到用户交互栈顶的TaskRecord（tr）
+        final int numTasks = mTaskHistory.size();
+        final int index = mTaskHistory.indexOf(tr);
+        if (numTasks == 0 || index < 0) {
+            //找不到则立刻返回
+            if (noAnimation) {
+                ActivityOptions.abort(options);
+            } else {
+                updateTransitLocked(TRANSIT_TASK_TO_FRONT, options);
+            }
+            return;
+        }
+		...
+            //***重点关注**  将tr插入到mTaskHistory顶部
+            insertTaskAtTop(tr, null);
+		   ...
+            //获取到ActivityStack中顶部正在运行的Activity
+            final ActivityRecord r = topRunningActivityLocked();
+            if (r != null) {
+                //**重点关注**   将ActivityRecord移动到栈顶，并且设置可见，而且为FocusedStacks
+                r.moveFocusableActivityToTop(reason);
+            }
+		   ...
+            //调用持有焦点的任务栈的顶部Activity的onResume()方法
+            mRootActivityContainer.resumeFocusedStacksTopActivities();
+        } finally {
+            getDisplay().continueUpdateImeTarget();
+        }
+    }
+
+```
+
+   将任务栈移动到ActivityStack顶部只需要三步。
+
+1. 在AcitivityStack中寻找到对应的TaskRecord，然后将其移动到AcitivityRecord的顶部位置，
+2. 寻找到ActivityStack中顶部正在运行的Activity，然后将其移动到Top位置并设置其持有焦点
+3. 调用持有焦点的任务栈的顶部Activity的onResume()方法
+
+回到我们的**setTargetStackAndMoveToFrontIfNeeded** 方法，当上面的操作执行完毕以后能够将TaskRecord移动到顶部，还需要将ActivityStack也移动到顶部位置，这样才能展示在用户的面前。这时候调用 **handleNonResizableTaskIfNeeded** 将其所在的ActivityStack也移动到顶部。
+
+到现在为止，已经将我们的可以复用的ActivityRecord的TaskRecord和ActivityStack的移动到交互栈顶。这时候就会根据实际的情况将可复用的Activity信息，进行一些整理工作。
+
+##### setTaskFromIntentActivity
+
+##### ```
+
+```java
+ private void setTaskFromIntentActivity(ActivityRecord intentActivity) {
+     if ((mLaunchFlags & (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK))== (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK)) {
+         //设置了FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK标志位，那么mReuseTask设置为可以复用的intentActivity的任务栈
+         final TaskRecord task = intentActivity.getTaskRecord();
+         task.performClearTaskLocked();
+         mReuseTask = task;
+         mReuseTask.setIntent(mStartActivity);
+     } else if ((mLaunchFlags & FLAG_ACTIVITY_CLEAR_TOP) != 0|| isLaunchModeOneOf(LAUNCH_SINGLE_INSTANCE, LAUNCH_SINGLE_TASK)) {
+//清空栈，这里跟之前的操作相似，但是那里处理的是top不为空，这里处理的是top为空的情况，也就是launchMode == ActivityInfo.LAUNCH_MULTIPLE
+         ....
+     } else if (mStartActivity.mActivityComponent.equals(intentActivity.getTaskRecord().realActivity)) {//任务栈顶部的activity和要启动的activity是同一个。
+         if (((mLaunchFlags & FLAG_ACTIVITY_SINGLE_TOP) != 0|| LAUNCH_SINGLE_TOP == mLaunchMode)&& intentActivity.mActivityComponent.equals(mStartActivity.mActivityComponent)) {
+             //如果是sigleTop，那么就调用deliverNewIntent
+             if (intentActivity.frontOfTask) {//如果是栈的根activity，那么设置
+                 intentActivity.getTaskRecord().setIntent(mStartActivity);
+             }
+             deliverNewIntent(intentActivity);
+         } else if (!intentActivity.getTaskRecord().isSameIntentFilter(mStartActivity)) {
+             //如果不是singleTop，那么认为是需要启动一个新的activity，
+             mAddingToTask = true;
+             mSourceRecord = intentActivity;
+         }
+     } else if ((mLaunchFlags & FLAG_ACTIVITY_RESET_TASK_IF_NEEDED) == 0) {
+         // 对FLAG_ACTIVITY_RESET_TASK_IF_NEEDED标志出处理　，这个主要用于快捷图标和或者从通知启动，这种情况需要替换task最上面的activity，所以需要添加activity到task中，
+         mAddingToTask = true;
+         mSourceRecord = intentActivity;
+     } else if (!intentActivity.getTaskRecord().rootWasReset) {
+         intentActivity.getTaskRecord().setIntent(mStartActivity);
+     }
+ }
+```
+
+这里根据使用的情况进行了分类。
+
+* 设置了FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK标志位，那么mReuseTask设置为可以复用的intentActivity的任务栈。
+* 如果清空了栈时，如果可复用的activity也销毁了（clearTop 而且使用了singleInstance或者singleTask的一种），会拿到顶部的Task，然后重新添加到ActivityStack中
+* 如果要启动的Activity和当前顶部的Activity是同一个，会根据情况调用onNewIntent方法。
+
+到这里所有的可复用的Activity的逻辑都处理完成了。
+
+
+
+* 
 
 学习到的知识点：
 
 1. 启动模式如果intent中的和mainfest中的冲突，那么manfest的启动模式优先。
 2. **newIntent**启动模式是无法获取result结果的。
-3. 一个**ActivityRecord**对应一个**Activity**，保存了一个**Activity**的所有信息;但是一个**Activity**可能会有多个**ActivityRecord**,因为**Activity**可以被多次启动，这个主要取决于其启动模式。
-4. 一个**TaskRecord**由一个或者多个**ActivityRecord**组成，这就是我们常说的任务栈，具有后进先出的特点。
-5. **ActivityStack**则是用来管理**TaskRecord**的，包含了多个**TaskRecord**。
-6. **singleTask** 和 **singleTop** 模式的都会去任务栈中遍历寻找是否已经启动了相应实例
-7. **ActivityStackSupervisor** 用来管理 **ActivityStack** 的。
-8. APP与 **ActivityStack** 之间并无必然的联系。有可能是一个APP对应一个 **ActivityStack** ，有可能是一个APP对应多个 **ActivityStack** ，也有可能是多个APP共用一个 **ActivityStack** 。
-9. **ActivityDisplay** 表示一个屏幕，Android支持三种屏幕：主屏幕，外接屏幕（HDMI等），虚拟屏幕（投屏）。一般情况下，即只有主屏幕时， **ActivityStackSupervisor** 与 **ActivityDisplay** 都是系统唯一。 **ActivityDisplay** 持有着当前屏幕的 **ActivityStack** 列表信息。
-10.  **RootActivityContainer** 则是持有着屏幕 **ActivityDisplay** 信息。用来分担ActivityStackSupervisor的部分职责的，主要目的是使ActivityContainer的结构和WindowContainer的结构保持一致。
-11. ![image-20200408150308700](http://cdn.qiniu.kailaisii.com/typora/202004/08/153428-322821.png)
+
+扩展知识点
+
+1. 一个**ActivityRecord**对应一个**Activity**，保存了一个**Activity**的所有信息;但是一个**Activity**可能会有多个**ActivityRecord**,因为**Activity**可以被多次启动，这个主要取决于其启动模式。
+2. 一个**TaskRecord**由一个或者多个**ActivityRecord**组成，这就是我们常说的任务栈，具有后进先出的特点。
+3. **ActivityStack**则是用来管理**TaskRecord**的，包含了多个**TaskRecord**。
+4. **singleTask** 和 **singleTop** 模式的都会去任务栈中遍历寻找是否已经启动了相应实例
+5. **ActivityStackSupervisor** 用来管理 **ActivityStack** 的。
+6. APP与 **ActivityStack** 之间并无必然的联系。有可能是一个APP对应一个 **ActivityStack** ，有可能是一个APP对应多个 **ActivityStack** ，也有可能是多个APP共用一个 **ActivityStack** 。
+7. **ActivityDisplay** 表示一个屏幕，Android支持三种屏幕：主屏幕，外接屏幕（HDMI等），虚拟屏幕（投屏）。一般情况下，即只有主屏幕时， **ActivityStackSupervisor** 与 **ActivityDisplay** 都是系统唯一。 **ActivityDisplay** 持有着当前屏幕的 **ActivityStack** 列表信息。
+8. **RootActivityContainer** 则是持有着屏幕 **ActivityDisplay** 信息。用来分担ActivityStackSupervisor的部分职责的，主要目的是使ActivityContainer的结构和WindowContainer的结构保持一致。
+9. ![image-20200408150308700](http://cdn.qiniu.kailaisii.com/typora/202004/08/153428-322821.png)
