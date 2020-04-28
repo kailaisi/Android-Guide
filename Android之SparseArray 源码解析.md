@@ -1,4 +1,4 @@
-## SparseArray 源码解析
+### 前言
 
 SparseArray是安卓特有的一种数据结构，跟HashMap相似，都是存储<Key,Value>的实体。但是SparseArray的Key只能是Int类型的。在存储的时候Key按照顺序进行了排序，当查询的时候采用了二分查找法来定位位置。这种方式相对来说更加迅速
 
@@ -240,3 +240,10 @@ SparseArray的垃圾回收并不是我们平时所理解的JVM的垃圾回收，
 * 插入新元素会导致大量的数组移动
 * 数据量较大时，二分查找效率会变低
 
+
+
+> 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
+>
+> 同步公众号[开了肯]
+
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)

@@ -1430,8 +1430,6 @@ if (dontStart) {//不需要重新启动，那么使用复用逻辑，将当前ac
         //标记是否需要创建新的任务栈
         boolean newTask = false;
         final TaskRecord taskToAffiliate = (mLaunchTaskBehind && mSourceRecord != null)? mSourceRecord.getTaskRecord() : null;
-
-        // Should this be considered a new task?
         int result = START_SUCCESS;
         if (mStartActivity.resultTo == null && mInTask == null && !mAddingToTask&& (mLaunchFlags & FLAG_ACTIVITY_NEW_TASK) != 0) {
 			//如果要启动的目标Activity没有对应的resultTo，并且也没有添加到对应栈中而且设置了FLAG_ACTIVITY_NEW_TASK。说明没有找到对应的栈来启动我们的Activity。
@@ -1439,7 +1437,9 @@ if (dontStart) {//不需要重新启动，那么使用复用逻辑，将当前ac
             newTask = true;
 			//创建新的任务栈
             result = setTaskFromReuseOrCreateNewTask(taskToAffiliate);
-        } else if (mSourceRecord != null) {//当mSourceRecord不为空，把新的ActivityRecord绑定到启动者的TaskRecord上
+        } else if (mSourceRecord != null) {//当mSourceRecord不为空，把新的ActivityRecord绑定到启动者的TaskRecord上。
+         	//一般情况下,mSourceRecord就是调用者,如本例中的Launcher;
+        	//但也有特殊情况,举个例子,如果启动模式为singleTask,栈中又不存在相同的Activity时,mSourceRecord就是栈顶的Activity。
             result = setTaskFromSourceRecord();
         } else if (mInTask != null) {//启动时指定了目标栈（mInTask），ActivityRecord绑定到mInTask
             result = setTaskFromInTask();
@@ -1521,9 +1521,163 @@ if (dontStart) {//不需要重新启动，那么使用复用逻辑，将当前ac
 
 这个的代码相对来说比较简单，我们注释也写的很清楚，有兴趣的朋友可以去看看里面的实现方式。
 
-#### mSourceRecord不为空
+##### mSourceRecord不为空
 
-这个时候会把新的ActivityRecord绑定到启动者的TaskRecord上。
+这种是最常见的情况，会直接把新的ActivityRecord绑定到启动者的TaskRecord上。
+
+```java
+    //将任务绑定到源数据所在的堆栈
+    private int setTaskFromSourceRecord() {
+        //获取启动者的任务栈
+        final TaskRecord sourceTask = mSourceRecord.getTaskRecord();
+        final ActivityStack sourceStack = mSourceRecord.getActivityStack();
+        //如果启动了mRestrictedBgActivity，但是启动者的任务栈不包含调用者uid。这个可能会有疑问，实际在我们在进程A通过IPC机制调用进程B的时候，我们需要知道A所在的UID和PID，来校验是否有权限
+        //但是在进程B调用进程B的Activity的时候，其实也是通过的IPC机制，但是程序本事是不知道二者属于同一个UID的，为了保证安全性，所以也会校验B的UID和PID。而每一个ActivityRecord都会保存本身的UID
+        //mRestrictedBgActivity要求启动者的任务栈的Activity列表中至少有一个Activity的UID是和调用它的UID是相同的
+        if (mRestrictedBgActivity && !sourceTask.containsAppUid(mCallingUid)) {
+            if (handleBackgroundActivityAbort(mStartActivity)) {
+                return START_ABORTED;
+            }
+        }
+        //我们只允许在两种情况下改变堆栈:
+        // 1。如果目标任务栈并没有在栈顶。否则，我们将把启动任务移到另一边，而不是同时显示两个任务。
+        // 2。如果activity不允许在目标屏幕上显示。
+        final int targetDisplayId = mTargetStack != null ? mTargetStack.mDisplayId : sourceStack.mDisplayId;
+        //我们在前面已经将要启动的Activity所在的Activity栈移动到前台了，所以sourceStack.topTask就是要启动的Activity所在的栈
+        //如果目标Activity不允许在屏幕上显示或者源任务栈和目标任务不再同一个栈（比如说从桌面启动，在Android9中，是在不同的Activity栈的。）
+        final boolean moveStackAllowed = sourceStack.topTask() != sourceTask || !mStartActivity.canBeLaunchedOnDisplay(targetDisplayId);
+        if (moveStackAllowed) {
+            //****重点方法****获取当前要启动activity所属的ActivityStack栈
+            mTargetStack = getLaunchStack(mStartActivity, mLaunchFlags,mStartActivity.getTaskRecord(), mOptions);
+            //如果仍然没有获取到目标的ActivityStack，或者目标所在屏幕和源数据的屏幕不是同一个，则在源数据的屏幕上找到一个合适的ActivityStack
+            if (mTargetStack == null && targetDisplayId != sourceStack.mDisplayId) {
+                // Can't use target display, lets find a stack on the source display.
+                mTargetStack = mRootActivityContainer.getValidLaunchStackOnDisplay( sourceStack.mDisplayId, mStartActivity, mOptions, mLaunchParams);
+            }
+            //如果还找不到，就只能在所有的屏幕中找一个合适的ActivityStack了
+            if (mTargetStack == null) {
+                mTargetStack = mRootActivityContainer.getNextValidLaunchStack(mStartActivity, -1 /* currentFocus */);
+            }
+        }
+        //目标ActivityStack为空（默认一般是这种）
+        if (mTargetStack == null) {
+            mTargetStack = sourceStack;
+        } else if (mTargetStack != sourceStack) {
+            //把启动方的任务栈绑定到目标ActivityStack上
+            sourceTask.reparent(mTargetStack, ON_TOP, REPARENT_MOVE_STACK_TO_FRONT, !ANIMATE, DEFER_RESUME, "launchToSide");
+        }
+
+        final TaskRecord topTask = mTargetStack.topTask();
+        //目标任务栈移动到ActivityStack的顶部，也就是设置为焦点
+        if (topTask != sourceTask && !mAvoidMoveToFront) {
+            mTargetStack.moveTaskToFrontLocked(sourceTask, mNoAnimation, mOptions, mStartActivity.appTimeTracker, "sourceTaskToFront");
+        } else if (mDoResume) {
+            mTargetStack.moveToFront("sourceStackToFront");
+        }
+
+        //如果目标activity还没有加入到栈中，而且启动标志设置了CLEAR_TOP，那么我们将Activity添加到已经存在的任务栈中，并调用clear方法清空对应的activity
+        if (!mAddingToTask && (mLaunchFlags & FLAG_ACTIVITY_CLEAR_TOP) != 0) {
+            ...
+        }
+        //将Activity添加到相应的Task
+        addOrReparentStartingActivity(sourceTask, "setTaskFromSourceRecord");
+        return START_SUCCESS;
+    }
+
+```
+
+这段代码里面的情况应该是我们最常见的情况了。我们简单总结一下
+
+1. 启动栈的顶部TaskRecord和启动方的TaskRecord不一致，或者目标任务不能再启动方所在屏幕展示，则需要移动到其他的ActivityStack去显示。这里会从有效的displayId中去查找对应的ActivityStack。
+2. 目标ActivityStack为空，这种属于默认的情况。会设置为启动方的ActivityStack。如果目标ActivityStack存在而且和启动方的ActivityStack不一致，则把启动方的任务栈（TaskRecord）绑定到目标所在的ActivityStack上
+3. 把目标ActivityStack移动到最前方，同时也移到ActivityDisplay集合的顶部。
+4. AddingToTask为false，打开了FLAG_ACTIVITY_CLEAR_TOP，则清除启动方的TaskRecord中的顶部。顶部不为空，则调用newIntent，再根据需要调用resume方法。
+5. 最后调用 **addOrReparentStartingActivity** 将ActivityS到对应的Task中。
+
+以上的步骤属于我们一般的启动Activity时会走的流程。
+
+##### 指定了目标栈（mInTask）
+
+```java
+    //将目标Activity的任务栈设置为mInTask
+    private int setTaskFromInTask() {
+        //根据实际情况检查是需要创建新的activity还是重新使用任务栈顶部的activity
+        mTargetStack = mInTask.getStack();
+        ActivityRecord top = mInTask.getTopActivity();
+        //任务栈顶部的activity是我们要启动的activity。
+        if (top != null && top.mActivityComponent.equals(mStartActivity.mActivityComponent) && top.mUserId == mStartActivity.mUserId) {
+            //如果设置了singleTop或者启动模式位singleTop或者singleTask，那么调用newIntent方法。
+            if ((mLaunchFlags & FLAG_ACTIVITY_SINGLE_TOP) != 0 || isLaunchModeOneOf(LAUNCH_SINGLE_TOP, LAUNCH_SINGLE_TASK)) {
+                mTargetStack.moveTaskToFrontLocked(mInTask, mNoAnimation, mOptions, mStartActivity.appTimeTracker, "inTaskToFront");
+                if ((mStartFlags & START_FLAG_ONLY_IF_NEEDED) != 0) {
+                    return START_RETURN_INTENT_TO_CALLER;
+                }
+                deliverNewIntent(top);
+                return START_DELIVERED_TO_TOP;
+            }
+        }
+        //mAddingToTask是标记位，标记着是否需要将Activity添加到TaskRecord中，
+        // 在之前进行如果已经将目标Activity放入到任务栈的话，这里就不需要再次放入了，只需要把TaskRecord移动ActivityStack顶部即可
+        if (!mAddingToTask) {
+            mTargetStack.moveTaskToFrontLocked(mInTask, mNoAnimation, mOptions, mStartActivity.appTimeTracker, "inTaskToFront");
+            ActivityOptions.abort(mOptions);
+            return START_TASK_TO_FRONT;
+        }
+        //将mInTask移动到顶部
+        mTargetStack.moveTaskToFrontLocked( mInTask, mNoAnimation, mOptions, mStartActivity.appTimeTracker, "inTaskToFront");
+        //将Activity添加到mInTask任务栈中
+        addOrReparentStartingActivity(mInTask, "setTaskFromInTask");
+        return START_SUCCESS;
+    }
+
+```
+
+这里也进行了分情况处理：
+
+1. 如果mInTask的顶部和我们要启动的Activity相同，而且启动了singleTop或者singleTask，那么就直接调用newIntent方法。
+2. 如果acitivity在之前的操作中已经添加到mInTask中了，那么这里只需要将mInTask移动到其所在ActivityRecord的顶部即可。
+3. 剩下的情况就需要将mInTask移动到ActivityRecord的顶部，然后Activity添加到mInTask任务栈中。
+
+##### setTaskToCurrentTopOrCreateNewTask
+
+这种基本不可能发生的情况，我们也分析一下，毕竟不能厚此薄彼嘛~
+
+```
+    //找焦点的ActivityStack上栈顶的Task,或者创建一个新的任务栈
+    private int setTaskToCurrentTopOrCreateNewTask() {
+        //获取持有焦点的ActivityStack
+        mTargetStack = computeStackFocus(mStartActivity, false, mLaunchFlags, mOptions);
+        if (mDoResume) {
+            mTargetStack.moveToFront("addingToTopTask");
+        }
+        //获取栈顶的ActivityRecord，也就是会被我们覆盖的那个Activity
+        final ActivityRecord prev = mTargetStack.getTopActivity();
+        //如果prev为空，而且我们的的acitivity只能后台运行，则报错
+        if (mRestrictedBgActivity && prev == null) {
+            if (handleBackgroundActivityAbort(mStartActivity)) {
+                return START_ABORTED;
+            }
+        }
+        //尝试从持有焦点的ActivityRecord获取其顶部的任务栈，如果获取不到的话，则创建一个
+        final TaskRecord task = (prev != null)
+                ? prev.getTaskRecord() : mTargetStack.createTaskRecord(
+                mSupervisor.getNextTaskIdForUserLocked(mStartActivity.mUserId), mStartActivity.info,
+                mIntent, null, null, true, mStartActivity, mSourceRecord, mOptions);
+        //不符合调用条件
+        if (mRestrictedBgActivity && prev != null && !task.containsAppUid(mCallingUid)) {
+            if (handleBackgroundActivityAbort(mStartActivity)) {
+                return START_ABORTED;
+            }
+        }
+        //将activity添加到任务栈中。
+        addOrReparentStartingActivity(task, "setTaskToCurrentTopOrCreateNewTask");
+        //
+        mTargetStack.positionChildWindowContainerAtTop(task);
+        return START_SUCCESS;
+    }
+```
+
+
 
 学习到的知识点：
 
