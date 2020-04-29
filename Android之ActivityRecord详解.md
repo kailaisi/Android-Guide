@@ -1,4 +1,4 @@
-## ActivityRecord详解
+### ActivityRecord详解
 
 在进行Activity启动源码解析的过程中，总是遇到各种类，有时候因为不理解其作用而总是搞混，所以对其中使用的各种类进行一个源码及作用的记录整理。
 
@@ -19,16 +19,7 @@ ActivityRecord是最常遇到的一个类了。它代表的是堆栈中的一个
 * RootActivityContainer mRootActivityContainer//当前activity所处的RootActivityContainer。这个类是10.0中新增的一个类，暂时用来分担ActivityStackSupervisor的部分职责的，主要目的是使ActivityContainer的结构和WindowContainer的结构保持一致。
 * 
 
-
-
-* ```
-  
-  
-  
-  
-  ```
-
-## ActivityInfo 详解
+### ActivityInfo 详解
 
 ActivityInfo保存着我们定义Activity的信息
 
@@ -38,3 +29,43 @@ ActivityInfo保存着我们定义Activity的信息
             android:screenOrientation="landscape" />
 ```
 
+
+
+
+
+
+
+### ActivityStack详解
+
+**ActivityStack**`,内部维护了一个`**ArrayList**`，用来管理`**TaskRecord**。它继承自ConfigurationContainer类。**ActivityStack**类是由**ActivityStackSupervisor**创建并管理的。
+
+```
+class ActivityStack extends ConfigurationContainer
+```
+
+我们先看一下它里面比较重要的几个属性。
+
+* ArrayList<TaskRecord> mTaskHistory //所管理的**TaskRecord**类列表。
+* ArrayList<ActivityRecord> mLRUActivities //通过LRU算法缓存的正在活动的Activity。
+* ActivityRecord mLastPausedActivity //最后执行pause的那个activity。
+* ActivityRecord mResumedActivity //当前处于resumed状态的的activity。
+* ActivityStackSupervisor mStackSupervisor  //持有的ActivityStackSupervisor，用来管理所有的ActivityStack
+
+在ActivityStack中，定义了几个枚举类型的类
+
+```java
+enum ActivityState {
+    INITIALIZING,
+    RESUMED,
+    PAUSING,
+    PAUSED,
+    STOPPING,
+    STOPPED,
+    FINISHING,
+    DESTROYING,
+    DESTROYED,
+    RESTARTING_PROCESS
+}
+```
+
+这个枚举类是用来表达Activity的状态的
