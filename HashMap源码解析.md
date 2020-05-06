@@ -1,12 +1,16 @@
 ## HashMap源码解析
 
+### 前言
+
 之前写过一篇[SparseArray的源码解析]()，今天我们就对HashMap下手，撸一撸HashMap的源码。这篇文章的源码是从Android29中扒过来，实现方式是和JDK1.8里面的实现方式相似。
 
 ![img](http://cdn.qiniu.kailaisii.com/typora/202004/28/165155-679862.png)
 
 在jdk1.8的结构中，用的是数组+链表+红黑树的的结构来存放数据。使用红黑树能够加快增删改查的效率。
 
-### 重要属性
+### 源码
+
+#### 重要属性
 
 ```java
 	public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneable, Serializable {
@@ -32,7 +36,7 @@
     final float loadFactor; 
 ```
 
-### 重要内部类
+#### 重要内部类
 
  **Node<K,V> ：节点信息类**。在HashMap中，进行存储的时候，每个存储位置都是一个节点，节点类型就是Node<K,V>
 
@@ -75,7 +79,7 @@
 
 红黑树的节点保存了父节点，左子节点，柚子节点以及前方节点信息
 
-### 构造函数
+#### 构造函数
 
 HashMap的构造函数有多个，我们一一的研究
 
@@ -169,7 +173,7 @@ HashMap这3个构造函数是相似的，最后一个构造函数的唯一的需
 
 这个构造方法，传入的是Map，在进行处理的过程中，会先通过map的大小对HashMap进行容量或者临界值做一个处理。然后再遍历通过**putval()**方法，将数据保存到hashmap中。
 
-### 添加元素
+#### 添加元素
 
 ```java
     public V put(K key, V value) {
@@ -464,7 +468,7 @@ HashMap这3个构造函数是相似的，最后一个构造函数的唯一的需
 
 这个调用的方法和我们的构造函数中使用的是一样的，我们之前做过解析，这里就不用再看了
 
-### 删除
+#### 删除
 
 ```java
     public V remove(Object key) {
@@ -545,7 +549,7 @@ HashMap这3个构造函数是相似的，最后一个构造函数的唯一的需
 
 我们来看下一个移除的函数（清空）
 
-##### 清空
+#### 清空
 
 ```java
     public void clear() {
@@ -563,11 +567,69 @@ HashMap这3个构造函数是相似的，最后一个构造函数的唯一的需
 
 清空操作相对来说比较简单，会把所有的哈希桶的首节点都置为null，然后将hashmap的size置为0。
 
+#### 查找
 
+```java
+    public V get(Object key) {
+        Node<K, V> e;
+        return (e = getNode(hash(key), key)) == null ? null : e.value;
+    }
 
-学习到的知识点
+    final Node<K, V> getNode(int hash, Object key) {
+        Node<K, V>[] tab;
+        Node<K, V> first, e;
+        int n;
+        K k;
+        //hash所对应的哈希桶是存在的
+        if ((tab = table) != null && (n = tab.length) > 0 &&
+                (first = tab[(n - 1) & hash]) != null) {
+            //首先检测首节点是否是我们需要查找的数据，如果是的话，直接返回
+            if (first.hash == hash && // always check first node
+                    ((k = first.key) == key || (key != null && key.equals(k))))
+                return first;
+            //如果不是，遍历
+            if ((e = first.next) != null) {
+                if (first instanceof TreeNode)
+                    //如果是红黑树，则从红黑树获取
+                    return ((TreeNode<K, V>) first).getTreeNode(hash, key);
+                do {//链表结构的话，遍历链表查询
+                    if (e.hash == hash &&
+                            ((k = e.key) == key || (key != null && key.equals(k))))
+                        return e;
+                } while ((e = e.next) != null);
+            }
+        }
+        return null;
+    }
+```
+
+对于数据的获取，通过重载函数进行了查询处理。
+
+### 线程安全
+
+在JDK8中的HashMap是非线程安全的，会发生数据覆盖问题。而非线程安全的问题主要出现在数据的插入操作。
+
+```
+    final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
+        ...
+		if ((p = tab[i = (n - 1) & hash]) == null) // 如果没有hash碰撞则直接插入元素
+            tab[i] = newNode(hash, key, value, null);
+        ...
+        if (++size > threshold)
+            resize();
+        ...
+    }
+
+```
+
+首先，在第一个地方，假设线程A、B都在执行put的操作，当线程执行完条件判断完成以后由于时间片耗尽而被挂起，而线程B得到时间片后载该下标处进行了插入元素的操作，完成了正常的插入操作。然后这个时候A获取时间片以后，由于之前进行过条件判断，所以不再进行判断而是直接进行数据的插入，会导致线程B的数据被线程A覆盖了，从而线程不安全。
+
+其次，在第二个位置，++size的操作，在进行操作的时候，在底层会进行多个处理，首先取得size值，然后再进行++，最后将值进行保存。并非是一个原子操作。所以会存在线程安全的问题。
+
+### 扩展知识点
 
 1. 在进行HashMap存储的过程中，理解了为什么类在重写equal方法的同时，必须重写hashcode方法。因为在保存或者移除的时候，会根据hashcode来获取对应的哈希桶，然后根据equals方法来进行是否是同一个key的判断处理。如果重写了equal，但是hashcode不同，可能会导致其hashcode不一致，从而保存到了不同的哈希桶中。
 2. hashcode值是32位的。
-3. 
-
+3. HashMap非线程安全，Hashtable是线程安全的。HashTable的方法是通过Synchronize来实现同步的。
+4. HashMap非线程安全，在多线程使用场景下可以使用ConcurrentHashMap来替代HashMap。
+5. Hashmap是允许key和value为null值的，用containsValue和containsKey方法判断是否包含对应键值对；HashTable键值对都不能为空，否则包空指针异常。
