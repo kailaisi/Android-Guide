@@ -7,5 +7,10 @@
 * 在进行字节码插入的过程中，对后缀是“Activity”的文件插入finish的方法。结果报javassist.bytecode.DuplicateMemberException: duplicate method: closeKeyboard in com.example.selfinspection.base.BaseActivity
 * javassist.NotFoundException: com.example.selfinspection.base.BaseViewModel
 
-这个类是我们的基类，在使用过程中
+这个类是我们的基类，在使用过程中发现传入的包名错误
 
+* DexArchiveBuilderException  error processing
+
+遇到这个问题主要是因为buildSrc中使用的build.gradle的版本和主工程的build.gradle的版本不一致，导致的问题。将两个修改为一致的即可。
+
+还有一种情况是因为分包导致的问题，需要使用mutilDex功能
