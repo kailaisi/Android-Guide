@@ -2,7 +2,7 @@
 
 SparseArray是安卓特有的一种数据结构，跟HashMap相似，都是存储<Key,Value>的实体。但是SparseArray的Key只能是Int类型的。在存储的时候Key按照顺序进行了排序，当查询的时候采用了二分查找法来定位位置。这种方式相对来说更加迅速
 
-#### 变量
+### 变量
 
 ```java
 private boolean mGarbage = false;//是否可以进行回收，也就是进行key，value的整理
@@ -18,7 +18,7 @@ private int mSize; //数组的大小
 
 这里面有个 **mGarbage** 变量，它标志着我们当前的数据是否可以进行数据的整理工作。比如说，当我们移除某个key以后，会将这个标志位设置为true，在需要的时候（比如说我们要进行数据的存储），会根据这个标志位进行一次数组的整理工作。
 
-#### 构造函数
+### 构造函数
 
 ```java
 public SparseArray() {
@@ -39,6 +39,8 @@ public SparseArray(int initialCapacity) {
 ```
 
 从构造函数可以看出来，SparseArray的数组 **默认大小是10** ，如果我们在实际的使用过程中能够确定要保存的数据量的大小，最好直接初始化，这样就不会出现扩容的问题。
+
+### 源码分析
 
 #### 添加元素
 

@@ -259,7 +259,7 @@ public void callActivityOnCreate(Activity activity, Bundle icicle) {
         }
         if (mContentParent == null) {
             //mContentParent用来加载我们设置的布局。是用户设置的布局的父布局
-            //里面根据主题等一些信息来绘制一个根布局，然后在根布局中找到一个id为content的布局，用来方式我们的setContentView中的布局文件
+            //里面根据主题等一些信息来绘制一个根布局，然后在根布局中找到一个id为content的布局，用来放置我们的setContentView中的布局文件
             mContentParent = generateLayout(mDecor);
             .....
         }
@@ -458,7 +458,7 @@ final void performResume(boolean followedByPause, String reason) {
 
 #### wm.addView()
 
-在进行这个方法分析之前我们先看看wm.addView(decor, l)这几个对象都是什么。**wm**是是我们在**performLaunchActivity**方法中调用attach方法里创建的**WindowManagerImpl**对象。**docor**则是Activity对应的Window中的视图**DecorView**
+在进行这个方法分析之前我们先看看wm.addView(decor, l)这几个对象都是什么。**wm**是我们在**performLaunchActivity**方法中调用attach方法里创建的**WindowManagerImpl**对象。**docor**则是Activity对应的Window中的视图**DecorView**
 
 ```java
 #WindowManagerImpl.java 
