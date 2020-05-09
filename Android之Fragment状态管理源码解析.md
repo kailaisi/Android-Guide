@@ -2,9 +2,9 @@
 
 #### 引言
 
-在之前，我们写过一篇[Fragment事务流程分析](https://mp.weixin.qq.com/s?__biz=MzUzOTE4MTQzNQ==&mid=2247483744&idx=1&sn=c5db3f3a1d2f5a5d7e13562d94d2695c&chksm=facd2974cdbaa062668dae6031a8b1ba41ced7338bb8554a0ae5403143c76e0c6a791b97d713&token=1511138431&lang=zh_CN#rd)，在这篇文章中，我们了解到，Activity通过通过FragmentManager来对Fragment进行统一的管理。在文章最后，我们讲到**FragmentManager**会通过 **moveToState()** 方法，将Fragment的生命周期和Activity的生命周期进行同步。这一篇文章，就主要分析一下，**FragmentManager**是如何Fragment的状态管理。
+在之前，我们写过一篇[Fragment事务流程分析](https://mp.weixin.qq.com/s?__biz=MzUzOTE4MTQzNQ==&mid=2247483744&idx=1&sn=c5db3f3a1d2f5a5d7e13562d94d2695c&chksm=facd2974cdbaa062668dae6031a8b1ba41ced7338bb8554a0ae5403143c76e0c6a791b97d713&token=1511138431&lang=zh_CN#rd)，在这片文章中，我们了解到，Activity通过通过FragmentManager来对Fragment进行统一的管理。在文章最后，我们讲到**FragmentManager**会通过 **moveToState()** 方法，将Fragment的生命周期和Activity的生命周期进行同步。这一篇文章，就主要分析一下，**FragmentManager**是如何Fragment的状态管理。
 
-#### 重要知识点
+### 重要知识点
 
 在进行源码解析之前，我们先讲解一下可能会涉及到的基础知识点
 
@@ -20,14 +20,14 @@
 
 对于Fragment，在进行创建到显示的过程，其状态会从0逐渐过渡到5。而当其销毁时，状态会从5逐渐回到0。
 
-##### Fragment的创建方式
+#### Fragment的创建方式
 
 我们使用Fragment时，主要通过两种方式进行创建
 
 1. 在activity的布局文件中，生命fragment。
 2. 通过Java代码，将Fragment添加到已存的**ViewGroup**中
 
-这两种方式其实最终效果是相同的，在进行代码处理中会根据不同的创建方式进行一定的区分处理。比如说第二种，那么必须保证Fragment有对应的container。而且需要有对应的containerId。
+这两种方式其实最终效果是相同的，在进行代码处理中红会根据不同的创建方式进行一定的区分处理。比如说第二种，那么必须保证Fragment有对应的container。而且需要有对应的containerId。
 
 ### 生命周期源码
 
@@ -73,7 +73,7 @@
             }
 ```
 
-这段代码，是fragment由不显示到显示的整个过程。在这个里面根据fragment的当前状态来进行不同的处理。也就是switch里面的操作。我们会发现，其实每个case里面并没有break操作，所以会从符合条件的分支开始，一直往后循环，直到其对应的state和newState相等为止。
+这段代码，是fragment由不显示到显示的整个过程。在这个里面根据fragment的当前状态来进行不同的处理。也就是switch里面的操作。我们会发现，其实每个case里面并没有break操作，所以会从符合条件的分支开始，一直往后循环，直到其对应的state和newState相等未知。
 
 这里的分支比较多。我们一个个分析。
 
@@ -317,7 +317,7 @@
 
 #### 从显示到不显示
 
-当我们的页面从可见状态变化为不可见时，就会走我们后面的分支了
+当我们的页面从可见状态变化为不可见是，就会走我们后面的分支了
 
 ```
 		else if (f.mState > newState) {
@@ -336,7 +336,7 @@
         
 ```
 
-从显示到不显示，其状态的变化和之前分析的正好相反，状态会从RESUMED一路变化，最终变化为INITIALIZING。
+从显示到不显示，其状态的变化和之前分析的整好相反，状态会从RESUMED一路变化，最终变化为INITIALIZING。
 
 ##### 当前状态值是RESUMED
 
@@ -435,8 +435,6 @@
 ```
 
 这里会进行**onDetach()** 生命周期方法的调用。
-
-
 
 #### 学到的知识点
 
