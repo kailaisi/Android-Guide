@@ -213,7 +213,6 @@ new Gson().toJson(object)
 
 ```java
     public static final TypeAdapterFactory FACTORY = new TypeAdapterFactory() {
-        @SuppressWarnings("unchecked")
         @Override
         public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
             //如果type对应的RawType是Object，则创建一个ObjectTypeAdapter
@@ -225,7 +224,7 @@ new Gson().toJson(object)
     };
 ```
 
-可以看到这个Factory的作用是创建一个**ObjectTypeAdapter**对象。我们在之前的关键类中说过，TypeAdapter的作用就是进行对应的Type和Json字串的相互转化。这里所创建的**ObjectTypeAdapter**就是Object类型和Json字符串的转化所使用的类。
+可以看到这个Factory通过create方法会创建一个**ObjectTypeAdapter**对象。我们在之前的关键类中说过，TypeAdapter的作用就是进行对应的Type和Json字串的相互转化。这里所创建的**ObjectTypeAdapter**就是Object类型和Json字符串的转化所使用的类。
 
 ```java
 
@@ -291,7 +290,42 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
 
 ```
 
-在进行
+通过read方法将JSON数据转化为Object对象过程中，通过JsonReader来获取JSON数据所对应的标签，然后通过嵌套调用达到对于Object对象的生成返回。这里我们可以看到，对于Object，按照数组、Object、String、Number、Boolean、Null这几种类型来进行了区分处理。
+
+##### TypeAdapters.STRING_FACTORY
+
+```java
+  //创建一个TypeAdapterFactory，生成的TypeAdapter是STRING，对应的Type是String
+  public static final TypeAdapterFactory STRING_FACTORY = newFactory(String.class, STRING);
+
+  public static final TypeAdapter<String> STRING = new TypeAdapter<String>() {
+    @Override
+    public String read(JsonReader in) throws IOException {
+      //获取JSON的类型
+      JsonToken peek = in.peek();
+      //如果是空，则直接返回控制
+      if (peek == JsonToken.NULL) {
+        in.nextNull();
+        return null;
+      }
+      //如果JSON的类型是Boolean，那么将Boolean转化为String类型进行返回
+      if (peek == JsonToken.BOOLEAN) {
+        return Boolean.toString(in.nextBoolean());
+      }
+      //其他的正常情况则返回字符串
+      return in.nextString();
+    }
+    @Override
+    public void write(JsonWriter out, String value) throws IOException {
+      //直接将字符串输出
+      out.value(value);
+    }
+  };
+```
+
+STRING_FACTORY是一种创建String所对应的TypeAdapter的工厂。在进行JSON到String的解析过程中，我们看到是有一个对Boolean类型的兼容处理的。
+
+其实对于Boolean、Number、Byte、Short等等，都是相似的处理方式
 
 
 
