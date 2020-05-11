@@ -325,9 +325,146 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
 
 STRING_FACTORY是一种创建String所对应的TypeAdapter的工厂。在进行JSON到String的解析过程中，我们看到是有一个对Boolean类型的兼容处理的。
 
-其实对于Boolean、Number、Byte、Short等等，都是相似的处理方式
+其实对于Boolean、Number、Byte、Short等等，都是相似的处理方式。
 
+##### ReflectiveTypeAdapterFactory
 
+方法比较绕。一点点分析。我们知道所有的**TypeAdapterFactory**都会实现一个**create**方法来创建一个对应的TypeAdapter。
+
+我们先看看这个类的**create**方法的实现。
+
+```java
+    public <T> TypeAdapter<T> create(Gson gson, final TypeToken<T> type) {
+        Class<? super T> raw = type.getRawType();
+        //如果不是Object的子类类，则不匹配，只直接返回
+        if (!Object.class.isAssignableFrom(raw)) {
+            return null; // it's a primitive!
+        }
+        //获取Type所对应构造器
+        ObjectConstructor<T> constructor = constructorConstructor.get(type);
+        //创建一个TypeAdapter 重点方法***getBoundFields
+        return new Adapter<T>(constructor, getBoundFields(gson, type, raw));
+    }
+```
+
+在这个里面会调用一个**getBoundFields**方法，然后将其返回值作为Adapter的构造函数的一部分。我们先看看**getBoundFields**这个方法。
+
+```java
+    private Map<String, BoundField> getBoundFields(Gson context, TypeToken<?> type, Class<?> raw) {
+        Map<String, BoundField> result = new LinkedHashMap<String, BoundField>();
+        //接口直接返回
+        if (raw.isInterface()) {
+            return result;
+        }
+        Type declaredType = type.getType();
+        while (raw != Object.class) {
+            //获取所有属性
+            Field[] fields = raw.getDeclaredFields();
+            for (Field field : fields) {
+                //是否序列化，主要是根据字段名称，以及是否忽略等相关设置信息进行判断
+                boolean serialize = excludeField(field, true);
+                //是否反序列化
+                boolean deserialize = excludeField(field, false);
+                //既不参与序列化，也不参与反序列化，则直接跳过
+                if (!serialize && !deserialize) {
+                    continue;
+                }
+                //设置属性可见
+                accessor.makeAccessible(field);
+                Type fieldType = $Gson$Types.resolve(type.getType(), raw, field.getGenericType());
+                List<String> fieldNames = getFieldNames(field);
+                BoundField previous = null;
+                for (int i = 0, size = fieldNames.size(); i < size; ++i) {
+                    String name = fieldNames.get(i);
+                    if (i != 0) serialize = false; // only serialize the default name
+                    //根据filed、type、以及是否支持序列化和反序列化来创建一个BoundField对象
+                    BoundField boundField = createBoundField(context, field, name, TypeToken.get(fieldType), serialize, deserialize);
+                    //将属性名称作为key，boundField作为value保存到result中
+                    BoundField replaced = result.put(name, boundField);
+                    //如果之前解析过对应的这个值的话，这里机会导致previous不为空，从而报错
+                    if (previous == null) previous = replaced;
+                }
+                if (previous != null) {
+                    throw new IllegalArgumentException(declaredType + " declares multiple JSON fields named " + previous.name);
+                }
+            }
+            type = TypeToken.get($Gson$Types.resolve(type.getType(), raw, raw.getGenericSuperclass()));
+            raw = type.getRawType();
+        }
+        return result;
+    }
+```
+
+这个函数主要功能就是对于给定的type，通过反射遍历获取对应的属性，然后将结果以Map的方式保存起来。key是属性名称，value是属性的相关信息类。
+
+我们再看看创建的TypeAdapter对象。主要看看其**write**和**read**方法。
+
+```java
+    //继承TypeAdapter的一个类
+    public static final class Adapter<T> extends TypeAdapter<T> {
+        private final ObjectConstructor<T> constructor;
+        private final Map<String, BoundField> boundFields;
+
+        Adapter(ObjectConstructor<T> constructor, Map<String, BoundField> boundFields) {
+            this.constructor = constructor;
+            this.boundFields = boundFields;
+        }
+
+        @Override
+        public T read(JsonReader in) throws IOException {
+            if (in.peek() == JsonToken.NULL) {
+                in.nextNull();
+                return null;
+            }
+            T instance = constructor.construct();
+            try {
+                in.beginObject();//从"{"开始
+                while (in.hasNext()) {
+                    String name = in.nextName();//逐个获取属性
+                    BoundField field = boundFields.get(name);//从map中获取属性所对应的的BoundField类
+                    if (field == null || !field.deserialized) {
+                        in.skipValue();
+                    } else {
+                        //属性值能够序列化，则进行序列化操作。这里会对field进行赋值
+                        field.read(in, instance);
+                    }
+                }
+            } catch (IllegalStateException e) {
+                throw new JsonSyntaxException(e);
+            } catch (IllegalAccessException e) {
+                throw new AssertionError(e);
+            }
+            in.endObject();
+            return instance;
+        }
+
+        @Override
+        public void write(JsonWriter out, T value) throws IOException {
+            if (value == null) {
+                out.nullValue();
+                return;
+            }
+            //输出"{
+            out.beginObject();
+            try {
+                for (BoundField boundField : boundFields.values()) {
+                    if (boundField.writeField(value)) {
+                        out.name(boundField.name);//先输出属性名称
+                        boundField.write(out, value);//再输出属性值
+                    }
+                }
+            } catch (IllegalAccessException e) {
+                throw new AssertionError(e);
+            }
+            //输出"}"
+            out.endObject();
+        }
+    }
+```
+
+这里面不管是write还是read方法，都是通过之前保存的HashMap来获取属性值，然后去进行赋值工作。
+
+对于TypeAdapterFactory的几个实现类，我们就先说这几个，剩下的可以自己去慢慢研究。我们继续我们的主线
 
 #### 序列化
 
