@@ -487,9 +487,36 @@ STRING_FACTORY是一种创建String所对应的TypeAdapter的工厂。在进行J
         toJson(src, typeOfSrc, writer);
         return writer.toString();
     }
+	//重载方法
+    public void toJson(Object src, Type typeOfSrc, JsonWriter writer) throws JsonIOException {
+        //****重点方法****   获取对应的TypeAdapter
+        TypeAdapter<?> adapter = getAdapter(TypeToken.get(typeOfSrc));
+        //设置配置,并且保存原有的配置，在最后会将配置进行还原
+        boolean oldLenient = writer.isLenient();
+        writer.setLenient(true);
+        boolean oldHtmlSafe = writer.isHtmlSafe();
+        writer.setHtmlSafe(htmlSafe);
+        boolean oldSerializeNulls = writer.getSerializeNulls();
+        writer.setSerializeNulls(serializeNulls);
+        try {
+            //调用TypeAdapter里面的write方法
+            ((TypeAdapter<Object>) adapter).write(writer, src);
+        } catch (IOException e) {
+            throw new JsonIOException(e);
+        } catch (AssertionError e) {
+            AssertionError error = new AssertionError("AssertionError (GSON " + GsonBuildConfig.VERSION + "): " + e.getMessage());
+            error.initCause(e);
+            throw error;
+        } finally {
+            writer.setLenient(oldLenient);
+            writer.setHtmlSafe(oldHtmlSafe);
+            writer.setSerializeNulls(oldSerializeNulls);
+        }
+    }
+
 ```
 
-
+之前我们讲过每一个Type和TypeAdapter都是一一对应的。所以只要我们知道了Type，那么就可以获取到type所对应的TypeAdapter。这个获取的方法就是这里的**getAdapter()**方法。
 
 
 
