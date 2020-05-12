@@ -269,7 +269,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
         }
     }
 
-    //将Object对象通过JsonWriter属于出去，也即是将Object对象变为JSON字符串
+    //将Object对象通过JsonWriter输出出去，也即是将Object对象变为JSON字符串
     @Override
     public void write(JsonWriter out, Object value) throws IOException {
         if (value == null) {
@@ -454,7 +454,7 @@ STRING_FACTORY是一种创建String所对应的TypeAdapter的工厂。在进行J
                     BoundField boundField = createBoundField(context, field, name, TypeToken.get(fieldType), serialize, deserialize);
                     //将属性名称作为key，boundField作为value保存到result中
                     BoundField replaced = result.put(name, boundField);
-                    //如果之前解析过对应的这个值的话，这里机会导致previous不为空，从而报错
+                    //如果之前解析过对应的这个值的话，这里就会导致previous不为空，从而报错
                     if (previous == null) previous = replaced;
                 }
                 if (previous != null) {
@@ -624,7 +624,7 @@ STRING_FACTORY是一种创建String所对应的TypeAdapter的工厂。在进行J
             threadCalls.put(type, call);
             for (TypeAdapterFactory factory : factories) {
                 //通过注册的factory来创建type类型，如果创建成功，则表明factory能够进行type类型的创建，
-                //如果返回未null，则表明factory不能进行type类型的创建
+                //如果返回为null，则表明factory不能进行type类型的创建
                 TypeAdapter<T> candidate = factory.create(this, type);
                 if (candidate != null) {
                     call.setDelegate(candidate);
@@ -685,7 +685,7 @@ STRING_FACTORY是一种创建String所对应的TypeAdapter的工厂。在进行J
     }
 ```
 
-这是一个典型的代理模式，代理模式的作用是为了屏蔽底层的具体实现，但是这里面缺没有体现这方面的作用。
+这是一个典型的代理模式，代理模式的作用是为了屏蔽底层的具体实现，但是这里面却没有体现这方面的作用。
 
 我们考虑一种情况
 
