@@ -327,6 +327,79 @@ STRING_FACTORY是一种创建String所对应的TypeAdapter的工厂。在进行J
 
 其实对于Boolean、Number、Byte、Short等等，都是相似的处理方式。
 
+##### JsonAdapterAnnotationTypeAdapterFactory
+
+这个工厂方法是用来处理JsonAdapter注解的。我们知道，在使用Gson进行解析的时候，我们有时候会给属性或者类使用一个JsonAdapter的注解来实现自定义的解析器。而对于使用了JsonAdapter注解的方法或者类，就会通过这个工程来创建对应的TypeAdapter。
+
+我们看看其**create**方法
+
+```java
+    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> targetType) {
+        Class<? super T> rawType = targetType.getRawType();
+        JsonAdapter annotation = rawType.getAnnotation(JsonAdapter.class);
+        if (annotation == null) {
+            return null;
+        }
+        return (TypeAdapter<T>) getTypeAdapter(constructorConstructor, gson, targetType, annotation);
+    }
+
+    TypeAdapter<?> getTypeAdapter(ConstructorConstructor constructorConstructor, Gson gson, TypeToken<?> type, JsonAdapter annotation) {
+        //获取注解的value所对应的对象
+        Object instance = constructorConstructor.get(TypeToken.get(annotation.value())).construct();
+        TypeAdapter<?> typeAdapter;
+        if (instance instanceof TypeAdapter) {
+            //如果注解的value是TypeAdapter，那么直接使用即可
+            typeAdapter = (TypeAdapter<?>) instance;
+        } else if (instance instanceof TypeAdapterFactory) {
+            //如果注解的value是个TypeAdapterFactory，则将其create方法创建的TypeAdapter作为其TypeAdapter
+            typeAdapter = ((TypeAdapterFactory) instance).create(gson, type);
+        } else if (instance instanceof  || instance instanceof JsonDeserializer) {
+            //如果注解的value是JsonSerializer或者JsonDeserializer。则创建TreeTypeAdapter
+            JsonSerializer<?> serializer = instance instanceof JsonSerializer? (JsonSerializer) instance: null;
+            JsonDeserializer<?> deserializer = instance instanceof JsonDeserializer? (JsonDeserializer) instance: null;
+            typeAdapter = new TreeTypeAdapter(serializer, deserializer, gson, type, null);
+        } else {
+            throw new IllegalArgumentException("...");
+        }
+        if (typeAdapter != null && annotation.nullSafe()) {
+            typeAdapter = typeAdapter.nullSafe();
+        }
+        return typeAdapter;
+    }
+```
+
+这里会根据注解的value的类型进行不同的处理。前面两个是**自定义TypeAdapte**r和**自定义TypeAdapterFactory**，后面这个则是**JsonSerializer**或者**JsonDeserializer**。前面两个我们就不看了，我们看看最后创建的**TreeTypeAdapter**。我们只关注read和write方法
+
+```java
+    @Override
+    public T read(JsonReader in) throws IOException {
+        //如果没有设置deserializer，则通过标准的方法进行处理
+        if (deserializer == null) {
+            return delegate().read(in);
+        }
+        JsonElement value = Streams.parse(in);
+        if (value.isJsonNull()) {
+            return null;
+        }
+        //调用deserialize方法来实现反序列化
+        return deserializer.deserialize(value, typeToken.getType(), context);
+    }
+
+    @Override
+    public void write(JsonWriter out, T value) throws IOException {
+        if (serializer == null) {
+            delegate().write(out, value);
+            return;
+        }
+        if (value == null) {
+            out.nullValue();
+            return;
+        }
+        JsonElement tree = serializer.serialize(value, typeToken.getType(), context);
+        Streams.write(tree, out);
+    }
+```
+
 ##### ReflectiveTypeAdapterFactory
 
 方法比较绕。一点点分析。我们知道所有的**TypeAdapterFactory**都会实现一个**create**方法来创建一个对应的TypeAdapter。
@@ -466,7 +539,7 @@ STRING_FACTORY是一种创建String所对应的TypeAdapter的工厂。在进行J
 
 对于TypeAdapterFactory的几个实现类，我们就先说这几个，剩下的可以自己去慢慢研究。我们继续我们的主线
 
-#### 序列化
+#### 序列化toJson
 
 当创建完成以后，就会调用**toJson()**方法来进行数据的序列化工作。
 
@@ -518,18 +591,228 @@ STRING_FACTORY是一种创建String所对应的TypeAdapter的工厂。在进行J
 
 之前我们讲过每一个Type和TypeAdapter都是一一对应的。所以只要我们知道了Type，那么就可以获取到type所对应的TypeAdapter。这个获取的方法就是这里的**getAdapter()**方法。
 
+##### getAdapter
 
+```java
+    public <T> TypeAdapter<T> getAdapter(TypeToken<T> type) {
+        //先尝试从缓存获取，缓存使用的是ConcurrentHashMap，能够保障线程的安全性。
+        TypeAdapter<?> cached = typeTokenCache.get(type == null ? NULL_KEY_SURROGATE : type);
+        if (cached != null) {
+            //如果获取到则直接返回
+            return (TypeAdapter<T>) cached;
+        }
+        //all属于一个ThreadLocal变量，保存了Map对象，而map对象则缓存了FutureTypeAdapter类型。
+        //获取当前线程对应的解析器。这里为嘛用一个线程安全的calls？？好奇
+        Map<TypeToken<?>, FutureTypeAdapter<?>> threadCalls = calls.get();
+        boolean requiresThreadLocalCleanup = false;
+        if (threadCalls == null) {//如果为空，则创建，保证后面不会出现空指针问题
+            threadCalls = new HashMap<TypeToken<?>, FutureTypeAdapter<?>>();
+            calls.set(threadCalls);
+            //最后需要根据这个字段进行线程的清空处理
+            requiresThreadLocalCleanup = true;
+        }
+        // the key and value type parameters always agree
+        //如果从ThreadLocal内部的Map缓存中获取到对应的TypeAdapter则直接返回
+        FutureTypeAdapter<T> ongoingCall = (FutureTypeAdapter<T>) threadCalls.get(type);
+        if (ongoingCall != null) {
+            return ongoingCall;
+        }
+        try {
+            //创建一个FutureTypeAdapter对象
+            FutureTypeAdapter<T> call = new FutureTypeAdapter<T>();
+            //将其缓存
+            threadCalls.put(type, call);
+            for (TypeAdapterFactory factory : factories) {
+                //通过注册的factory来创建type类型，如果创建成功，则表明factory能够进行type类型的创建，
+                //如果返回未null，则表明factory不能进行type类型的创建
+                TypeAdapter<T> candidate = factory.create(this, type);
+                if (candidate != null) {
+                    call.setDelegate(candidate);
+                    //创建成功则进行缓存
+                    typeTokenCache.put(type, candidate);
+                    return candidate;
+                }
+            }
+            throw new IllegalArgumentException("GSON (" + GsonBuildConfig.VERSION + ") cannot handle " + type);
+        } finally {
+            //因为已经将type缓存到typeTokenCache中了。所以ThreadLocal里面的缓存用不到了。移除
+            threadCalls.remove(type);
+            //如果创建了ThreadLocal对象，则进行清除
+            if (requiresThreadLocalCleanup) {
+                calls.remove();
+            }
+        }
+    }
 
-- 源码解析
-- 自定义TypeAdatper
-- JsonReader/JsonWriter
-- fromJson
-- toJson
+```
 
-#### 
+这里使用了两级缓存，而且操作
 
+1. 尝试从**typeTokenCache**去获取，获取到则返回
+2. 获取不到则尝试从ThreadLocal中的Map中获取，获取到则返回
+3. 获取不到则遍历factories，来查看其**create**能否创建和Type对应的TypeAdapter，如果可以的话，就进行缓存，不可以的话则抛出异常了
+4. 最后将临时的变量信息进行释放处理。
 
+这里有个**FutureTypeAdapter**对象，一直很好奇，为什么有这么东西，后来通过文章才发现是为了解决嵌套导致的无线递归问题。
 
-总结
+```java
+    static class FutureTypeAdapter<T> extends TypeAdapter<T> {
+        //代理模式
+        private TypeAdapter<T> delegate;
 
-* 这里面使用了适配器模式
+        public void setDelegate(TypeAdapter<T> typeAdapter) {
+            if (delegate != null) {
+                throw new AssertionError();
+            }
+            delegate = typeAdapter;
+        }
+
+        @Override
+        public T read(JsonReader in) throws IOException {
+            if (delegate == null) {
+                throw new IllegalStateException();
+            }
+            return delegate.read(in);
+        }
+
+        @Override
+        public void write(JsonWriter out, T value) throws IOException {
+            if (delegate == null) {
+                throw new IllegalStateException();
+            }
+            delegate.write(out, value);
+        }
+    }
+```
+
+这是一个典型的代理模式，代理模式的作用是为了屏蔽底层的具体实现，但是这里面缺没有体现这方面的作用。
+
+我们考虑一种情况
+
+```java
+class User{
+    User user;
+    String name;
+    ...
+}
+```
+
+之前我们说过，对于我们自定义的对象，其对应的TypeAdapter是由**ReflectiveTypeAdapterFactory**创建的。在进行创建TypeAdapter时，会逐个遍历其所有的属性，然后获取其对应的TypeAdapter(也是通过这个getAdapter()方法)。如果正常不进行处理的话，肯定就会陷入了死循环中了。
+
+但是这里不会，为什么？**因为当我们在第一次创建了一个FutureTypeAdapter对象以后，将其缓存到了ThreadLocal中，对于同一个对象的解析，肯定是在同一个线程中的，当再次进行getAdapter的时候，就能够在ThreadLocal的Map中获取到了。而且这也是为什么先将创建的FutureTypeAdapter进行缓存，然后再进行代理的设置。如果先进行代理处理，再创建TypeAdapter的话，里面循环获取，就会发生死循环了**
+
+可能比较绕，我们做个总结。
+
+1. User对象在threadCalls中不存在。创建一个FutureTypeAdapter对象，然后将其缓存到threadCalls中，key是user。
+2. 通过ReflectiveTypeAdapterFactory创建对应的TypeAdapter。
+   1. 里面遍历到属性user，通过getAdapter获取对应的TypeAdapter。
+   2. 这时候在threadCalls能够找到对应的缓存。直接将其返回就可以了。
+   3. 遍历完成，将所有的属性所对应的TypeAdapter也都进行了保存。
+3. 将获取到的TypeAdapter缓存到typeTokenCache。
+
+这种解决循环的方式，在后台的[Spring的循环依赖注入的解决方案]()中我们也提到过，两者有异曲同工之妙，有兴趣的可以去看一看。
+
+对于序列化工作，当获取到TypeAdapter以后，就是调用其write方法来进行处理了。这个write方法对于不同的TypeAdapter有不同的实现方法，之前已经介绍了一部分了，这里就不再展开了。
+
+#### 反序列化（fromJson）
+
+```java
+   //将json字符串转化为T对象
+    public <T> T fromJson(String json, Class<T> classOfT) throws JsonSyntaxException {
+        //调用重载方法
+        Object object = fromJson(json, (Type) classOfT);
+        //如果解析以后，发现是int类型，会进行包装返回，也就是int->Integer
+        return Primitives.wrap(classOfT).cast(object);
+    }
+
+    public <T> T fromJson(String json, Type typeOfT) throws JsonSyntaxException {
+        //如果字符串是空，则直接返回null
+        if (json == null) {
+            return null;
+        }
+        //创建一个StringReader，入参是json字符串，
+        StringReader reader = new StringReader(json);
+        //重载方法
+        T target = (T) fromJson(reader, typeOfT);
+        return target;
+    }
+
+   public <T> T fromJson(Reader json, Type typeOfT) throws JsonIOException, JsonSyntaxException {
+        //将Read进行包装，创建一个JsonReader
+        JsonReader jsonReader = newJsonReader(json);
+        //重载方法
+        T object = (T) fromJson(jsonReader, typeOfT);
+        //判断是否读取完了
+        assertFullConsumption(object, jsonReader);
+        return object;
+    }
+```
+
+这里是通过了好几次的重载方法的调用。
+
+```java
+    public <T> T fromJson(JsonReader reader, Type typeOfT) throws JsonIOException, JsonSyntaxException {
+        boolean isEmpty = true;
+        boolean oldLenient = reader.isLenient();
+        reader.setLenient(true);
+        try {
+            reader.peek();
+            isEmpty = false;
+            //将传入的class类型包装，生成一个TypeToken
+            TypeToken<T> typeToken = (TypeToken<T>) TypeToken.get(typeOfT);
+            //根据typeToken获取对应的TypeAdapter
+            TypeAdapter<T> typeAdapter = getAdapter(typeToken);
+            //通过typeAdapter转化对象
+            T object = typeAdapter.read(reader);
+            return object;
+        }
+        ...
+    }
+```
+
+这个方式是我们最终进行反序列化的地方了。这里面的getAdapter方法在序列化中已经讲解过了。最终会调用TypeAdapter的read方法进行对象的创建并返回。
+
+### 自定义解析器
+
+#### 注册方法
+
+其实对于自定义解析器有很多种实现方案。我们会根据之前源码解析中的各种情况进行分析，然后知道可以如下的几种方案来进行自定义解析器的注册
+
+##### 注册自定义TypeAdapterFactory
+
+在我们的Gson的构造函数中，会首先将自定义的**TypeAdapterFactory**添加到列表中，我们可以在这里插入我们自定义的TypeAdapterFactory来实现自定义解析器。
+
+```java
+new StatsTypeAdapterFactory();
+gson = new GsonBuilder().registerTypeAdapterFactory(stats).create();
+```
+
+##### 注册自定义TypeAdapter
+
+GsonBuilder给我们提供了注册自定义TypeAdapter的方法，能够注册我们的实现方案
+
+```java
+Gson gson = new GsonBuilder().registerTypeAdapter(A.class, typeAdapter).create();
+String json = gson.toJson(new A("abcd"));
+```
+
+其实**registerTypeAdapter**的参数是一个Object类型，不仅可以是TypeAdapter，也可以是JsonDeserializer，也可以是InstanceCreator。其内部会按照不同的类型帮我们进行处理。
+
+##### JsonAdapter注解
+
+JsonAdapter注解不仅可以使用在类上，而且可以使用在属性上。使用JsonAdapter不需要我们进行注册的处理，会直接按照我们JsonAdapterAnnotationTypeAdapterFactory中解析所说的那样。会直接按照注解来进行处理。
+
+##### 解析方法
+
+对于上面不同的注册方法，其实本质上还是需要我们去自己实现对于JSON的序列化还是反序列化操作的。
+
+而Gson支持两种不同的自定义解析方法
+
+* 自己实现继承TypeAdapter：这种需要自己同时实现write，read方法。效率高，但是不太灵活。
+* 实现JsonSerializer/JsonDeserializer接口：操作简单，可以根据自己需要去实现序列化或者反序列化。但是其实现经过了一层JsonElement的包装处理，所以效率方面会有所影响
+
+### 总结
+
+* 这里面使用了适配器模式，将Type和TypeAdapter进行了适配。
+* 对于TypeAdapter的创建，则使用了工厂模式
+* JsonAdapter注解支持**自定义TypeAdapter**和**自定义TypeAdapterFactory**，以及**JsonSerializer**和**JsonDeserializer**。
