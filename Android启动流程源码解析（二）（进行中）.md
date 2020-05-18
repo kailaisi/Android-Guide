@@ -94,6 +94,8 @@
 
 代码也很长，我们只提取了两个比较重要的函数，一个是调用**onPause**生命周期函数，另一个是调用**onCreate**生命周期函数的。
 
+### onPause的暂停过程
+
 我们首先来看一下是如何一步步通过调度来执行**onPause**的生命周期调度的
 
 ```java
@@ -230,7 +232,8 @@ Handler消息机制就不贴出来了，直接看其是怎么处理的。
 当接收到Handler以后，会调用**TransactionExecutor**的**execute()**方法。
 
 ```java
-    public void execute(ClientTransaction transaction) {
+//TransactionExecutor.java
+	public void execute(ClientTransaction transaction) {
         final IBinder token = transaction.getActivityToken();
         ...
         //循环遍历回调请求的所有状态，并在适当的时间执行它们
@@ -250,7 +253,8 @@ Handler消息机制就不贴出来了，直接看其是怎么处理的。
 我们这儿的暂停，是通过第二种来进行设置的，所以我们直接看**executeLifecycleState**这个方法。
 
 ```java
-    //如果事务请求，则转换到最终状态
+//TransactionExecutor.java
+	//如果事务请求，则转换到最终状态
     private void executeLifecycleState(ClientTransaction transaction) {
         // ActivityStackSupervisor.java中进行了这个设置
         // final ActivityLifecycleItem lifecycleItem;
@@ -273,4 +277,123 @@ Handler消息机制就不贴出来了，直接看其是怎么处理的。
 ```
 
 我们这里的**lifecycleItem**是我们刚才创建的**PauseActivityItem**，这里会执行其**execute**方法。
+
+```java
+//PauseActivityItem.java
+	@Override
+    public void execute(ClientTransactionHandler client, IBinder token,  PendingTransactionActions pendingActions) {
+        Trace.traceBegin(TRACE_TAG_ACTIVITY_MANAGER, "activityPause");
+        //这里的client，是Activity独享
+        client.handlePauseActivity(token, mFinished, mUserLeaving, mConfigChanges, pendingActions,"PAUSE_ACTIVITY_ITEM");
+        Trace.traceEnd(TRACE_TAG_ACTIVITY_MANAGER);
+    }
+```
+
+这里的client对象我们需要回退去跟踪一下
+
+```java
+//ActivityThread.java
+private final TransactionExecutor mTransactionExecutor = new TransactionExecutor(this);
+//TransactionExecutor.java
+//在ActivityThread类中中调用了mTransactionExecutor = new TransactionExecutor(this)这个方法，其中的mTransactionHandler是ActivityThread本身
+    public TransactionExecutor(ClientTransactionHandler clientTransactionHandler) {
+        mTransactionHandler = clientTransactionHandler;
+    }
+```
+
+所以说，最终调用的是**ActivityThread**的**handlePauseActivity**方法
+
+```java
+//ActivityThread.java
+	public void handlePauseActivity(IBinder token, boolean finished, boolean userLeaving,int configChanges, PendingTransactionActions pendingActions, String reason) {
+        //获取对应的ActivityClientRecord对象
+        ActivityClientRecord r = mActivities.get(token);
+        if (r != null) {
+            ...
+            //***重点方法***，执行pause方法
+            performPauseActivity(r, finished, reason, pendingActions);
+		    ...
+        }
+    }
+
+    private Bundle performPauseActivity(ActivityClientRecord r, boolean finished, String reason,
+                                        PendingTransactionActions pendingActions) {
+        ...
+        //****重点方法****
+        performPauseActivityIfNeeded(r, reason);
+        ...
+        return shouldSaveState ? r.state : null;
+    }
+    private void performPauseActivityIfNeeded(ActivityClientRecord r, String reason) {
+        	...
+            r.activity.mCalled = false;
+            //重点方法，通过Instrumentation调用onPause生命周期
+            mInstrumentation.callActivityOnPause(r.activity);
+            ...
+    }
+```
+
+最终会通过**Instrumentation**调用**callActivityOnPause**方法。
+
+```java
+   //Instrumentation.java
+   	public void callActivityOnPause(Activity activity) {
+        activity.performPause();
+    }
+    //Activity.java
+    final void performPause() {
+        dispatchActivityPrePaused();
+        mDoReportFullyDrawn = false;
+        //管理的Fragment的处理
+        mFragments.dispatchPause();
+        mCalled = false;
+        //调用了onPause生命周期方法
+        onPause();
+        writeEventLog(LOG_AM_ON_PAUSE_CALLED, "performPause");
+        //设置mResumed为false，表示当前activity没有展示
+        mResumed = false;
+        //调用一些回调函数
+        dispatchActivityPostPaused();
+    }
+```
+
+到这里为止，原来在我们面前展示的那个Activity调用了其**onPause**方法。
+
+### Activity的创建过程
+
+回到主线的**resumeTopActivityInnerLocked**方法中，当执行完**startPausingLocked**方法后，会调用**mStackSupervisor.startSpecificActivityLocked**方法
+
+```java
+    //ActivityStackSupervisor.java
+	void startSpecificActivityLocked(ActivityRecord r, boolean andResume, boolean checkConfig) {
+        //根据uid和pid，获取activity对应的进行和线程信息
+        final WindowProcessController wpc =mService.getProcessController(r.processName, r.info.applicationInfo.uid);
+        boolean knownToBeDead = false;
+        if (wpc != null && wpc.hasThread()) {
+            //如果进程和线程都存在，执行后面的代码
+            try {
+                realStartActivityLocked(r, wpc, andResume, checkConfig);
+                return;
+            } catch (RemoteException e) {
+                Slog.w(TAG, "Exception when starting activity "
+                        + r.intent.getComponent().flattenToShortString(), e);
+            }
+
+            knownToBeDead = true;
+        }
+
+            //通过message进行进程的启动。
+            final Message msg = PooledLambda.obtainMessage(
+                    ActivityManagerInternal::startProcess, mService.mAmInternal, r.processName,
+                    r.info.applicationInfo, knownToBeDead, "activity", r.intent.getComponent());
+            mService.mH.sendMessage(msg);
+        } finally {
+            Trace.traceEnd(TRACE_TAG_ACTIVITY_MANAGER);
+        }
+    }
+```
+
+如果要启动的activity所在的进程和线程都存在，那么直接调用**realStartActivityLocked**方法进行启动，否则的话，就会调用Handler机制进行进程的创建。
+
+#### realStartActivityLocked
 
