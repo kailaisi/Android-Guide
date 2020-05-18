@@ -1640,7 +1640,7 @@ if (dontStart) {//不需要重新启动，那么使用复用逻辑，将当前ac
 
 这种基本不可能发生的情况，我们也分析一下，毕竟不能厚此薄彼嘛~
 
-```
+```java
     //找焦点的ActivityStack上栈顶的Task,或者创建一个新的任务栈
     private int setTaskToCurrentTopOrCreateNewTask() {
         //获取持有焦点的ActivityStack
