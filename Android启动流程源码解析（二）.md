@@ -381,7 +381,6 @@ private final TransactionExecutor mTransactionExecutor = new TransactionExecutor
 
             knownToBeDead = true;
         }
-
             //通过message进行进程的启动。
             final Message msg = PooledLambda.obtainMessage(
                     ActivityManagerInternal::startProcess, mService.mAmInternal, r.processName,
@@ -397,3 +396,72 @@ private final TransactionExecutor mTransactionExecutor = new TransactionExecutor
 
 #### realStartActivityLocked
 
+```java
+    //真正执行Activity启动的方法
+    boolean realStartActivityLocked(ActivityRecord r, WindowProcessController proc, boolean andResume, boolean checkConfig) throws RemoteException {
+        //如果还有activity没有暂停，这里会直接返回false
+        if (!mRootActivityContainer.allPausedActivitiesComplete()) {
+            return false;
+        }
+
+        final TaskRecord task = r.getTaskRecord();
+        final ActivityStack stack = task.getStack();
+        //设置标志位，不再接收其他activity的resume的操作
+        beginDeferResume();
+        try {
+           ...
+                //创建了一个Activity事务
+                final ClientTransaction clientTransaction = ClientTransaction.obtain(proc.getThread(), r.appToken);
+                final DisplayContent dc = r.getDisplay().mDisplayContent;
+                //增加一个要执行的事务LaunchActivityItem。
+                clientTransaction.addCallback(LaunchActivityItem.obtain(new Intent(r.intent),
+                        System.identityHashCode(r), r.info,
+                        mergedConfiguration.getGlobalConfiguration(),
+                        mergedConfiguration.getOverrideConfiguration(), r.compat,
+                        r.launchedFromPackage, task.voiceInteractor, proc.getReportedProcState(),
+                        r.icicle, r.persistentState, results, newIntents,
+                        dc.isNextTransitionForward(), proc.createProfilerInfoIfNeeded(),
+                                r.assistToken));
+                final ActivityLifecycleItem lifecycleItem;
+                //设置其生命周期LifecycleStateRequest
+                if (andResume) {
+                    lifecycleItem = ResumeActivityItem.obtain(dc.isNextTransitionForward());
+                } else {
+                    lifecycleItem = PauseActivityItem.obtain();
+                }
+                clientTransaction.setLifecycleStateRequest(lifecycleItem);
+                //执行事务的调度
+                mService.getLifecycleManager().scheduleTransaction(clientTransaction);
+	    ...
+        proc.onStartActivity(mService.mTopProcessState, r.info);
+        return true;
+    }
+```
+
+在这个方法里面，创建了一个事务，在事务中增加了一个callback回调，然后通过**setLifecycleStateRequest**设置了一个生命周期，最后通过**scheduleTransaction**执行了调度。在前面的**onPause**中，我们梳理了整个调度的流程，最后会调用到**LaunchActivityItem**的**execute**，然后会调用生命周期所对应的**ResumeActivityItem**的**execute**。
+
+我们挨个看，先看**LaunchActivityItem**的调用
+
+```java
+//LaunchActivityItem.java
+	//一般会在TransactionExecutor中调用这个方法
+    //ClientTransactionHandler实际是ActivityThread对象，所以这里会执行activitythread类中的handleLaunchActivity方法
+    @Override
+    public void execute(ClientTransactionHandler client, IBinder token,
+                        PendingTransactionActions pendingActions) {
+        Trace.traceBegin(TRACE_TAG_ACTIVITY_MANAGER, "activityStart");
+        ActivityClientRecord r = new ActivityClientRecord(token, mIntent, mIdent, mInfo,
+                mOverrideConfig, mCompatInfo, mReferrer, mVoiceInteractor, mState, mPersistentState,
+                mPendingResults, mPendingNewIntents, mIsForward,
+                mProfilerInfo, client, mAssistToken);
+        //调用activitythread类中的handleLaunchActivity方法
+        client.handleLaunchActivity(r, pendingActions, null /* customIntent */);
+        Trace.traceEnd(TRACE_TAG_ACTIVITY_MANAGER);
+    }
+```
+
+其本质调用的是ActivityThread中的handleLaunchActivity方法。
+
+这部分的功能，我们在[Android布局窗口绘制分析]()中进行过解析。这里不再往下进行解析了。
+
+我们直接跳过这部分，来看看如果启动的activity所在的进程和线程都存在。会进行进程的创建工作。这部分我们后面专门再进行一篇关于进程创建的解析工作。

@@ -48,7 +48,7 @@ final boolean serializeNulls;
 
 ##### TypeToken
 
-TypeToken是支持泛型，通过反射获取Type和Class（由于JVM中泛型的类型插除,所以来发射获取Type)。这个类的主要功能就是提供Type，获得相应的TypeAdapter。
+TypeToken是支持泛型，通过反射获取Type和Class（由于JVM中泛型的类型插除,所以来反射获取Type)。这个类的主要功能就是提供Type，获得相应的TypeAdapter。
 
 ##### TypeAdapter
 

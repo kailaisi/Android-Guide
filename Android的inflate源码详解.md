@@ -328,7 +328,7 @@ XmlResourceParser loadXmlResourceParser(@NonNull String file, @AnyRes int id, in
 
 在试图通过factory创建view之后，如果返回为空，会调用 **createView** 方法来进行view的绘制工作。
 
-```
+```java
 public final View createView(@NonNull Context viewContext, @NonNull String name, @Nullable String prefix, @Nullable AttributeSet attrs) throws ClassNotFoundException, InflateException {
     //从缓存中获取构造方法
     Constructor<? extends View> constructor = sConstructorMap.get(name);
@@ -438,7 +438,7 @@ public final View createView(@NonNull Context viewContext, @NonNull String name,
 
 这个里面使用的mFactory，mFactory2都是什么呢？
 
-```
+```java
 //LayoutInflater.java
 
     private Factory mFactory;
@@ -458,7 +458,7 @@ public final View createView(@NonNull Context viewContext, @NonNull String name,
 
 所以其实只是两个接口而已。
 
-```
+```java
 ////LayoutInflater.java
 public void setFactory(Factory factory) {
     if (mFactorySet) {
@@ -496,7 +496,7 @@ public void setFactory2(Factory2 factory) {
 
 那么其意义是什么呢？比如说我现在有一个有个需求，想要把某个页面中的TextView全部修改为自定义的NewTextView。那么我们可以创建一个Factory的实现类，然后设置一次即可。
 
-```
+```java
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -527,7 +527,7 @@ public class MainActivity extends AppCompatActivity {
 
 其实我们经常使用的 **AppCompatActivity** 也是这么来进行处理的。我们跟踪一下源码看看。
 
-```
+```java
 public class AppCompatActivity extends FragmentActivity implements AppCompatCallback,
     TaskStackBuilder.SupportParentable, ActionBarDrawerToggle.DelegateProvider {
     @Override
