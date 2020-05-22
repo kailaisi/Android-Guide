@@ -92,8 +92,9 @@ public abstract class LauncherActivity extends ListActivity {
 
 可以看到，不管是否有mParent，其实最后都是需要交给**mInstrumentation**通过**execStartActivity**来进行处理。
 
-```java 
-    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, Activity target, Intent intent, int requestCode, Bundle options) {
+```java
+    //Instrumentation.java
+	public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, Activity target, Intent intent, int requestCode, Bundle options) {
         IApplicationThread whoThread = (IApplicationThread) contextThread;
         ...
         try {
@@ -114,7 +115,7 @@ public abstract class LauncherActivity extends ListActivity {
     }
 ```
 
-现在我们去**ActivityTaskManagerService**中看一下**startActivity()**方法的具体实现
+现在我们去**ActivityTaskManagerService**中看一下**startActivity()**方法的具体实现。
 
 ```java
 //ActivityTaskManagerService.java
@@ -145,7 +146,7 @@ public abstract class LauncherActivity extends ListActivity {
                 .setCallingPackage(callingPackage)//调用方的包名
                 .setResolvedType(resolvedType)//调用type
                 .setResultTo(resultTo)//调用方的ActivityClientRecord的binder（实际上是AMS的ActivityRecord对应在App端的binder对象）
-                .setResultWho(resultWho)//调用方的标示
+                .setResultWho(resultWho)//调用方的标识
                 .setRequestCode(requestCode)//需要返回的requestCode
                 .setStartFlags(startFlags)//启动标志位
                 .setProfilerInfo(profilerInfo)//启动时带上的权限文件对象
@@ -675,7 +676,7 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
 
         // If the activity being launched is the same as the one currently at the top, then
         // we need to check if it should only be launched once.
-        //如果要启动的activity和当前栈顶的activity是一样的，安么我们需要检测是否只需要启动一次
+        //如果要启动的activity和当前栈顶的activity是一样的，那么我们需要检测是否只需要启动一次
         final ActivityStack topStack = mRootActivityContainer.getTopDisplayFocusedStack();
         final ActivityRecord topFocused = topStack.getTopActivity();
         final ActivityRecord top = topStack.topRunningNonDelayedActivityLocked(mNotTop);
@@ -814,7 +815,7 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
         mLaunchParams.reset();
         //根据启动模式计算launchparam
         mSupervisor.getLaunchParamsController().calculate(inTask, r.info.windowLayout, r,sourceRecord, options, PHASE_DISPLAY, mLaunchParams);
-		//获取一个显示id。这个DisplayId是我们要启动的activity具体要现实在那个屏幕上。因为android支持多屏幕，但是一般只使用第一个屏幕
+		//获取一个显示id。这个DisplayId是我们要启动的activity具体要显示在那个屏幕上。因为android支持多屏幕，但是一般只使用第一个屏幕
         mPreferredDisplayId =mLaunchParams.hasPreferredDisplay() ? mLaunchParams.mPreferredDisplayId: DEFAULT_DISPLAY;
 
         mLaunchMode = r.launchMode;
@@ -1060,7 +1061,7 @@ private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
         }
 
         if (intentActivity != null&& (mStartActivity.isActivityTypeHome() || intentActivity.isActivityTypeHome()) && intentActivity.getDisplayId() != mPreferredDisplayId) {
-            //不能再其他屏幕上复用桌面Activity
+            //不能在其他屏幕上复用桌面Activity
             intentActivity = null;
         }
 
@@ -1420,7 +1421,7 @@ if (dontStart) {//不需要重新启动，那么使用复用逻辑，将当前ac
 
 这里是对。代码很简单，判断当前顶部运行的Activity是否是我们所要启动的Activity，而且启动模式是singTop和singleTask。如果是的话，情况调用onResume和newIntent方法。因为这两种模式下，如果顶层是当前Activity的话，都不会启动新的Activity。也就是我们常说的 A->B->C  。如果C的模式是singleTop，这时候再启动C的话，栈内仍然是A->B->C。
 
-到这里为知，整个复用的逻辑才完全走完。剩下的就是我们的标准的启动流程了。
+到这里为止，整个复用的逻辑才完全走完。剩下的就是我们的标准的启动流程了。
 
 #### 正常模式的任务栈处理
 
@@ -1586,7 +1587,7 @@ if (dontStart) {//不需要重新启动，那么使用复用逻辑，将当前ac
 
 这段代码里面的情况应该是我们最常见的情况了。我们简单总结一下
 
-1. 启动栈的顶部TaskRecord和启动方的TaskRecord不一致，或者目标任务不能再启动方所在屏幕展示，则需要移动到其他的ActivityStack去显示。这里会从有效的displayId中去查找对应的ActivityStack。
+1. 启动栈的顶部TaskRecord和启动方的TaskRecord不一致，或者目标任务不能在启动方所在屏幕展示，则需要移动到其他的ActivityStack去显示。这里会从有效的displayId中去查找对应的ActivityStack。
 2. 目标ActivityStack为空，这种属于默认的情况。会设置为启动方的ActivityStack。如果目标ActivityStack存在而且和启动方的ActivityStack不一致，则把启动方的任务栈（TaskRecord）绑定到目标所在的ActivityStack上
 3. 把目标ActivityStack移动到最前方，同时也移到ActivityDisplay集合的顶部。
 4. AddingToTask为false，打开了FLAG_ACTIVITY_CLEAR_TOP，则清除启动方的TaskRecord中的顶部。顶部不为空，则调用newIntent，再根据需要调用resume方法。
@@ -1604,7 +1605,7 @@ if (dontStart) {//不需要重新启动，那么使用复用逻辑，将当前ac
         ActivityRecord top = mInTask.getTopActivity();
         //任务栈顶部的activity是我们要启动的activity。
         if (top != null && top.mActivityComponent.equals(mStartActivity.mActivityComponent) && top.mUserId == mStartActivity.mUserId) {
-            //如果设置了singleTop或者启动模式位singleTop或者singleTask，那么调用newIntent方法。
+            //如果设置了singleTop或者启动模式为singleTop或者singleTask，那么调用newIntent方法。
             if ((mLaunchFlags & FLAG_ACTIVITY_SINGLE_TOP) != 0 || isLaunchModeOneOf(LAUNCH_SINGLE_TOP, LAUNCH_SINGLE_TASK)) {
                 mTargetStack.moveTaskToFrontLocked(mInTask, mNoAnimation, mOptions, mStartActivity.appTimeTracker, "inTaskToFront");
                 if ((mStartFlags & START_FLAG_ONLY_IF_NEEDED) != 0) {
@@ -1675,7 +1676,7 @@ if (dontStart) {//不需要重新启动，那么使用复用逻辑，将当前ac
     }
 ```
 
-( ′◔ ‸◔`)？咦？看了那么多，怎么没看到我们的Activtiy生命周期的东西，好奇怪。。。。其实是在之前的分析中经常说的那个 **resumeFocusedStacksTopActivities** 方法中的，因为篇幅太行，剩下的等下一章再整理吧，毕竟本文有点太长了~~~。
+( ′◔ ‸◔`)？咦？看了那么多，怎么没看到我们的Activtiy生命周期的东西，好奇怪。。。。其实是在之前的分析中经常说的那个 **resumeFocusedStacksTopActivities** 方法中的，因为篇幅太长，剩下的等下一章再整理吧，毕竟本文有点太长了~~~。
 
 ### 汇总
 
@@ -1697,3 +1698,9 @@ if (dontStart) {//不需要重新启动，那么使用复用逻辑，将当前ac
 7. **ActivityDisplay** 表示一个屏幕，Android支持三种屏幕：主屏幕，外接屏幕（HDMI等），虚拟屏幕（投屏）。一般情况下，即只有主屏幕时， **ActivityStackSupervisor** 与 **ActivityDisplay** 都是系统唯一。 **ActivityDisplay** 持有着当前屏幕的 **ActivityStack** 列表信息。
 8. **RootActivityContainer** 则是持有着屏幕 **ActivityDisplay** 信息。用来分担ActivityStackSupervisor的部分职责的，主要目的是使ActivityContainer的结构和WindowContainer的结构保持一致。
 9. ![image-20200408150308700](http://cdn.qiniu.kailaisii.com/typora/202004/08/153428-322821.png)
+
+> 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
+>
+> 同步公众号[开了肯]
+
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)

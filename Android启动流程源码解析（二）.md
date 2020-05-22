@@ -1,6 +1,6 @@
 ## Android启动流程源码解析（二）
 
-在之前的源码分析中，我们最后遗留下来一个问题。那就是我们的Activity的启动是啥时候处理的啊？上万行的分析，也没看到我们想要的**onCreate**啥的。其实就是**resumeFocusedStacksTopActivities**方法，所以我们这篇文章就从这个方法开始。
+在之前的[Android启动流程源码解析(一)](https://mp.weixin.qq.com/s/ASjx3aR69rfVKrjeUM94iw)源码分析中，我们最后遗留下来一个问题。那就是我们的Activity的启动是啥时候处理的啊？上万行的分析，也没看到我们想要的**onCreate**啥的。其实就是**resumeFocusedStacksTopActivities**方法，所以我们这篇文章就从这个方法开始。
 
 ### resumeFocusedStacksTopActivities
 
@@ -462,6 +462,12 @@ private final TransactionExecutor mTransactionExecutor = new TransactionExecutor
 
 其本质调用的是ActivityThread中的handleLaunchActivity方法。
 
-这部分的功能，我们在[Android布局窗口绘制分析]()中进行过解析。这里不再往下进行解析了。
+这部分的功能，我们在[Android布局窗口绘制分析](https://mp.weixin.qq.com/s?__biz=MzUzOTE4MTQzNQ==&mid=2247483782&idx=1&sn=ef0a09a51d7a4dc3087a85bd10c820cd&chksm=facd2992cdbaa084b8f0b6503a8b31833228b371da0c57a5cb2851b78ea2d7b914fea738ecc6&token=137862270&lang=zh_CN#rd)中进行过解析。这里不再往下进行解析了。
 
 我们直接跳过这部分，来看看如果启动的activity所在的进程和线程都存在。会进行进程的创建工作。这部分我们后面专门再进行一篇关于进程创建的解析工作。
+
+> 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
+>
+> 同步公众号[开了肯]
+
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)
