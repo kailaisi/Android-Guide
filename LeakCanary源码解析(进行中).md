@@ -323,6 +323,230 @@ AndroidExcludedRefs具有不同的枚举实例，会根据不同的系统版本�
 
 #### 监控
 
+我们对于已经销毁的界面会通过**refWatcher**的**watch**方法来进行监控。
+
+```java
+//RefWatcher.java
+	public void watch(Object watchedReference) {
+        //重载方法
+        watch(watchedReference, "");
+    }
+    public void watch(Object watchedReference, String referenceName) {
+        if (this == DISABLED) {
+            return;
+        }
+        //保证watch的对象不为空
+        checkNotNull(watchedReference, "watchedReference");
+        checkNotNull(referenceName, "referenceName");
+        final long watchStartNanoTime = System.nanoTime();
+        //创建一个UUID
+        String key = UUID.randomUUID().toString();
+        //将UUID保存到set中
+        retainedKeys.add(key);
+        //创建一个弱引用，指向要检测的对象。
+        //如果这个弱引用被回收，那么会将reference加入到queue队列中
+        
+        final KeyedWeakReference reference = new KeyedWeakReference(watchedReference, key, referenceName, queue);
+        //判断reference是否被回收
+        ensureGoneAsync(watchStartNanoTime, reference);
+    }
+```
+
+这个里面主要执行了3个操作
+
+* 创建了UUID
+* 将生成的UUID保存到**retainedKeys**队列中。
+* 创建一个弱引用，指定了对应的引用队列**queue**。
+
+这里的retainedKeys队列记录了我们执行了监控的引用对象。而**queue**中会保存回收的引用。所以通过二者的对比，我们就可以找到内存泄漏的引用了。
+
+我们看一下**ensureGoneAsync**中是如何执行这个操作过程的。
+
+```java
+    //RefWatcher.java
+	private void ensureGoneAsync(final long watchStartNanoTime, final KeyedWeakReference reference) {
+        watchExecutor.execute(new Retryable() {
+            @Override
+            public Retryable.Result run() {
+                return ensureGone(reference, watchStartNanoTime);
+            }
+        });
+    }
+```
+
+这里的watcheExecute使用的是**AndroidWatchExecutor**
+
+```java
+//AndroidRefWatcherBuilder.java
+  @Override protected @NonNull WatchExecutor defaultWatchExecutor() {
+    return new AndroidWatchExecutor(DEFAULT_WATCH_DELAY_MILLIS);
+  }
+
+```
+
+我们跟踪一下**execute**方法。
+
+```java
+//AndroidWatchExecutor.java
+  @Override public void execute(@NonNull Retryable retryable) {
+    //如果当前线程是主线程，则直接执行waitForIdl
+    if (Looper.getMainLooper().getThread() == Thread.currentThread()) {
+      waitForIdle(retryable, 0);
+    } else {
+      //如果不是主线程，则通过Handler机制，将waitForIdle放入到主线程去执行
+      postWaitForIdle(retryable, 0);
+    }
+  }
+
+  private void postWaitForIdle(final Retryable retryable, final int failedAttempts) {
+    //通过Handler机制，将waitForIdle发送到主线程执行
+    mainHandler.post(new Runnable() {
+      @Override public void run() {
+        waitForIdle(retryable, failedAttempts);
+      }
+    });
+  }
+
+  private void waitForIdle(final Retryable retryable, final int failedAttempts) {
+    //当messagequeue闲置时，增加一个处理。这种方法主要是为了提升性能，不会影响我们正常的应用流畅度
+    //这个方法会在主线程执行，所以postToBackgroundWithDelay会在主线程执行
+    Looper.myQueue().addIdleHandler(new MessageQueue.IdleHandler() {
+      @Override public boolean queueIdle() {
+        postToBackgroundWithDelay(retryable, failedAttempts);
+        return false;
+      }
+    });
+  }
+```
+
+所以这里最终都会在主线程中执行**postToBackgroundWithDelay**方法。
+
+```java
+  private void postToBackgroundWithDelay(final Retryable retryable, final int failedAttempts) {
+    //计算补偿因子。如果返回了重试的话，这个failedAttempts回增加，会使得方法的执行时间延迟时间增加。
+    //比如说第一次，演示5秒执行，但是执行结果为RETRY，那么下一次就是延迟10秒来执行了
+    long exponentialBackoffFactor = (long) Math.min(Math.pow(2, failedAttempts), maxBackoffFactor);
+    //计算延迟时间
+    long delayMillis = initialDelayMillis * exponentialBackoffFactor;
+    //backgroundHandler会将run方法中的代码放在一个新的线程中去执行。
+    backgroundHandler.postDelayed(new Runnable() {
+      @Override public void run() {
+        Retryable.Result result = retryable.run();
+        if (result == RETRY) {
+          postWaitForIdle(retryable, failedAttempts + 1);
+        }
+      }
+    }, delayMillis);
+  }
+```
+
+这个方法的执行，会根据执行的次数进行来延迟执行对应的run方法。
+
+我们看一下retryable.run()方法的执行。也就回到了我们的RefWatcher中的**ensureGoneAsync**方法。
+
+```java
+private void ensureGoneAsync(final long watchStartNanoTime, final KeyedWeakReference reference) {
+  watchExecutor.execute(new Retryable() {
+    @Override public Retryable.Result run() {
+      return ensureGone(reference, watchStartNanoTime);
+    }
+  });
+}
+```
+
+这里的ensureGone方法属于我们最核心的代码了。
+
+```java
+    //判断reference是否被回收
+    @SuppressWarnings("ReferenceEquality")
+    // Explicitly checking for named null.
+    Retryable.Result ensureGone(final KeyedWeakReference reference, final long watchStartNanoTime) {
+        long gcStartNanoTime = System.nanoTime();
+        long watchDurationMs = NANOSECONDS.toMillis(gcStartNanoTime - watchStartNanoTime);
+        //移除已经回收的监控对象
+        removeWeaklyReachableReferences();
+        //如果当前是debug状态，则直接返回retry
+        if (debuggerControl.isDebuggerAttached()) {
+            // The debugger can create false leaks.
+            return RETRY;
+        }
+        //监控对象已经回收了，直接返回Done
+        if (gone(reference)) {
+            return DONE;
+        }
+        //执行一次垃圾回收
+        gcTrigger.runGc();
+        //再次移除已经回收的监控对象
+        removeWeaklyReachableReferences();
+        if (!gone(reference)) {
+            //如果仍然没有回收，证明发生了内存泄漏
+            long startDumpHeap = System.nanoTime();
+            //gc执行的时长
+            long gcDurationMs = NANOSECONDS.toMillis(startDumpHeap - gcStartNanoTime);
+            //dump出hprof文件
+            File heapDumpFile = heapDumper.dumpHeap();
+            if (heapDumpFile == RETRY_LATER) {
+                // Could not dump the heap.
+                //不能生成快照文件的话，进行重试
+                return RETRY;
+            }
+            //生成hprof文件消耗的的时间
+            long heapDumpDurationMs = NANOSECONDS.toMillis(System.nanoTime() - startDumpHeap);
+            HeapDump heapDump = heapDumpBuilder.heapDumpFile(heapDumpFile).referenceKey(reference.key)
+                    .referenceName(reference.name)
+                    .watchDurationMs(watchDurationMs)
+                    .gcDurationMs(gcDurationMs)
+                    .heapDumpDurationMs(heapDumpDurationMs)
+                    .build();
+            //分析堆内存，heapdumpListener默认是ServiceHeapDumpListener
+            heapdumpListener.analyze(heapDump);
+        }
+        return DONE;
+    }
+```
+
+这段代码执行了几个过程
+
+1. 移除已经回收的监控对象
+2. 如果当前监控的对象已经回收了，直接返回DONE。
+3. 如果没有回收，则强行执行一次GC操作。
+4. 再次移除已经回收的监控对象。
+5. 如果当前监控对象仍然没有回收，则dump出hprof文件，然后根据快照文件进行内存泄漏情况的分析。
+
+这里我们对每个方法都一一的进行一次分析
+
+##### 移除已回收的弱引用对象
+
+```java
+    private void removeWeaklyReachableReferences() {
+        KeyedWeakReference ref;
+        //循环queue
+        while ((ref = (KeyedWeakReference) queue.poll()) != null) {
+            //在queue中的ref，说明已经被回收了，所以直接将其对应的key从retainedKeys移除。
+            retainedKeys.remove(ref.key);
+        }
+    }
+```
+
+这里的**queue**是我们提到的引用队列，而**retainedKeys**中则保存着我们要监控的对象。当对象被回收以后，就会将对应的弱引用信息保存到**queue**中，所以我们将**queue**中的相关弱引用信息从**retainedKeys**移除。省下的就是我们在监听或者已经发生内存泄漏的对象了。
+
+##### 判断监控对象是否回收
+
+```java
+    //判断监控的对象是否已经回收 true:已经回收
+    private boolean gone(KeyedWeakReference reference) {
+        return !retainedKeys.contains(reference.key);
+    }
+```
+
+
+
+这里又将代码的执行放到了子线程中。这里为啥。。
+
+![](https://i02piccdn.sogoucdn.com/7684e0c5074dd677)
+
+
+
 
 
 
