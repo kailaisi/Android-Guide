@@ -28,6 +28,7 @@
   * Retrofit源码分析（完成）
   * EventBus源码解析（完成）
     * 里面的APT技术研究
+  * LeakCanary源码解析（完成） 
 * 常用的类源码解析
   * SparseArray 源码解析（完成）
   * HashMap源码解析（完成）

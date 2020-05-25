@@ -528,7 +528,7 @@ private void ensureGoneAsync(final long watchStartNanoTime, final KeyedWeakRefer
     }
 ```
 
-这里的**queue**是我们提到的引用队列，而**retainedKeys**中则保存着我们要监控的对象。当对象被回收以后，就会将对应的弱引用信息保存到**queue**中，所以我们将**queue**中的相关弱引用信息从**retainedKeys**移除。省下的就是我们在监听或者已经发生内存泄漏的对象了。
+这里的**queue**是我们提到的引用队列，而**retainedKeys**中则保存着我们要监控的对象。当对象被回收以后，就会将对应的弱引用信息保存到**queue**中，所以我们将**queue**中的相关弱引用信息从**retainedKeys**移除。剩下的就是我们在监听或者已经发生内存泄漏的对象了。
 
 ##### 判断监控对象是否回收
 
@@ -539,30 +539,260 @@ private void ensureGoneAsync(final long watchStartNanoTime, final KeyedWeakRefer
     }
 ```
 
+在上一步中，我们已经将回收的引用信息从retainedKeys中移除了，所以这里只要通过判断这个set中是否有我们监控的这个类即可。
 
+##### 导出.hprof文件
 
-这里又将代码的执行放到了子线程中。这里为啥。。
+```java
+  public File dumpHeap() {
+    //创建一个.hrof文件
+    File heapDumpFile = leakDirectoryProvider.newHeapDumpFile();
+    if (heapDumpFile == RETRY_LATER) {
+      //创建失败了，等会再重试
+      return RETRY_LATER;
+    }
+    FutureResult<Toast> waitingForToast = new FutureResult<>();
+    //通过Handler机制在主线程显示Toast，使用了CountDownLatch机制。显示Toast的时候会将其数值修改为0，
+    showToast(waitingForToast);
+    //这里会等待主线程显示Toast，也就是CountDownLatch变为0。然后就可以继续后面的操作
+    if (!waitingForToast.wait(5, SECONDS)) {
+      CanaryLog.d("Did not dump heap, too much time waiting for Toast.");
+      return RETRY_LATER;
+    }
+    //创建一个Notification通知
+    Notification.Builder builder = new Notification.Builder(context)
+        .setContentTitle(context.getString(R.string.leak_canary_notification_dumping));
+    Notification notification = LeakCanaryInternals.buildNotification(context, builder);
+    NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+    int notificationId = (int) SystemClock.uptimeMillis();
+    notificationManager.notify(notificationId, notification);
 
-![](https://i02piccdn.sogoucdn.com/7684e0c5074dd677)
+    Toast toast = waitingForToast.get();
+    try {
+      //创建heap堆的快照信息，可以获知程序的哪些部分正在使用大部分的内存
+      Debug.dumpHprofData(heapDumpFile.getAbsolutePath());
+      //关闭Toask和Notification通知
+      cancelToast(toast);
+      notificationManager.cancel(notificationId);
+      return heapDumpFile;
+    } catch (Exception e) {
+      CanaryLog.d(e, "Could not dump heap");
+      // Abort heap dump
+      return RETRY_LATER;
+    }
+  }
+```
 
+这里会创建一个.hprof文件，然后显示一个Toast和Notification通知，再将内存泄漏时候的堆的快照信息保存的.hprof文件中，最后将Toast和Notification通知关闭。所以执行完这个操作之后，我们生成的.hprof文件中就保存了对应的内存泄漏时的堆的相关信息了。
 
+##### 快照文件分析
 
+当生成了文件以后，会通过heapdumpListener来分析生成的快照文件。这里的listener默认的是ServiceHeapDumpListener类
 
+```java
+  //AndroidRefWatcherBuilder.java
+  @Override protected @NonNull HeapDump.Listener defaultHeapDumpListener() {
+    return new ServiceHeapDumpListener(context, DisplayLeakService.class);
+  }
+```
 
+我们看一下它的**analyze**方法
 
+```java
+  //ServiceHeapDumpListener.java
+   public void analyze(@NonNull HeapDump heapDump) {
+    checkNotNull(heapDump, "heapDump");
+    HeapAnalyzerService.runAnalysis(context, heapDump, listenerServiceClass);
+  }
+  //HeapAnalyzerService.java
+  public static void runAnalysis(Context context, HeapDump heapDump,
+      Class<? extends AbstractAnalysisResultService> listenerServiceClass) {
+    setEnabledBlocking(context, HeapAnalyzerService.class, true);
+    setEnabledBlocking(context, listenerServiceClass, true);
+    Intent intent = new Intent(context, HeapAnalyzerService.class);
+    //这里的listenerServiceClass是DisplayLeakService
+    intent.putExtra(LISTENER_CLASS_EXTRA, listenerServiceClass.getName());
+    intent.putExtra(HEAPDUMP_EXTRA, heapDump);
+    //启动一个前台的服务，启动时，会调用onHandleIntent方法，该方法在父类中实现了。实现中会调用onHandleIntentInForeground()方法
+    ContextCompat.startForegroundService(context, intent);
+  }
+```
 
-因为当Activity执行该回调方法的时候，已经创建了对应的**FragmentManager**。我们可以对
+这里启动了一个服务来进行对于文件的分析功能。当启动服务的时候会调用**onHandleIntent**方法。**HeapAnalyzerService**的**onHandleIntent**是在其父类中实现的。
 
-​	注册监听的实现方案：
+```java
+//ForegroundService.java
+@Override protected void onHandleIntent(@Nullable Intent intent) {
+  onHandleIntentInForeground(intent);
+}
+```
 
-销毁后放入到弱引用WeakReference中
+所以会调用**onHandleIntentInForeground**这个方法。
 
-将WeakReference关联到ReferenceQueue
+```java
+    protected void onHandleIntentInForeground(@Nullable Intent intent) {
+        String listenerClassName = intent.getStringExtra(LISTENER_CLASS_EXTRA);
+        HeapDump heapDump = (HeapDump) intent.getSerializableExtra(HEAPDUMP_EXTRA);
+        //创建一个堆分析器
+        HeapAnalyzer heapAnalyzer = new HeapAnalyzer(heapDump.excludedRefs, this, heapDump.reachabilityInspectorClasses);
+        //**重点分析方法***分析内存泄漏结果
+        AnalysisResult result = heapAnalyzer.checkForLeak(heapDump.heapDumpFile, heapDump.referenceKey, heapDump.computeRetainedHeapSize);
+        //调用接口，将结果回调给listenerClassName所对应的类（这里是DisplayLeakService类）来进行处理
+        AbstractAnalysisResultService.sendResultToListener(this, listenerClassName, heapDump, result);
+    }
+```
 
-查看Reference中是否存在Activity的引用。
+这里会创建一个堆分析器，对于我们的快照文件进行分析，然后将结果通过AbstractAnalysisResultService的方法，将结果交给DisplayLeakService类来进行处理。
 
-如果泄露，则Dump出heap信息，然后分析泄露路径
+##### 检测泄漏结果
 
+HeapAnalyzer类的作用主要就是通过对.hprof文件的分析，检测我们监控的对象是否发生了内存的泄漏
 
+```java
+//HeapAnalyzer.java
+//将hprof文件解析，解析为对应的AnalysisResult对象
+public @NonNull AnalysisResult checkForLeak(@NonNull File heapDumpFile, @NonNull String referenceKey, boolean computeRetainedSize) {
+    long analysisStartNanoTime = System.nanoTime();
 
-> 源码解析项目地址：[leakcanary-source](https://github.com/kailaisi/leakcanary-source.git)
+    if (!heapDumpFile.exists()) {
+        Exception exception = new IllegalArgumentException("File does not exist: " + heapDumpFile);
+        return failure(exception, since(analysisStartNanoTime));
+    }
+
+    try {
+        //开始读取Dump文件
+        listener.onProgressUpdate(READING_HEAP_DUMP_FILE);
+        HprofBuffer buffer = new MemoryMappedFileBuffer(heapDumpFile);
+        //.hprof的解析器,这个是haha库的类
+        HprofParser parser = new HprofParser(buffer);
+        listener.onProgressUpdate(PARSING_HEAP_DUMP);
+        //解析生成快照，快照中会包含所有被引用的对象信息
+        Snapshot snapshot = parser.parse();
+        listener.onProgressUpdate(DEDUPLICATING_GC_ROOTS);
+        deduplicateGcRoots(snapshot);
+        listener.onProgressUpdate(FINDING_LEAKING_REF);
+        //根据key值，查找快照中是否有所需要的对象
+        Instance leakingRef = findLeakingReference(referenceKey, snapshot);
+        if (leakingRef == null) {
+            //表示对象不存在，在gc的时候，进行了回收。表示没有内存泄漏
+            String className = leakingRef.getClassObj().getClassName();
+            return noLeak(className, since(analysisStartNanoTime));
+        }
+        //检测泄漏的路径，并将检测的结果进行返回
+        return findLeakTrace(analysisStartNanoTime, snapshot, leakingRef, computeRetainedSize);
+    } catch (Throwable e) {
+        return failure(e, since(analysisStartNanoTime));
+    }
+}
+```
+
+这个方法使用了haha三方类库来对.hprof文件解析以及处理。里面的主要流程如下：
+
+1. 创建一个.hprof文件的buffer来进行文件的读取
+2. 通过HprofParser解析器来解析hprof文件，生成Snapshot对象。在这一步中构建了一颗对象的引用关系树，我们可以在这颗树中查询各个Object的信息，包括Class信息、内存地址、持有的引用以及被持有引用的关系。
+3. 根据传入的监控的对象key值，获取其在Snapshot中所对应的引用leakingRef。
+4. 分析leakingRef，获取到内存泄漏的路径。这里会找到一条到泄漏对象的最短引用路径。这个过程由findLeakTrace来完成，实际上寻找最短引用路径的逻辑是封装在PathsFromGCRootsComputerImpl类的getNextShortestPath和processCurrentReferrefs方法中
+
+##### 泄漏的通知
+
+当找到我们的内存泄漏的路径后，会调用**AbstractAnalysisResultService.sendResultToListener**将结果交给**DisplayLeakService**类来进行处理。
+
+```java
+//AbstractAnalysisResultService.java
+public static void sendResultToListener(@NonNull Context context,
+    @NonNull String listenerServiceClassName,
+    @NonNull HeapDump heapDump,
+    @NonNull AnalysisResult result) {
+  Class<?> listenerServiceClass;
+  try {
+    //通过反射获取到一个类信息
+    listenerServiceClass = Class.forName(listenerServiceClassName);
+  } catch (ClassNotFoundException e) {
+    throw new RuntimeException(e);
+  }
+  Intent intent = new Intent(context, listenerServiceClass);
+  //将结果保存到文件中，然后将文件路径传递给service
+  File analyzedHeapFile = AnalyzedHeap.save(heapDump, result);
+  if (analyzedHeapFile != null) {
+    intent.putExtra(ANALYZED_HEAP_PATH_EXTRA, analyzedHeapFile.getAbsolutePath());
+  }
+  //启动服务，然后传递内存泄漏分析的结果文件所对应的位置
+  ContextCompat.startForegroundService(context, intent);
+}
+```
+
+这里会启动一个DisplayLeakService服务，传递了对应的内存泄漏分析结果的文件路径信息。
+
+然后通过onHandleIntent()->onHandleIntentInForeground()->onHeapAnalyzed()。最终调用了**DisplayLeakService**的**onHeapAnalyzed**方法
+
+```java
+protected final void onHeapAnalyzed(@NonNull AnalyzedHeap analyzedHeap) {
+    HeapDump heapDump = analyzedHeap.heapDump;
+    AnalysisResult result = analyzedHeap.result;
+    //根据泄漏的信息，生成提示的String字符串
+    String leakInfo = leakInfo(this, heapDump, result, true);
+    CanaryLog.d("%s", leakInfo);
+    //重命名.hprof文件
+    heapDump = renameHeapdump(heapDump);
+    //保存分析的结果
+    boolean resultSaved = saveResult(heapDump, result);
+    //结果表头
+    String contentTitle;
+    if (resultSaved) {
+        PendingIntent pendingIntent = DisplayLeakActivity.createPendingIntent(this, heapDump.referenceKey);
+        if (result.failure != null) {
+            //分析失败
+            contentTitle = getString(R.string.leak_canary_analysis_failed);
+        } else {
+            String className = classSimpleName(result.className);
+            if (result.leakFound) {//检测到内存泄漏
+                if (result.retainedHeapSize == AnalysisResult.RETAINED_HEAP_SKIPPED) {
+                    if (result.excludedLeak) {//被排除的检测结果
+                        contentTitle = getString(R.string.leak_canary_leak_excluded, className);
+                    } else {
+                        contentTitle = getString(R.string.leak_canary_class_has_leaked, className);
+                    }
+                } else {
+                    String size = formatShortFileSize(this, result.retainedHeapSize);
+                    if (result.excludedLeak) {
+                        contentTitle = getString(R.string.leak_canary_leak_excluded_retaining, className, size);
+                    } else {
+                        contentTitle = getString(R.string.leak_canary_class_has_leaked_retaining, className, size);
+                    }
+                }
+            } else {
+                //未检测到内存泄漏
+                contentTitle = getString(R.string.leak_canary_class_no_leak, className);
+            }
+        }
+        String contentText = getString(R.string.leak_canary_notification_message);
+        //***重点方法***显示一个Notification通知
+        showNotification(pendingIntent, contentTitle, contentText);
+    } else {
+        onAnalysisResultFailure(getString(R.string.leak_canary_could_not_save_text));
+    }
+    afterDefaultHandling(heapDump, result, leakInfo);
+}
+```
+
+这个服务的作用就是将我们分析之后的泄漏路径的相关信息通过Notification的通知形式，告知用户具体的内存泄漏情况。
+
+到这里为止LeakCanary的整个实现流程解析完成了。
+
+### 学习到的新知识
+
+整篇的学习，还是学到了一些之前没有认识到的东西的。
+
+1. 主要是通过**registerActivityLifecycleCallbacks**来注册对于我们销毁的Activity的监听。
+2. 使用了弱引用的**引用队列**方式对于我们已经销毁的Activity的引用信息进行监控，检测其是否被回收。
+3. 对于执行垃圾回收需要使用**Runtime.getRuntime().gc()**。
+4. 可以使用**CountDownLatch**来实现线程之间的同步处理。比如说这套源码里面对于showToast的处理。
+5. 不同的Android版本本身可能就存在一些内存泄漏的情况。
+
+源码解析项目地址：[leakcanary-source](https://github.com/kailaisi/leakcanary-source.git)
+
+> 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
+>
+> 同步公众号[开了肯]
+
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)
