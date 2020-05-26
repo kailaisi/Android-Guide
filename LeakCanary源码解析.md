@@ -771,11 +771,15 @@ protected final void onHeapAnalyzed(@NonNull AnalyzedHeap analyzedHeap) {
     } else {
         onAnalysisResultFailure(getString(R.string.leak_canary_could_not_save_text));
     }
+    //钩子函数，可以重写此方法，将内存的泄露信息和对应的.hprof文件上传到服务器。
+    // 需要注意，leakfind和excludedLeak的情况都会调用这个方法
     afterDefaultHandling(heapDump, result, leakInfo);
 }
 ```
 
 这个服务的作用就是将我们分析之后的泄漏路径的相关信息通过Notification的通知形式，告知用户具体的内存泄漏情况。
+
+在程序的最后有一个afterDefaultHandling方法，这个方法是一个空实现，用户可以覆写这个方法来实现将内存泄漏的信息上传到服务器的功能
 
 到这里为止LeakCanary的整个实现流程解析完成了。
 
@@ -788,6 +792,7 @@ protected final void onHeapAnalyzed(@NonNull AnalyzedHeap analyzedHeap) {
 3. 对于执行垃圾回收需要使用**Runtime.getRuntime().gc()**。
 4. 可以使用**CountDownLatch**来实现线程之间的同步处理。比如说这套源码里面对于showToast的处理。
 5. 不同的Android版本本身可能就存在一些内存泄漏的情况。
+6. LeakCanary可以通过覆写**afterDefaultHandling**方法来实现对于内存泄漏信息的自行处理
 
 源码解析项目地址：[leakcanary-source](https://github.com/kailaisi/leakcanary-source.git)
 
