@@ -208,7 +208,7 @@
         }
 ```
 
- 所以openZygoteSocketIfNeeded的主要作用是保证和Zygote的socket连接的存在。当连接存在以后就可以通过socket进行消息的传输了。
+ 所以openZygoteSocketIfNeeded的主要作用是**保证和Zygote的socket连接的存在**。当连接存在以后就可以通过socket进行消息的传输了。
 
 #### ZygoteProcess#zygoteSendArgsAndGetResult
 
@@ -272,16 +272,9 @@ Zygote会先fork出SystemServer进程，然后会进入循环等待，用来接�
                     return;
                 }
             }
-            //这里会进入循环等待，用来接收Socket发来的消息，用来fork出其他应用所需要的进程信息。并且返回fork出的进程的启动函数
+            //***重点方法***   这里会进入循环等待，用来接收Socket发来的消息，用来fork出其他应用所需要的进程信息。并且返回fork出的进程的启动函数
             caller = zygoteServer.runSelectLoop(abiList);
-        } catch (Throwable ex) {
-            Log.e(TAG, "System zygote died with exception", ex);
-            throw ex;
-        } finally {
-            if (zygoteServer != null) {
-                zygoteServer.closeServerSocket();
-            }
-        }
+        ....
         if (caller != null) {
             //调用caller的run方法，启动子进程（run方法会调用子进程的启动程序的main方法，也就是ActivityThread.java的main()方法）
             caller.run();
@@ -291,7 +284,7 @@ Zygote会先fork出SystemServer进程，然后会进入循环等待，用来接�
 
 ### 连接的处理
 
-我们这里看一下**runSelectLoop**这个方法，
+我们这里看一下**runSelectLoop**这个方法如何监听Socket连接以及接收消息的
 
 ```java
     Runnable runSelectLoop(String abiList) {
@@ -550,5 +543,16 @@ handleChildProc会根据将传入的参数信息，返回子进程启动时所�
         }
 ```
 
-当通过**runSelectLoop**方法fork完对应的子进程以后，会将这个**MethodAndArgsCaller**返回并执行。我们一开始传入的**ActivityThread**的main方法就调用并执行了
+当通过**runSelectLoop**方法fork完对应的子进程以后，会将这个**MethodAndArgsCaller**返回并执行。我们一开始传入的**ActivityThread**的main方法就调用并执行了。
+
+### 总结
+
+1. 在fork子进程之后，直接执行了**ActivityThread**的main方法来启动的。
+2. 在系统启动时，开启了Zygote的Socket的Server端来监听，当需要创建进程时，直接通过Socket连接，然后传递参数来创建。
+3. fork采用了copy on write方式。
+4. Server端对于连接的处理，采用了**I/O 多路复用**机制。具体的这个机制，这个机制回头可以延伸一下。
+
+
+
+
 

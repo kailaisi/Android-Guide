@@ -4,7 +4,8 @@
   - Android启动流程源码解析（一）（完成）
   - Android启动流程源码解析（二）（完成）
   - Android布局窗口绘制分析（完成）
-  - 应用进程创建过程（待写）
+  - 应用进程创建过程（完成）
+    - 
 - FragmentManager系列
   - Android之Fragment状态管理源码解析（完成）
 
@@ -22,7 +23,8 @@
     * JsonReader/JsonWriter解析(待写)
     * TypeToken的补充(待写)
   * OkHttp源码解析（完成）
-    * 5个拦截器分析（待写）
+    * 5个拦截器分析（进行中）
+    * 缓存实现方案
   * Glide万字解密（完成）
   * Picasso解密(完成)
   * Retrofit源码分析（完成）
@@ -40,6 +42,7 @@
 * 杂项
   * Andoird的编译和打包流程分析(完成)
   * Handler 源码机制(完成)
+  * io复用和copyonwrite技术延伸
 * 插桩技术(待研究)
   * APT技术实现对代码的抖动处理
   * ASM技术
