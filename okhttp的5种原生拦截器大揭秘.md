@@ -1,10 +1,10 @@
-## Okhttp的5种原生拦截器大揭秘
+## Okhttp原生拦截器大揭秘
 
 ### 前言
 
-在之前进行OkHttp的源码解析篇中，我们大体讲解了一下okhttp的整个调用流程，而且也知道了是采用责任链模式来一点点的处理各种拦截器的。而其中有5种自带的拦截器，我们并没有去进行详细的剖析。
+在[OkHttp的源码解析篇](https://mp.weixin.qq.com/s/DiZyEM77diQhKonoSCjrcQ)中，我们大体讲解了一下okhttp的整个调用流程，而且也知道了是采用责任链模式来一点点的处理各种拦截器的。而其中有5种自带的拦截器，我们并没有去进行详细的剖析。
 
-每次我们去使用okhttp的时候，只是根据实际的需要封装自己的拦截器处理，对于如何实现网络的连接、数据的传输、重试、缓存等都是5大原生拦截器来进行处理的。
+其实每次我们去使用okhttp的时候，只是根据实际的需要封装自己的拦截器处理，对于如何实现网络的连接、数据的传输、重试、缓存等都是5大原生拦截器来进行处理的。
 
 ### 源码剖析
 
@@ -13,7 +13,6 @@
 ```java
     //RealCall.java
 	Response getResponseWithInterceptorChain() throws IOException {
-        // Build a full stack of interceptors.
         List<Interceptor> interceptors = new ArrayList<>();
         //应用设置的拦截器，由用户来设置
         interceptors.addAll(client.interceptors());
@@ -35,11 +34,13 @@
 
 对于拦截器的调用，是从前往后来进行的。然后返回的结果则是从后往前来进行的。所以我们这按照顺序来进行一个个解析。
 
-### RetryAndFollowUpInterceptor
+#### RetryAndFollowUpInterceptor
 
 重试和重定向拦截器。见名思意，这个拦截器的主要功能是进行重试或者对重定向的返回信息进行处理的。
 
-* 重定向：即服务端返回重定向错误码，并且会返回需要重定向的url地址，客户端需要请求返回的这个新的地址信息才能获取到想要的Response信息。
+##### 基础知识
+
+重定向：即服务端返回重定向错误码，并且会返回需要重定向的url地址，客户端需要请求返回的这个新的地址信息才能获取到想要的Response信息。
 
 重定向错误码：
 
@@ -353,11 +354,11 @@ HTTP消息头，在超文本传输协议的请求和响应消息中，协议头�
 
 这个拦截器的主要作用是增加了一些网络使用的Header信息。有个比较特殊的地方就是gzip。如果是拦截器增加的gzip的话，这里需要对返回的信息进行解压缩处理。
 
-### CacheInterceptor
+#### CacheInterceptor
 
 OkHttp自带了缓存，当我们开启了缓存的话，就会根据相关设置将获取到的返回信息进行缓存处理
 
-#### 基础知识
+##### 基础知识
 
 http缓存根据是否需要重新向服务器发起请求来分类，可以将其分为两大类(强制缓存，对比缓存)，强制缓存如果生效，不需要再和服务器发生交互，而对比缓存不管是否生效，都需要与服务端发生交互。
 两类缓存规则可以同时存在，强制缓存优先级高于对比缓存，也就是说，当执行强制缓存的规则时，如果缓存生效，直接使用缓存，不再执行对比缓存规则。
@@ -367,7 +368,7 @@ http缓存根据是否需要重新向服务器发起请求来分类，可以将�
 对比缓存：当第一次请求服务器的时候，服务器会将缓存标识与数据一起返回给客户端，客户端将二者进行缓存处理。
 再次请求数据时，客户端将备份的缓存标识发送给服务器，服务器根据缓存标识进行判断，判断成功后，返回304状态码，通知客户端比较成功，可以使用缓存数据。否则需要重新请求。
 
-#### 源码解读
+##### 源码解读
 
 ```java
     public Response intercept(Chain chain) throws IOException {
@@ -579,7 +580,7 @@ http缓存根据是否需要重新向服务器发起请求来分类，可以将�
 
 这里面涉及到的几个比较重要的类。我们先从他们开始入手
 
-##### RealConnectio连接类。
+**RealConnectio连接类。**
 
 这个类是连接的真正实现，内部通过socket建立和服务器之间的连接工作。
 
@@ -673,7 +674,7 @@ public void connectSocket(Socket socket, InetSocketAddress address,
 
 所以最终是建立的是socket连接。当建立完socket连接之后，就可以获取输入输出流了。这里使用了Okio对输入输出流进行了一次封装。因为Okio封装之后对于流的操作更加的简单。
 
-##### RealConnectionPool连接池
+**RealConnectionPool连接池**
 
 不管是建立socket连接，还是连接的保持，都是很浪费资源的。对于这种问题，最常见的解决方案就是池技术。Okhttp对于连接的处理就采用了池技术。
 
@@ -852,39 +853,362 @@ long cleanup(long now) {
        ...
 ```
 
-这里最终会调用**findConnection**方法
+这里最终会调用**findConnection**方法来获取实际的连接。
 
+```java
+    //返回一个持有新的流（即输入输出流）连接。如果连接已存在则从池中获取，否则就创建一个新的连接
+    private RealConnection findConnection(int connectTimeout, int readTimeout, int writeTimeout, int pingIntervalMillis, boolean connectionRetryEnabled) throws IOException {
+        //标识是否是从池中获取的连接
+        boolean foundPooledConnection = false;
+        //返回的结果
+        RealConnection result = null;
+        Route selectedRoute = null;
+        //之前创建的连接
+        RealConnection releasedConnection;
+        Socket toClose;
+        synchronized (connectionPool) {
+            //已经取消了，则直接抛出异常
+            if (transmitter.isCanceled()) throw new IOException("Canceled");
+            hasStreamFailure = false;
+            //获取已经创建过的连接。
+            releasedConnection = transmitter.connection;
+            //创建过的连接可能不允许创建新的流。如果不允许创建新的流，则需要将其对应的socket关闭
+            toClose = transmitter.connection != null && transmitter.connection.noNewExchanges
+                    ? transmitter.releaseConnectionNoEvents()
+                    : null;
+            if (transmitter.connection != null) {
+                //证明之前创建的连接是可以使用的。这里就使用之前的结果。那么连接不需要释放了
+                result = transmitter.connection;
+                releasedConnection = null;
+            }
+            if (result == null) {
+                //如果连接不可用，则尝试从连接池获取到一个连接
+                if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, null, false)) {
+                    foundPooledConnection = true;
+                    result = transmitter.connection;
+                } else if (nextRouteToTry != null) {
+                    selectedRoute = nextRouteToTry;
+                    nextRouteToTry = null;
+                } else if (retryCurrentRoute()) {
+                    selectedRoute = transmitter.connection.route();
+                }
+            }
+        }
+        //关闭之前的连接
+        closeQuietly(toClose);
+        if (result != null) {
+            //已经找到一个可以使用的连接（之前申请的或者从池中获取到的），则直接返回
+            return result;
+        }
+        //看看是否需要路由选择，多IP操作
+        boolean newRouteSelection = false;
+        if (selectedRoute == null && (routeSelection == null || !routeSelection.hasNext())) {
+            newRouteSelection = true;
+            routeSelection = routeSelector.next();
+        }
 
+        List<Route> routes = null;
+        synchronized (connectionPool) {
+            if (transmitter.isCanceled()) throw new IOException("Canceled");
+            if (newRouteSelection) {
+                //使用多IP，从连接池中尝试获取
+                routes = routeSelection.getAll();
+                if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, routes, false)) {
+                    foundPooledConnection = true;
+                    result = transmitter.connection;
+                }
+            }
+            //在连接池没有找到可用的连接
+            if (!foundPooledConnection) {
+                if (selectedRoute == null) {
+                    selectedRoute = routeSelection.next();
+                }
+                //创建一个新的连接
+                result = new RealConnection(connectionPool, selectedRoute);
+                connectingConnection = result;
+            }
+        }
+        //连接池中找到了，则直接返回
+        if (foundPooledConnection) {
+            eventListener.connectionAcquired(call, result);
+            return result;
+        }
+        //进入这里证明是新创建的连接，调用connect方法进行连接。进行TCP+TLS握手。这是一种阻塞操作
+        result.connect(connectTimeout, readTimeout, writeTimeout, pingIntervalMillis,connectionRetryEnabled, call, eventListener);
+        connectionPool.routeDatabase.connected(result.route());
+        Socket socket = null;
+        synchronized (connectionPool) {
+            ...
+                //将连接放入到连接池
+                connectionPool.put(result);
+                //把刚刚新建的连接保存到Transmitter的connection字段
+                transmitter.acquireConnectionNoEvents(result);
+            }
+        }
 
+        return result;
+    }
+```
 
+这个findConnection方法是获取连接的核心代码。这里依次尝试上次的连接、连接池、多路由选择等方式去获取，如果仍然获取不到的话，就会创建一个新的连接。整个流程如下：
+
+1. transmitter.connection是否可用？可用的话直接返回
+2. 如果不可用，则尝试通过连接池获取连接。如果获取到可用连接，则使用它。
+3. 如果仍然无法获取到。则尝试多路由方法从连接池获取。获取成功就使用。
+4. 如果获取失败，则创建一个新的连接、TSL握手、将其放入到连接池、将连接赋值给transmitter.connection。
+
+到这里就已经成功 获取到了对应的本次请求的连接了。然后会依据这个连接进创建对应的编码解码其ExchangCodec，以及Exchange对象。
+
+##### 总结
+
+1. okhttp是支持路由的动态配置功能。之前听说过一次某个地方访问服务无法访问，最后通过动态路由来进行处理解决的方案。
+2. 当使用HTTPS协议进行了连接的时候需要使用TLS协议
+3. 每次创建Call的时候回创建Transmitter，而每一个Call是可以发起多次请求的。
+4. 连接池中的连接对于所有的Call都是共享的，所有的call都可以尝试从连接池中获取连接并复用
 
 #### CallServerInterceptor
 
+在 ConnectInterceptor 中，已经创建了与服务器之间的Socket连接。并且通过okio封装了对应的输入输出流。而CallServerInterceptor的作用就是通过建立的输入输出流进行数据的传输工作。
+
+##### 基础知识
+
+在HTTP/1.1协议中，新增了一种“Expect: 100-continue”的头域。这种的头域的目的是，在客户端发送 Request Message 之前，允许客户端先判定服务器是否愿意接受客户端发来的消息主体（基于 Request Headers）。这么做的原因是，如果客户端直接发送请求数据，但是服务器又将该请求拒绝的话，这种行为将带来很大的资源开销。一般对于超过1024字节的使用这种方案。毕竟两次的传输会带来请求延迟的加大。
+
+Expect: 100-continue的进行分为两步：
+
+1. 发送一个请求，包含一个 "Expect: 100-continue" 头域，询问 Server 是否愿意接收数据；
+
+2. 接收到 Server 返回的 100-continue 应答以后（这里会传输空的body体），才把数据 POST 给 Server；
+
+#####  源码解析
+
+```java
+//CallServerInterceptor.java
+public Response intercept(Chain chain) throws IOException {
+  RealInterceptorChain realChain = (RealInterceptorChain) chain;
+  Exchange exchange = realChain.exchange();
+  //获取请求。这里的请求已经不是最初始的request了，而是经过了前面的层层封装处理之后的request信息
+  Request request = realChain.request();
+  long sentRequestMillis = System.currentTimeMillis();
+  //向服务器端写请求头信息
+  exchange.writeRequestHeaders(request);
+  boolean responseHeadersStarted = false;
+  Response.Builder responseBuilder = null;
+  if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
+    //用于客户端在发送POST请求数据之前，征询服务器情况，看服务器是否处理POST的数据，如果不处理，客户端则不上传POST数据，如果处理，则POST上传数据。
+    if ("100-continue".equalsIgnoreCase(request.header("Expect"))) {
+      //判断服务器是否允许发送body
+      exchange.flushRequest();
+      responseHeadersStarted = true;
+      //获取返回的头信息
+      exchange.responseHeadersStart();
+      //读取返回的头信息，如果服务器接收RequestBody，会返回null
+      responseBuilder = exchange.readResponseHeaders(true);
+    }
+    //如果RequestBuilder为null，说明Expect不为100-continue或者服务器同意接收RequestBody
+    if (responseBuilder == null) {
+      //向服务器发送body
+      ...
+        BufferedSink bufferedRequestBody = Okio.buffer(exchange.createRequestBody(request, false));
+        //写入body体
+        request.body().writeTo(bufferedRequestBody);
+        bufferedRequestBody.close();
+      }
+    } 
+    ..
+  //读取相应的header
+  if (responseBuilder == null) {
+    responseBuilder = exchange.readResponseHeaders(false);
+  }
+  //通过Builder模式构造返回response
+  Response response = responseBuilder
+      .request(request)
+      .handshake(exchange.connection().handshake())
+      .sentRequestAtMillis(sentRequestMillis)
+      .receivedResponseAtMillis(System.currentTimeMillis())
+      .build();
+
+  int code = response.code();
+  if (code == 100) {
+    //100的状态码的处理继续发送请求，继续接收数据
+    response = exchange.readResponseHeaders(false)
+        .request(request)
+        .handshake(exchange.connection().handshake())
+        .sentRequestAtMillis(sentRequestMillis)
+        .receivedResponseAtMillis(System.currentTimeMillis())
+        .build();
+    code = response.code();
+  }
+
+  exchange.responseHeadersEnd(response);
+  ...
+    //获取返回的body体
+    response = response.newBuilder()
+        .body(exchange.openResponseBody(response))
+        .build();
+  }
+  ...
+  //返回为空的数据处理
+  if ((code == 204 || code == 205) && response.body().contentLength() > 0) {
+    throw new ProtocolException("HTTP " + code + " had non-zero Content-Length: " + response.body().contentLength());
+  }
+  return response;
+}
+```
+
+这个拦截器的作用主要是根据实际的需要进行数据的输入和读取。大体的流程如下：
+
+1. 向服务器写入请求头。
+2. 如果请求头中有"Expect: 100-continue"，判断服务器是否允许发送Body。如果允许则返回null。
+3. 根据2的判断，如果RequestBody为null，则写入body体。
+4. 通过构造者模式构造返回的response信息。
+5. 针对204/205状态码处理。
+6. 返回Response。
+
+**写请求头**
+
+```java
+    //Exchange.java
+	//写请求头
+    public void writeRequestHeaders(Request request) throws IOException {
+        try {
+            //注册的监听事件
+            eventListener.requestHeadersStart(call);
+            //写入请求头
+            codec.writeRequestHeaders(request);
+            eventListener.requestHeadersEnd(call, request);
+        } catch (IOException e) {
+            eventListener.requestFailed(call, e);
+            trackFailure(e);
+            throw e;
+        }
+    //Http1ExchangeCodec.java    
+    public void writeRequestHeaders(Request request) throws IOException {
+        //返回请求的地址以及协议版本号：HTTP/1.1
+        String requestLine = RequestLine.get(request, realConnection.route().proxy().type());
+        //写请求头
+        writeRequest(request.headers(), requestLine);
+    }
+        
+    public void writeRequest(Headers headers, String requestLine) throws IOException {
+        if (state != STATE_IDLE) throw new IllegalStateException("state: " + state);
+        //换行
+        sink.writeUtf8(requestLine).writeUtf8("\r\n");
+        //遍历消息头，并按照 name:value的形式写入
+        for (int i = 0, size = headers.size(); i < size; i++) {
+            sink.writeUtf8(headers.name(i))
+                    .writeUtf8(": ")
+                    .writeUtf8(headers.value(i))
+                    .writeUtf8("\r\n");
+        }
+        sink.writeUtf8("\r\n");
+        state = STATE_OPEN_REQUEST_BODY;
+    }
+```
+
+这里会将请求的消息头按照一定的格式发送给服务器端。
+
+**读请求头**
+
+对于HTTP的返回头信息而言，第一条的信息表示是HTTP的版本号，以及对应的返回状态码和协议信息。后面的才是其他相关的头信息。
+
+```java
+    //Exchange.java
+    Response.Builder readResponseHeaders(boolean expectContinue) throws IOException {
+        //重点方法
+            Response.Builder result = codec.readResponseHeaders(expectContinue);
+            ...
+    }
+    //Http1ExchangeCodec.java
+    public Response.Builder readResponseHeaders(boolean expectContinue) throws IOException {
+        ...
+            //读取第一行Header信息，然后通过parse进行转化。
+            StatusLine statusLine = StatusLine.parse(readHeaderLine());
+            Response.Builder responseBuilder = new Response.Builder()
+                    .protocol(statusLine.protocol)
+                    .code(statusLine.code)
+                    .message(statusLine.message)
+                    //读取剩余的其他所有的头信息，并设置到response的header中
+                    .headers(readHeaders());
+```
+
+这里看一下**readHeaderLine**是如何读取一行头信息的
+
+```java
+//Http1ExchangeCodec.java
+	private long headerLimit = HEADER_LIMIT;
+    //消息头最多有256k个字节
+    private static final int HEADER_LIMIT = 256 * 1024;
+	//按行读取Header信息
+    private String readHeaderLine() throws IOException {
+        //使用了okio的BufferedSource来读取一行数据，headerLimit是我们的最大读取的字符数
+        String line = source.readUtf8LineStrict(headerLimit);
+        //header的字符限制数减少
+        headerLimit -= line.length();
+        return line;
+    }
+```
+
+这里面使用了okio封装的数据流来读取了一行数据。由于在数据传输中，Header中能够传输的最大传输字符是有限制的。所以每次读取以后，都会将计算一下还可以读取多少个字节信息。
+
+HTTP返回的Header信息中，第一行数据标识的是状态的信息，会通过**StatusLine.parse**来解析。
+
+```java
+  public static StatusLine parse(String statusLine) throws IOException {
+    // H T T P / 1 . 1   2 0 0   T e m p o r a r y   R e d i r e c t
+    // 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
+    int codeStart;
+    //协议版本号
+    Protocol protocol;
+    
+    if (statusLine.startsWith("HTTP/1.")) {//HTTP协议类型
+      ...
+    } else if (statusLine.startsWith("ICY ")) {//ICY协议类型，使用HTTP1.0来处理
+      ...
+    } else {//其他的不支持
+      throw new ProtocolException("Unexpected status line: " + statusLine);
+    }
+    //返回的状态码信息  200，301，302等等，都是4位的数字
+    int code;
+    try {
+      code = Integer.parseInt(statusLine.substring(codeStart, codeStart + 3));
+    } catch (NumberFormatException e) {
+      throw new ProtocolException("Unexpected status line: " + statusLine);
+    }
+    //协议后面的信息
+    String message = "";
+    if (statusLine.length() > codeStart + 3) {
+      ...
+    }
+    return new StatusLine(protocol, code, message);
+  }
+
+```
+
+这个里面会严格按照格式来解析对应的协议类型，状态码以及协议的信息等。
+
+而其他的Header信息则以如下的方式进行传输。
+
+![image-20200529114827491](http://cdn.qiniu.kailaisii.com/typora/202005/29/114829-52705.png)
+
+##### 总结
+
+1. 消息头最多有256*1024个字符。
+2. 消息头的第一行是协议以及状态等相关信息
+3. 消息头是按照 name:value的样式来处理的
+
+### 大总结
+
+1. okhttp的拦截器具体的职责分工十分明确。不同的拦截器只负责自己的业务处理。而责任链模式能够保证整个流程的递归执行。这种模式去处理我们常用的if else的魔鬼分支处理其实是一种很好的解决方案。
+
+2. 对于okhttp，可以注册一个EventListener，来监听所有的内部过程的回调信息。
+
+项目注释源地址:[okhttp_source](https://github.com/kailaisi/okhttp_source-3.14.git)
 
 
 
+> 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
+>
+> 同步公众号[开了肯]
 
-- okhttp的5中拦截器大纲
-
-  - 简介 
-
-  - 重定向
-
-    - 重定向的概念
-
-    - 源码解读
-
-  - 桥接拦截器
-    - 源码解读
-
-  - 缓存拦截器
-
-    - 什么时候使用缓存
-
-    - 缓存机制
-
-  - 连接拦截器
-    - 源码解读
-
-  - 调用拦截器
-    - 源码解读
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)
