@@ -1,6 +1,6 @@
 ### Android应用进程的创建
 
-在之前的[Android启动流程]()中，我们最后提到了会通过**ActivityManagerService**的**startProcess**方法来进行应用进程的创建。本片文章我们就从这里开始着手，来进行相关源码的解析工作。
+在之前的[Android启动流程]()中，我们最后提到了会通过**ActivityManagerService**的**startProcess**方法来进行应用进程的创建。本篇文章我们就从这里开始着手，来进行相关源码的解析工作。
 
 #### ActivityManagerService#startProcess
 
