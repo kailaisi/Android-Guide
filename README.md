@@ -37,6 +37,7 @@
     * HashMap源码中红黑树解析（待写）
   * AsynTask源码（待写）
   * CopyOnWriteArrayList源码解析（待写）
+  * PriorityQueue 排队序列（待研究）
 * 通讯(待写)
   * 
 * 杂项

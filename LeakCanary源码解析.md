@@ -779,7 +779,15 @@ protected final void onHeapAnalyzed(@NonNull AnalyzedHeap analyzedHeap) {
 
 这个服务的作用就是将我们分析之后的泄漏路径的相关信息通过Notification的通知形式，告知用户具体的内存泄漏情况。
 
-在程序的最后有一个afterDefaultHandling方法，这个方法是一个空实现，用户可以覆写这个方法来实现将内存泄漏的信息上传到服务器的功能
+在程序的最后有一个afterDefaultHandling方法，这个方法是一个空实现，用户可以覆写这个方法来实现将内存泄漏的信息上传到服务器的功能。
+
+通过
+
+```java
+mRefWatcher = LeakCanary.install(this, LeakCanaryService.calss, AndroidExcludedRefs.createAppDefaults().build());
+```
+
+来进行自定义的注册。LeakCanaryService是我们继承**DisplayLeakService**的类，**而且需要在AndroidManifest中注册**。
 
 到这里为止LeakCanary的整个实现流程解析完成了。
 
