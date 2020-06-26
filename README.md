@@ -1,55 +1,86 @@
-### 待写文章记录
+### 学习路程Android-Guide
 
-- Activity启动流程系列
-  - Android启动流程源码解析（一）（完成）
-  - Android启动流程源码解析（二）（完成）
-  - Android布局窗口绘制分析（完成）
-  - 应用进程创建过程（完成）
-    - 
-- FragmentManager系列
-  - Android之Fragment状态管理源码解析（完成）
+### 计算机基础
 
-* 绘制相关系列
-  * Android的inflate源码详解（完成）
-  * Android的View绘制机制（完成）
-  * Android触摸事件源码解析（完成）
-* JetPack
-  * LiveData 源码解析（完成）
-  * Lifecycle源码解析（完成）
-* 常用控件解析
-  * RecyclerView源码解析（完成）
-* 三方源码系列
-  * Gson源码解析（完成）
-    * JsonReader/JsonWriter解析(待写)
-    * TypeToken的补充(待写)
-  * OkHttp源码解析（完成）
-    * 5个拦截器分析（进行中）
-    * 缓存实现方案
-  * Glide万字解密（完成）
-  * Picasso解密(完成)
-  * Retrofit源码分析（完成）
-  * EventBus源码解析（完成）
-    * 里面的APT技术研究
-  * LeakCanary源码解析（完成） 
-* 常用的类源码解析
-  * SparseArray 源码解析（完成）
-  * HashMap源码解析（完成）
-    * HashMap源码中红黑树解析（待写）
-  * AsynTask源码（待写）
-  * CopyOnWriteArrayList源码解析（待写）
-  * PriorityQueue 排队序列（待研究）
-* 通讯(待写)
-  * 
-* 杂项
-  * Andoird的编译和打包流程分析(完成)
-  * Handler 源码机制(完成)
-  * io复用和copyonwrite技术延伸
-* 插桩技术(待研究)
-  * APT技术实现对代码的抖动处理
-  * ASM技术
-  * Android中Resources.arsc详解
-  * shell apm打包
-  * Android Studio自定义Gradle插件，
-  * 深入理解Android之Gradle，
-  * Transform API，
-  * Javassist分析
+**编程必备基础知识：计算机组成原理 操作系统 计算机网络**
+
+#### Android基础
+
+* 第一行代码
+
+### Android进阶
+
+* **Android进阶之光**
+* **《Android开发艺术探索》**
+* **Android进阶解密**
+* **Android编程从程序员到架构师的高手之路-高焕堂Sundy**
+
+### 优秀三方库源码解析（进行中）
+
+* 
+
+### 性能优化方向（进行中）
+
+* [国内Top团队大牛带你玩转Android性能分析与优化](https://coding.imooc.com/class/chapter/308.html#Anchor)
+* [极客时间之Android开发高手课 01-23]
+
+### Android源码系列
+
+* Android源码设计模式（待进行）
+
+### Java
+
+#### JVM系列
+
+* 圣思园JVM（已完成）[记录]()
+
+* 龙果学院 叶子猿 深入理解Java虚拟机
+
+#### 高并发
+
+### Kotlin系列
+
+* Kotlin 实战（进行中）
+* **[慕课网之Kotlin从入门到精通](https://coding.imooc.com/class/chapter/398.html#Anchor)**
+
+### 数据结构
+
+邓俊辉《数据结构》上、下
+
+Java数据结构（进行中）
+
+《漫画算法：小灰的算法之旅》
+
+《数据结构与算法分析》
+
+### 架构技能
+
+* 《代码整洁之道》
+* 《代码简洁之道》
+* 《设计模式之禅》
+* 《Android源码设计模式》
+* 慕课网之 实战企业级项目 践行App重构之路
+
+### 软技能
+
+* 朱赟技术管理课（进行中）[笔记](https://mubu.com/doc7kuQuMkW6Xl)
+* 精进：如何成为一个很厉害的人（完成）[笔记](https://mubu.com/doc5AEjg45f3Nl)
+* 习惯的力量（美）
+* 精力管理
+* 自控力
+* 细节如何轻松影响他人
+* 所谓情商高，就是会说话
+* 极客时间之技术领导力
+* 代码之外的生存指南（进行中）
+
+
+
+
+
+
+
+建仓
+
+对应自己需要学习的知识体系和所需要阅读的文章、学习的方向总是没有一个重点。所以打算建仓来记录自己的学习历程。
+
+仓库会不断的收录看到的博文或者视频。然后进行分类记录
