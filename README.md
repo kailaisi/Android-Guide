@@ -63,7 +63,7 @@ Java数据结构（进行中）
 
 ### 软技能
 
-* 朱赟技术管理课（进行中）[笔记](https://mubu.com/doc7kuQuMkW6Xl)
+* 朱赟技术管理课（完成）[笔记](https://mubu.com/doc7kuQuMkW6Xl)
 * 精进：如何成为一个很厉害的人（完成）[笔记](https://mubu.com/doc5AEjg45f3Nl)
 * 习惯的力量（美）
 * 精力管理
