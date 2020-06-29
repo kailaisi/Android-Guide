@@ -45,6 +45,7 @@
 * 杂项
   * Andoird的编译和打包流程分析(完成)
   * Handler 源码机制(完成)
+  * IdleHandler源码解析（待进行）
   * io复用和copyonwrite技术延伸
 * 插桩技术(待研究)
   * APT技术实现对代码的抖动处理
