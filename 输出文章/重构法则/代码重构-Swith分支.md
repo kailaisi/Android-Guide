@@ -120,127 +120,66 @@ void printDetails(double outstanding) {
 
 ##### 如何重构
 
-1. 为类型代码创建对应的get方法。
-2. 
+2. 使超类构造函数私有（不再对外暴露）。创建静态工厂方法，方法参数和超类构造函数的参数相同。根据编码类型，工厂方法创建子类对象。
+2. 为编码类型的每一个值都创建一个唯一子类。
+3. 从超类中删除带有类型代码的字段。
+4. 然后使用多态，摆脱类型代码的条件。
 
-## ////todo
-
-每次调用方法之前，都必须调用未来参数对象的方法。如果这些方法或为该方法获得的数据的数量发生了变化，您将需要在程序中仔细地找到十几个这样的位置，并在每个位置中实现这些更改。
-
-应用这种重构技术后，获取所有必要数据的代码将存储在一个地方--方法本身。
-
-##### 好处
-
-- 看到的不是大量的参数，而是具有可理解名称的单个对象。
-- 如果该方法需要来自对象的更多数据，则无需重写使用该方法的所有位置--仅在方法本身内修改即可。
-
-##### 弊端
-
-有时，这种转换会导致方法变得不那么灵活：以前，该方法可以从许多不同的源获取数据，但是现在，由于重构，我们将它的使用限制在具有特定接口的对象上。
-
-##### 重构方法
-
-1. 在方法中为对象创建一个参数，从中获取必要的值。
-2. 现在开始逐个从方法中删除旧参数，代之以调用参数对象的相关方法。每次更换参数后测试程序。
-3. 从方法调用之前的参数对象中删除getter代码。
-
-#### 用方法对象替换方法
+#### 用多态替换条件
 
 ```java
-class Order {
+class Bird {
   // ...
-  public double price() {
-    double primaryBasePrice;
-    double secondaryBasePrice;
-    double tertiaryBasePrice;
-    // Perform long computation.
+  double getSpeed() {
+    switch (type) {
+      case EUROPEAN:
+        return getBaseSpeed();
+      case AFRICAN:
+        return getBaseSpeed() - getLoadFactor() * numberOfCoconuts;
+      case NORWEGIAN_BLUE:
+        return (isNailed) ? 0 : getBaseSpeed(voltage);
+    }
+    throw new RuntimeException("Should be unreachable");
   }
 }
 ```
 
-问题：方法很长，而且局部变量交织，不能使用**提取法**
+问题：这里的代码根据对象的类型或者属性执行不同的操作。
 
 ```java
-class Order {
+abstract class Bird {
   // ...
-  public double price() {
-    return new PriceCalculator(this).compute();
-  }
+  abstract double getSpeed();
 }
 
-class PriceCalculator {
-  private double primaryBasePrice;
-  private double secondaryBasePrice;
-  private double tertiaryBasePrice;
-  
-  public PriceCalculator(Order order) {
-    // Copy relevant information from the
-    // order object.
-  }
-  
-  public double compute() {
-    // Perform long computation.
+class European extends Bird {
+  double getSpeed() {
+    return getBaseSpeed();
   }
 }
+class African extends Bird {
+  double getSpeed() {
+    return getBaseSpeed() - getLoadFactor() * numberOfCoconuts;
+  }
+}
+class NorwegianBlue extends Bird {
+  double getSpeed() {
+    return (isNailed) ? 0 : getBaseSpeed(voltage);
+  }
+}
+//客户端
+speed = bird.getSpeed();
 ```
 
-解决方法：将方法转化为单独的类，局部变量变为类的字段。然后将方法拆分为同一个类中的多个方法。
-
-##### 重构原因
-
-方法太长，而且因为存在大量的局部变量而无法将其抽取为小的方法。
-
-将方法隔离为单独的类，将局部变量转变为类的字段。
-
-通过类级别的隔离，将大型和笨重的方法分解为较小的方法铺平了道路。
+解决方法：创建和条件分支对应的子类。所有的子类都实现一个共同的方法。然后用相关的方法替换条件分支。
 
 ##### 好处
 
-可以防止长方法的继续膨胀。而且允许将其拆分为类中的字方法，而不会使程序污染原来的类。
+* 可以删除重复代码。几乎所有相同的条件都可以去掉。
+* 当新增分支的时候，这种方法只需要添加一个新的子类，符合开闭原则。
 
-##### 弊端
+##### 重构步骤
 
-增加了一个类，增加了程序的复杂性。
-
-##### 重构方法
-
-1. 创建一个新类。根据重构方法的目的命名它。
-2. 在新类中，创建一个私有字段，用于存储对方法之前所在的类的实例的引用。如果需要，可以使用它从原始类获取一些必需的数据。
-3. 为方法的每个局部变量创建单独的私有字段。
-4. 创建一个构造函数，该构造函数接受方法的所有局部变量的值作为参数，并初始化相应的私有字段。
-5. 声明主方法并将原始方法的代码复制到它，用私有字段替换局部变量。
-6. 通过创建方法对象并调用其主方法来替换原始类中原始方法的主体。
-
-#### 引入参数对象法
-
-![img](http://cdn.qiniu.kailaisii.com/typora/202006/01/174547-809764.png)
-
-问题：方法中包含了重复的参数
-
-![img](http://cdn.qiniu.kailaisii.com/typora/202006/01/174603-201974.png)
-
-解决方法：用对象代替参数
-
-##### 重构原因
-
-在多个方法中经常会遇到相同的一组参数。这会导致参数本身和相关操作的代码重复。通过在单个类中合并参数，还可以将处理此数据的方法移到那里，从而将其他方法从此代码中解放出来。
-
-##### 好处
-
-* 更易读的代码。看到的不再是大量的参数，而是具有可理解名称的单个对象
-* 分散在各处的相同的参数组创建了它们自己的代码复制类型：虽然没有调用相同的代码，但经常会遇到相同的参数和参数组
-
-##### 弊端
-
-- 如果您只将数据移动到一个新的类中，并且不打算将任何行为或相关操作移到新类中，这个类看起来像[数据类]
-
-##### 重构方法
-
-1. 创建一个表示参数组的新类。使类不可变。
-2. 在要重构的方法中，使用[添加参数法](https://sourcemaking.com/refactoring/add-parameter)，传递参数对象。在所有方法调用中，将从旧方法使用参数创建的对象传递给此参数。
-3. 逐个从方法中删除旧参数，用参数对象的字段替换代码中的旧参数。在每个参数替换后测试程序。
-4. 完成后，查看是否有必要将方法的一部分(有时甚至整个方法)移动到参数对象类。如果是，请使用[移动法](https://sourcemaking.com/refactoring/move-method)或[提取法](https://sourcemaking.com/refactoring/extract-method).
-
-### 总结
-
-长方法应该属于代码中最常见也是最好处理的一种优化点了，在以后的开发中多注意一些，你会发现你的代码会优雅很多，而且可维护性也会高很多。
+2. 对于每个子类，重新定义一个统一的方法，将相应条件分支的代码复制到该方法中。
+3. 删除条件中的分支
+4. 重复以上操作，直到所有的条件分支。
