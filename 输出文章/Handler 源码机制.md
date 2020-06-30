@@ -314,3 +314,4 @@ private static void prepare(boolean quitAllowed) {
 ### 总结
 
 1. 对于message的获取，最好使用obtainMessage方法，这种方式会从池中获取可以使用的消息，而不需要每次都new对象出来。
+2. Handler的消息，是放在其发送的线程的。只有需要执行的时候，通过target。调用到handler所在的线程。
