@@ -21,7 +21,8 @@ so相关：so文件
 ### APK分析
 
 * ApkTool，反编译工具。
-* Analyze APK：AS2.2之后
+* Analyze APK：
+  * AS2.2之后支持
   * 位置：Build->Analyze APK
   * 查看Apk组成、大小、占比
   * 查看Dex文件组成
@@ -43,9 +44,13 @@ so相关：so文件
 
 > 代码混淆也称为花指令，是将计算机程序的代码转换为功能上等价但是难以阅读、理解的行为。Proguard是一个免费的Java类文件压缩、优化、混淆、预先验证的工具，可以检测和移除未使用的类、字段、方法、属性，优化字节码并移除未使用的指令，并将代码中的类、字段、方法的名字改为简短、无意义的名字。
 
+代码混淆处理的目的是通过缩短应用的类、方法和字段的名称来减小应用的大小。这是因为应用的 DEX 文件将许多类、方法和字段编入索引，那么混淆处理将可以显著缩减应用的大小。
+
 **混淆方法**
 
-开启Proguard混淆。
+开启Proguard混淆。设置**minifyEnabled=true**
+
+**在Android Studio3.0中引入了R8作为原Proguard压缩和优化的替代品**，其压缩优化效果更好一些。
 
 注意：对于Proguard，虽然效果明显，但仍然需要谨慎
 
@@ -55,19 +60,31 @@ so相关：so文件
 
 ##### **三方库处理**
 
-**基础库统一**：去掉多余的库，避免出现多套网络请求、图片加载等类库
+作为一个搬运工，那么做常做的事情就是使用三方库了。但是作为一个高级搬运工，要谨慎的选择每一个使用的三方库。
+
+**基础库统一**：去掉多余的库，避免出现多套网络请求、图片加载等类库。
 
 **无用的库要移除**：可能由于迭代会不再使用某些依赖的库。这时候要移除。
 
 。。todo  这个要如何确定呢？
 
-**选择更小的库**：picicss库更小，Android Method Count插件可以查看引入的库的大小
+**选择小而精的库**：很多的类库是有相同功能的。大而全的三方库可能未必是最好的选择。小而精才是最佳方案。
+
+比如如果只是简单的图片使用，那么使用Picasso完全足够了。虽然Glide的功能更加强大，但是其方法数和大小都更多一些。所以对图片需求不大时，选择Picasso更佳。
 
 todo...这个要如何确定呢？
 
 **仅引入所需的部分代码**：通过exclude移除部分支持。
 
-todo通过具体的代码实现
+查找依赖库，对于使用不到的，可以通过exclude移除。
+
+* 使用Gradle View 插件
+* 在Terminal中执行：./gradlew -q :app:dependencies --configuration compile
+* Android Studio 右边栏的Gradle插件，找到工程目录，点开Tasks->help->dependencies执行。
+
+通过以上方法都可以查看到项目的依赖关系。
+
+![image-20200702225932090](http://cdn.qiniu.kailaisii.com/typora/20200702225950-210718.png)
 
 **拷贝源码进行使用**：有时候可能我们只是使用了部分功能，那么可以下载源码，只拷贝保留比较少的文件来进行阉割处理
 
@@ -96,13 +113,30 @@ todo.这里需要进行一下研究
 
 ##### 图片压缩
 
-* 快速发展期的App没有相关规范，导致图片可能使用的都是原图
-* 图片压缩：https://tinypng.com以及TinyPngPlugin压缩插件
-* 图片格式的选择。
-  * Webp会有大幅度的压缩。
-  * PNG是无损格式，如果图片比较艳丽，那么图片就比较大
-  * JPG是有损格式，图片艳丽时，图片相对小一些
+快速发展期的App没有相关规范，导致图片可能使用的都是原图。从而导致前期Apk急剧增大。可以通过一些手段对图片来进行压缩处理。
+
+**图片压缩：**
+
+可以通过https://tinypng.com以及TinyPngPlugin压缩插件来帮助我们压缩对应的图片文件。
+
+**使用Webp**
+
+相同质量下，Webp更小，最多可以小30%。可以通过右击图片，选择*Convert to WebP*
+
+![image-20200702231101306](http://cdn.qiniu.kailaisii.com/typora/20200702231102-293915.png)
+
+可以看到，压缩效果很明显。
+
+> 注意：
+
+图片格式的选择。
+
+* Webp会有大幅度的压缩。
+* PNG是无损格式，如果图片比较艳丽，那么图片就比较大
+* JPG是有损格式，图片艳丽时，图片相对小一些
+
 * 图片，右键，convert to webp将图片转化为webp格式
+* 使用Shape Drawable：很多开发者都是用Bitmap的渐变背景或者圆角图。实际上，Bitmap比Shape Drawable更大。
 
 **资源混淆**
 
@@ -110,6 +144,10 @@ todo.这里需要进行一下研究
   * 能够使冗长的资源路径（图片名）变短
 * 图片只保留一份
 * 图片放在云端，在线加载
+
+##### 
+
+
 
 #### So瘦身
 
@@ -119,17 +157,43 @@ So是Android上的动态链接库。
 
 Android支持7种CPU架构。理论上对应架构的so的执行效率最高。但是会增加文件大小
 
-abiFilter:设置支持的So架构，一般选择armeabi（万金油）。
+abiFilter:设置支持的So架构，一般选择**arm-v7a**（万金油）。
+
+**具体操作：**
+
+如果在build.gradle 中对abiFilters进行了配置，那么只有配置过的目录下的so 文件才会被打包到apk安装包中。
+
+```
+ndk {
+    abiFilters  "armeabi-v7a"  // 指定要ndk需要兼容的架构(这样其他依赖包里mips,x86,armeabi,arm-v8之类的so会被过滤掉)
+}
+```
+
+
 
 ##### 最优方案
 
 对性能敏感的模块，都放在armeabi目录，根据CPU类型加载对应架构的so文件。这种是因为如果某个so使用了x86的话，会要求所有的其他模块也都要有x86的so文件，否则就会崩溃。所以只对敏感模块的so做这种处理。
+```java
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.LoLLIPOP){
+            abi=Build.CPU_ABI;
+        }else{
+            abi=Build.SUPPORTED_ABIS[0];
+        }
+        if(TextUtils.equals(abi,"ARMv7")){
+            //加载特定平台下使用的So文件
+        }else{
+            //正常加载
+        }
+```
 
 这样即减少了Apk的体积，也不影响性能敏感模块的执行。
 
 ##### 动态加载so文件
 
 发布的 APK 不包含 Native 代码，启动时根据不同的架构下载相应的 so 文件。
+
+
 
 ##### 插件化
 
@@ -138,3 +202,7 @@ abiFilter:设置支持的So架构，一般选择armeabi（万金油）。
 ### 参考
 
 https://www.jianshu.com/p/99f3c09982d4
+
+https://developer.android.google.cn/studio/build/shrink-code?hl=zh-cn
+
+https://www.baidu.com/link?url=M0hz3VFKaed8elPeONVSFtTLoEBisKg5sdbuvEdqEE2hEUFPJoSxB-IbJuwJ7poT&wd=&eqid=94fa2ae1001dc651000000035efdf405
