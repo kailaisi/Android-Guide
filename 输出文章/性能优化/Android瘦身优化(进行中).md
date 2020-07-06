@@ -12,29 +12,41 @@
 
 ### APK组成
 
-代码相关：classes.dex
+我们的[APK打包流程详解]()中曾经写过APK的具体打包流程，对于代码、资源、so文件的打包过程进行过一次解析工作。从 那篇文章可以了解到，APK的组成包含了以下三部分：
 
-资源相关：res、asserts、resources.arsc
+> * 代码相关：classes.dex
+>
+> * 资源相关：res、asserts、resources.arsc
+>
+> * so相关：so文件
 
-so相关：so文件
+最简单的方式，我们可以将apk通过解压缩来看一下，就能发现其具体组成。
+
+![image-20200703144344484](http://cdn.qiniu.kailaisii.com/typora/202007/03/144346-637105.png)
 
 ### APK分析
 
-* ApkTool，反编译工具。
-* Analyze APK：
-  * AS2.2之后支持
-  * 位置：Build->Analyze APK
-  * 查看Apk组成、大小、占比
-  * 查看Dex文件组成
-  * Apk对比
-* APP性能分析网站：https://nimbledroid.com/ 
-  * 文件大小及排行
-  * Dex方法数和SDK方法数
-  * 启动时间、内存等
-* android-classyshark：二进制检查工具
-  * 支持多种格式：apk，jar，class,so等
-  * 使用非常便捷
-  * 源码比较简略
+#### ApkTool，反编译工具。
+
+#### Analyze APK：
+
+* AS2.2之后支持
+* 位置：Build->Analyze APK
+* 查看Apk组成、大小、占比
+* 查看Dex文件组成
+* Apk对比
+
+#### APP性能分析网站：https://nimbledroid.com/ 
+
+* 文件大小及排行
+* Dex方法数和SDK方法数
+* 启动时间、内存等
+
+#### android-classyshark：二进制检查工具
+
+* 支持多种格式：apk，jar，class,so等
+* 使用非常便捷
+* 源码比较简略
 
 ### 瘦身实战
 
@@ -66,19 +78,27 @@ so相关：so文件
 
 **无用的库要移除**：可能由于迭代会不再使用某些依赖的库。这时候要移除。
 
-。。todo  这个要如何确定呢？
+Android Studio提供了强大的分析工具，能够很好的帮助我们分析无用的资源、无用的lib等等。
+
+![image-20200703153822845](http://cdn.qiniu.kailaisii.com/typora/202007/03/153823-718247.png)
+
+然后我们输入unuse。可以看到这里可以分析很多无用的东西。我们可以使用**Unused library**功能来分析我们的依赖
+
+![image-20200703153643817](http://cdn.qiniu.kailaisii.com/typora/202007/03/153719-782966.png)
+
+![image-20200703153926772](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20200703153926772.png)
+
+通过一段时间的分析，可以看到有一些无用的lib，我们可以将这些移除掉。
 
 **选择小而精的库**：很多的类库是有相同功能的。大而全的三方库可能未必是最好的选择。小而精才是最佳方案。
 
 比如如果只是简单的图片使用，那么使用Picasso完全足够了。虽然Glide的功能更加强大，但是其方法数和大小都更多一些。所以对图片需求不大时，选择Picasso更佳。
 
-todo...这个要如何确定呢？
-
 **仅引入所需的部分代码**：通过exclude移除部分支持。
 
 查找依赖库，对于使用不到的，可以通过exclude移除。
 
-* 使用Gradle View 插件
+* 使用Gradle View 插件：View-Tool Windows-Gradle View
 * 在Terminal中执行：./gradlew -q :app:dependencies --configuration compile
 * Android Studio 右边栏的Gradle插件，找到工程目录，点开Tasks->help->dependencies执行。
 
@@ -95,7 +115,13 @@ todo...这个要如何确定呢？
 * 代码业务只加不减
 * 代码太多不敢删除
 
-其实要根据实际情况，**移除无用代码以及无用的功能，减少代码量，最直接的提现就是Dex的体积会变小**。
+其实要根据实际情况，**移除无用代码以及无用的功能，减少代码量，最直接的体现就是Dex的体积会变小**。
+
+在以前经常使用Lint来进行代码的检测。在Android Studio3.0+上增加了Inspect Code来帮助我们来分析代码。
+
+![image-20200703151321912](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20200703151321912.png)
+
+
 
 #### 资源瘦身
 
@@ -193,7 +219,12 @@ ndk {
 
 发布的 APK 不包含 Native 代码，启动时根据不同的架构下载相应的 so 文件。
 
+具体的流程如下：
 
+1. 判断目录中是否存在so文件，存在则直接调用sdk
+2. 不存在so文件则从服务器下载相应的so库（可以通过zip包下载再解压的方法）
+3. 将so库复制到/data/data/packagename/..
+4. 通过System.load(全路径)加载。**注意有的so依赖于其他so。所以要注意加载顺序**
 
 ##### 插件化
 
@@ -206,3 +237,5 @@ https://www.jianshu.com/p/99f3c09982d4
 https://developer.android.google.cn/studio/build/shrink-code?hl=zh-cn
 
 https://www.baidu.com/link?url=M0hz3VFKaed8elPeONVSFtTLoEBisKg5sdbuvEdqEE2hEUFPJoSxB-IbJuwJ7poT&wd=&eqid=94fa2ae1001dc651000000035efdf405
+
+https://www.jianshu.com/p/32b4d92d4195
