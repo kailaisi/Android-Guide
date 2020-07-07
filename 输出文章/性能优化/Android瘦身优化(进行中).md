@@ -28,6 +28,11 @@
 
 #### ApkTool，反编译工具。
 
+* 可以获取较为完整的资源文件集
+* 源码较为详细
+* 使用复杂，需要多个工具结合
+* 不能较好的查看整个APK的架构逻辑
+
 #### Analyze APK：
 
 * AS2.2之后支持
@@ -45,7 +50,8 @@
 #### android-classyshark：二进制检查工具
 
 * 支持多种格式：apk，jar，class,so等
-* 使用非常便捷
+* 使用非常便捷，
+* 源码目录结构清晰，而且可以通过图形化工具查看整个apk的组成架构
 * 源码比较简略
 
 ### 瘦身实战
@@ -88,7 +94,7 @@ Android Studio提供了强大的分析工具，能够很好的帮助我们分析
 
 ![image-20200703153926772](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20200703153926772.png)
 
-通过一段时间的分析，可以看到有一些无用的lib，我们可以将这些移除掉。
+通过一段时间的分析，系统可以辅助我们来找到一些没有用到的资源。但是**注意：这里显示出来的类型并不一定是真的没有用处。删除的时候需要小心一些，不要一股脑的全部移除掉。**
 
 **选择小而精的库**：很多的类库是有相同功能的。大而全的三方库可能未必是最好的选择。小而精才是最佳方案。
 
@@ -121,57 +127,75 @@ Android Studio提供了强大的分析工具，能够很好的帮助我们分析
 
 ![image-20200703151321912](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20200703151321912.png)
 
-
-
 #### 资源瘦身
 
 资源和代码同样重要，但是从优化效果来讲，**资源文件的瘦身效果比代码瘦身效果更好**。
 
 ##### 冗余资源移除
 
-无用的资源文件的查找和移除相对于代码来说更加容易。
+无用的资源文件的查找和移除相对于代码来说更加容易。![查找无用资源](http://cdn.qiniu.kailaisii.com/typora/20200707222324-284677.gif)
 
-右键,Refactor,Remove Unused Resource，preview。可以预览无用的资源。
+右键->Refactor->Remove Unused Resource->preview。
 
-##### Drawable目录只保留一份
+通过上述方式可以预览无用的资源，然后将无用资源移除即可。
 
-todo.这里需要进行一下研究
+##### 图片的处理
 
-##### 图片压缩
+**Drawable目录只保留一份**
+
+在我们新建的工程中，对于图片资源，可能会根据不同的分辨率生成了ldpi、mdpi、hdpi、xhdp、xxhdpi、xxxhdpi几种不同的文件夹来存放我们的图片文件。这种方案虽然能够很好的展示我们的图片资源，但是对于包体积来说，是个巨大的灾难。
+
+Android为了能够更好的适配各种屏幕，如果在对应的分辨率下找不到图片，会在其他的资源文件夹中去寻找，然后按照对应的比例进行缩放。
+
+而当低分辨率的图片在高分辨率手机上显示时，首先会放大图片，而且会引起内存的占用增大。
+
+综合考虑以上各种情况以及市面上大部分机型的分辨率，**一般只需要一套xxdpi所对应的图片资源即可**。
+
+**图片压缩**
 
 快速发展期的App没有相关规范，导致图片可能使用的都是原图。从而导致前期Apk急剧增大。可以通过一些手段对图片来进行压缩处理。
 
-**图片压缩：**
-
-可以通过https://tinypng.com以及TinyPngPlugin压缩插件来帮助我们压缩对应的图片文件。
+可以通过[tinypng](https://tinypng.com/)和[TinyPngPlugin](https://github.com/Deemonser/TinyPngPlugin)帮助我们压缩对应的图片文件。
 
 **使用Webp**
 
-相同质量下，Webp更小，最多可以小30%。可以通过右击图片，选择*Convert to WebP*
+相同质量下，Webp更小，最多可以小30%。Android Studio中通过右击图片，选择*Convert to WebP*
 
 ![image-20200702231101306](http://cdn.qiniu.kailaisii.com/typora/20200702231102-293915.png)
 
 可以看到，压缩效果很明显。
 
-> 注意：
+> 注意:由于支持无损和透明的WebP图像只能在Android 4.3和更高版本中使用，**所以您的项目必须声明一个minSdkVersion 18或更高版本**，以使用Android Studio创建无损或透明的WebP图像。
 
-图片格式的选择。
+**图片格式的选择**
+
+很多时候，我们需要根据不同的情况，来选择不同的图片资源：
 
 * Webp会有大幅度的压缩。
 * PNG是无损格式，如果图片比较艳丽，那么图片就比较大
 * JPG是有损格式，图片艳丽时，图片相对小一些
 
-* 图片，右键，convert to webp将图片转化为webp格式
 * 使用Shape Drawable：很多开发者都是用Bitmap的渐变背景或者圆角图。实际上，Bitmap比Shape Drawable更大。
 
 **资源混淆**
 
-* AndResGuard
-  * 能够使冗长的资源路径（图片名）变短
-* 图片只保留一份
-* 图片放在云端，在线加载
+resources.arsc文件是Android打包之后，资源映射文件，会将res目录下的资源和id做一个映射关系。
 
-##### 
+我们通过Analyze APK工具查看一下内部的映射，可以看到如下的信息
+
+![image-20200707231319622](http://cdn.qiniu.kailaisii.com/typora/20200707231320-36788.png)
+
+如果我们的资源文件的路径越短，那么映射关系就越简单，资源映射表就越小，从而能够达到瘦身的效果。
+
+这里我们推荐
+
+* AndResGuard
+  
+  * 能够使冗长的资源路径（图片名）变短
+  
+  
+  
+* 图片放在云端，在线加载
 
 
 
@@ -239,3 +263,7 @@ https://developer.android.google.cn/studio/build/shrink-code?hl=zh-cn
 https://www.baidu.com/link?url=M0hz3VFKaed8elPeONVSFtTLoEBisKg5sdbuvEdqEE2hEUFPJoSxB-IbJuwJ7poT&wd=&eqid=94fa2ae1001dc651000000035efdf405
 
 https://www.jianshu.com/p/32b4d92d4195
+
+https://mp.weixin.qq.com/s/X58fK02imnNkvUMFt23OAg
+
+https://blog.csdn.net/tantion/article/details/79634694
