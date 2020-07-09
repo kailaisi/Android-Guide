@@ -58,7 +58,7 @@ int (*p)[10];//声明一个数组指针，指向一个数组
 1. 动态分配二维数组，操作数组的时候
 2. 在jni.h中的struct JNIEnv结构体中用到
 
-##### 定义
+**定义**
 
 ```c
     int a = 50;
@@ -91,19 +91,155 @@ void main(){
 }
 ```
 
-#### 结构
+#### 字符串
+
+在C语言中，字符串实际上是使用 *null* 字符 ‘\0’终止的一堆字符数组。字符数组的长度包含了末尾的的空字符。
+
+字符串有两种：
+
+* 字符数组实现。可以修改某一个值，不可以整体赋值。
+* 字符指针实现。不可以修改其中一个某个值，但是可以整体赋值。使用指针加法和结束符，可以进行截图。
+
+##### 初始化
+
+```cpp
+    //使用字符数组，内存连续，可以修改（StringBuilder、Buffer）
+    char str1[] = {'a','b','c','\0'};//可以不指定长度，但是需要有结束符
+    char str2[6] = {'a','b','c'};//可以指定长度，后面就不会乱码
+    char str3[] = "abcdeabcde";//直接用双引号，这时候不用把null放到末尾。
+    str3[0] = 's';//可以修改其中某一个字符
+
+    //字符数组不能整体赋值，只能在声明的时候整体赋值，优点是可以局部修改某一个字符。需要重新整体赋值的话，需要使用strcpy
+    //str1 = "abcde";
+
+    //字符指针，不需要、不能修改某一个字符串（String）
+    char* str4 = "abcdefg";
+    //不能修改某一个字符串，否则会提示访问冲突
+    //str4[0] = '7';str4++;str4 = "哈哈";
+
+    //但是可以整体赋值
+    str4 = "123456";
+
+    //使用指针加法，截取字符串
+    str4 += 3;
+    while (*str4){
+        printf("%c",*str4);
+        str4++;
+    }
+    system("pause");
+```
+
+##### 常用方法
+
+| 1    | **strcpy(s1, s2);** 复制字符串 s2 到字符串 s1。              |
+| ---- | ------------------------------------------------------------ |
+| 2    | **strcat(s1, s2);** 连接字符串 s2 到字符串 s1 的末尾。       |
+| 3    | **strlen(s1);** 返回字符串 s1 的长度。                       |
+| 4    | **strcmp(s1, s2);** 如果 s1 和 s2 是相同的，则返回 0；如果 s1<s2 则返回小于 0；如果 s1>s2 则返回大于 0。 |
+| 5    | **strchr(s1, ch);** 返回一个指针，指向字符串 s1 中字符 ch 的第一次出现的位置。 |
+| 6    | **strstr(s1, s2);** 返回一个指针，指向字符串 s1 中字符串 s2 的第一次出现的位置。 |
+
+#### 结构体
 
 结构是一个或者多个变量的集合，这些变量的类型可能不同，为了处理的方便讲这些变量组织在一个名字之下。
 
-```c
+##### 定义结构
+
+定义结构体，必须使用 **struct** 语句。使用{}来包含多个成员的数据类型。struct数据的格式如下：
+
+```cpp
+struct tag { 
+    member-list
+    member-list 
+    member-list  
+    ...
+} variable-list ;
+```
+
+这里的tag是结构体标签。而variable-list是结构体**变量**。在定义结构体结构的时候，我们可以在后界面跟上对应的变量。可以是多个，也可以是单个。
+
+```cpp
+//此声明声明了拥有3个成员的结构体，分别为整型的a，字符型的b和双精度的c
+//同时又声明了结构体变量s1
+//这个结构体并没有标明其标签
+struct 
+{
+    int a;
+    char b;
+    double c;
+} s1;
+ 
+//此声明声明了拥有3个成员的结构体，分别为整型的a，字符型的b和双精度的c
+//结构体的标签被命名为SIMPLE,没有声明变量
+struct SIMPLE
+{
+    int a;
+    char b;
+    double c;
+};
+//用SIMPLE标签的结构体，另外声明了变量t1、t2、t3
+struct SIMPLE t1, t2[20], *t3;
+ 
+//也可以用typedef创建新类型
+typedef struct
+{
+    int a;
+    char b;
+    double c; 
+} Simple2;
+//现在可以用Simple2作为类型声明新的结构体变量
+Simple2 u1, u2[20], *u3;
+
 struct student{//定义一个结构体
     char name[10];
     int age;
     int score;
 }
-
 typedef struct student s;//类型定义符，相当于用s来代表student这个结构体
 ```
+
+对于不同的结构体，哪怕成员变量完全相同，编译器也是将其当做完全不同的类型。
+
+##### 成员变量的访问
+
+C语言中，通过**成员访问运算符（.）**来访问成员变量。
+
+```cpp
+struct Books
+{
+   char  title[50];
+   char  author[50];
+   char  subject[100];
+   int   book_id;
+};
+int main( )
+{
+   struct Books Book1;        /* 声明 Book1，类型为 Books */
+   struct Books Book2;        /* 声明 Book2，类型为 Books */
+ 
+   /* Book1 详述 */
+   strcpy( Book1.title, "C Programming");
+   strcpy( Book1.author, "Nuha Ali"); 
+   strcpy( Book1.subject, "C Programming Tutorial");
+   Book1.book_id = 6495407;
+```
+
+##### 结构体指针
+
+我们可以定义指向结构体的指针，方式和定义其他类型变量的指针相似：
+
+```cpp
+struct Books* p = &p2;
+
+printf("%s,%d",(*p).name,(*p).age);//等价于
+printf("%s,%d",p->name,p->age);
+```
+
+
+
+结构体的定义
+
+
 
 ### 内存分配
 
@@ -163,7 +299,16 @@ int a[n]  或者int *a; a=(int*) malloc(sizeof(int)*n) 都属于动态分配，�
 
 1. 不能多次释放。
 2. 释放完之后，指针仍然有值，给指针置为NULL，标志释放完成。
-3. 
+
+### 
+
+|      |      |
+| ---- | ---- |
+|      |      |
+|      |      |
+|      |      |
+|      |      |
+|      |      |
 
 ### 编译器
 
