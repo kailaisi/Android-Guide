@@ -6,6 +6,7 @@
 * [FFmpeg音视频核心技术全面精讲](https://coding.imooc.com/class/279.html)
 * C程序设计语言
 * Android C++高级编程----使用NDK
+* C++ Primer 第五版
 
 #### 热修复
 
