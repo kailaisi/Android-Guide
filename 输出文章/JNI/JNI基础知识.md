@@ -29,7 +29,80 @@ JNI（Java Native Interface），即Java本地接口。是Java与其他语言的
 
 ##### 动态注册
 
-将Java中的方法在代码中动态的与JNI方法进行对应。
+将Java中的方法在代码中动态的与JNI方法进行对应。从而解决静态注册时包名过长的问题
+
+动态注册使用方法：
+
+```java
+public class MainActivity extends AppCompatActivity {
+    public native void dynamicJavaFunc1();
+
+    public native int dynamicJavaFunc2(int i);
+}
+
+```
+
+在对应的c++类中进行注册
+
+```c++
+void dynamicJavaFunc1() {
+    LOGE("调用了 dynamicJavaFunc1");
+}
+
+jint dynamicJavaFunc2(JNIEnv *env, jobject thiz, jint i) {
+    LOGE("调用了 dynamicJavaFunc2");
+    return 666;
+}
+
+/*这里是需要动态注册的方法对应的数组*/
+static const JNINativeMethod methods[] = {
+        {"dynamicJavaFunc1", "()V",  (void *) dynamicJavaFunc1},
+        {"dynamicJavaFunc2", "(I)I", (void *) dynamicJavaFunc2}
+};
+/*需要动态注册native方法的类名*/
+static const char *mClassName = "com/example/cdemo/MainActivity";
+
+jint JNI_OnLoad(JavaVM *vm, void *unused) {
+    JNIEnv *env = NULL;
+    /*获取JNIEnv,这里的第一个参数是二级指针*/
+    int result = vm->GetEnv(reinterpret_cast<void **>(env), JNI_VERSION_1_6);
+    if (result != JNI_OK) {
+        LOGE("获取Env失败");
+        return JNI_VERSION_1_6;
+    }
+    /*注册方法的类*/
+    jclass classMain = env->FindClass("com/example/cdemo/MainActivity");
+    /*调用动态注册方法，将方法进行注册*/
+    result = env->RegisterNatives(classMain, methods, 2);
+    if (result != JNI_OK) {
+        LOGE("动态方法注册失败");
+        return JNI_VERSION_1_2;
+    }
+    return JNI_VERSION_1_6;
+}
+```
+
+##### NDK
+
+NDK原生开发套件。是一套工具，能够使用户在Android应用中使用C和C++代码，并且能够提供多个平台的对应库。
+
+##### makefile
+
+自动化编译。定义了一些列的规则，指定哪些文件先编译，哪些文件后编译，如何进行链接等等。在Android中使用Android.mk文件来配置makefile。
+
+##### cmake
+
+CMake是跨平台的构件工具，可以用简单的语句来描述所有平台的安装编译过程。能够输出各种makefile或者project文件。
+
+Cmake并不是直接构建软件，而是一个工具。用于产生其他工具的脚本（makefile或者project），然后再依据这个产生的工具进行构建。
+
+Android Studio利用CMake生成ninja。
+
+##### CMakeLists.txt
+
+
+
+#### 使用第三方库
 
 ##### 
 
