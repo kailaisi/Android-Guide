@@ -4,7 +4,13 @@
 
 JNI（Java Native Interface），即Java本地接口。是Java与其他语言的桥梁。
 
+#### JNI字符串处理
 
+##### native操作JVM数据结构
+
+JNI把Java中所有对象都当作C指针传递到本地方法中，这个指针指向了JVM的内部数据结构。而内部数据结构在内存中是不可见的。只能通过JNIEnv指针指向的函数表中选择合适的JNI函数来操作JVM中的数据结构。
+
+native访问java中的String对应的jstring时，不能直接访问，因为它是Java的引用类型，所以只能通过类似于GetStringUTFChars这样的JNI函数来访问字符串内容。
 
 #### 加载动态库
 
