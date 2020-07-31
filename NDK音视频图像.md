@@ -7,6 +7,8 @@
 * C程序设计语言
 * Android C++高级编程----使用NDK
 * C++ Primer 第五版
+* [ndk-samples](https://github.com/android/ndk-samples)
+  * [OpenSL ES](https://github.com/android/ndk-samples/blob/master/native-audio/)
 
 #### 热修复
 
@@ -23,3 +25,4 @@
 对应自己需要学习的知识体系和所需要阅读的文章、学习的方向总是没有一个重点。所以打算建仓来记录自己的学习历程。
 
 仓库会不断的收录看到的博文或者视频。然后进行分类记录
+

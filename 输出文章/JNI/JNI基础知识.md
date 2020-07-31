@@ -106,9 +106,44 @@ Android Studio利用CMake生成ninja。
 
 ##### CMakeLists.txt
 
+### 线程知识
+
+##### 主线程调用Java方法
+
+JNI是线程相关的。
+
+```c++
+Java_com_example_cdemo_MainActivity_stringFromJNI(JNIEnv *env, jobject thiz) {
+    std::string hello = getString();
+    //获取thiz的class，也就是java中的Class信息
+    jclass thisclazz = env->GetObjectClass(thiz);
+    //获取getClass方法的methodId
+    jmethodID jmethodId = env->GetMethodID(thisclazz, "getClass", "()Ljava/lang/Class;");
+    //执行getClass方法，获取Class对象
+    jobject instance = env->CallObjectMethod(thisclazz, jmethodId);
+    //1.获取Class实例
+    jclass clazz = env->GetObjectClass(instance);
+    //2.获取其getName方法id
+    jmethodID mid_getName = env->GetMethodID(clazz, "getName", "()Ljava/lang/String;");
+    //3. 调用getName方法
+    jstring name = static_cast<jstring >(env->CallObjectMethod(instance, mid_getName));
+    LOGD("class name:%s", env->GetStringUTFChars(name, 0));
+    //资源的释放
+    env->DeleteLocalRef(thisclazz);
+    env->DeleteLocalRef(clazz);
+    env->DeleteLocalRef(instance);
+    env->DeleteLocalRef(name);
+    return env->NewStringUTF(hello.c_str());
+}
+```
+
+##### 子线程调用Java方法
+
+由于JNIEnv是线程相关的，所以子线程不能使用创建线程的JNIEnv。而JVM是进程相关的，所以可以通过JVM来获取当前线程的JNIEnv。然后就可以调用Java方法了。
 
 
-#### 使用第三方库
+
+### 使用第三方库
 
 ##### 
 
