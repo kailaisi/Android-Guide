@@ -47,9 +47,11 @@
 
 邓俊辉《数据结构》上、下
 
-Java数据结构（进行中）
+Java数据结构（进行中）[学习笔记](https://github.com/kailaisi/data-structure/tree/master/src/datalearning)
 
-《漫画算法：小灰的算法之旅》（开始）
+[力扣题解(进行中)](https://github.com/kailaisi/data-structure)
+
+《漫画算法：小灰的算法之旅》（完成）
 
 《数据结构与算法分析》
 
@@ -59,7 +61,7 @@ Java数据结构（进行中）
 * 《代码简洁之道》
 * 《设计模式之禅》
 * 《Android源码设计模式》
-* 慕课网之 实战企业级项目 践行App重构之路
+* 慕课网之 实战企业级项目 践行App重构之路（进行中）
 
 ### [JNI、音视频、图像](NDK音视频图像.md)
 
