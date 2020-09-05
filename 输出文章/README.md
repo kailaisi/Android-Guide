@@ -5,7 +5,6 @@
   - Android启动流程源码解析（二）（完成）
   - Android布局窗口绘制分析（完成）
   - 应用进程创建过程（完成）
-    - 
 - FragmentManager系列
   - Android之Fragment状态管理源码解析（完成）
   - ChildFragmentManager vs FragmentManager
@@ -15,6 +14,7 @@
   * Android的inflate源码详解（完成）
   * Android的View绘制机制（完成）
   * Android触摸事件源码解析（完成）
+  * Android屏幕刷新机制（进行中）
 * JetPack
   * LiveData 源码解析（完成）
   * Lifecycle源码解析（完成）
@@ -40,7 +40,7 @@
   * AsynTask源码（待写）
   * CopyOnWriteArrayList源码解析（待写）
   * PriorityQueue 排队序列（待研究）
-  * SettingPreferences源码解析（待研究）
+  * SharedPreferences源码解析（完成）
 * 通讯(待写)
   * 
 * 杂项
