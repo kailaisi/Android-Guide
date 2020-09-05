@@ -8,6 +8,8 @@
 
 HTTP权威指南。三方笔记https://github.com/woai30231/http
 
+极客时间-透视HTTP协议。[笔记](输出文章/计算机基础/透视HTTP协议.md)
+
 HTTP2详解
 
 TCPIP协议详解卷一：协议（进行中）
