@@ -20,6 +20,8 @@
   * Lifecycle源码解析（完成）
 * 常用控件解析
   * RecyclerView源码解析（完成）
+  * GridLayout源码解析（待写）
+  * GestureDector高级玩法（待写）
 * 三方源码系列
   * Gson源码解析（完成）
     * JsonReader/JsonWriter解析(待写)
@@ -40,7 +42,7 @@
   * AsynTask源码（待写）
   * CopyOnWriteArrayList源码解析（待写）
   * PriorityQueue 排队序列（待研究）
-  * SharedPreferences源码解析（完成）
+* SharedPreferences源码解析（完成）
 * 通讯(待写)
   * 
 * 杂项
@@ -48,6 +50,7 @@
   * Handler 源码机制(完成)
   * IdleHandler源码解析（完成）
   * io复用和copyonwrite技术延伸
+  * 同步屏障
 * 插桩技术(待研究)
   * APT技术实现对代码的抖动处理
   * ASM技术
