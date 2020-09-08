@@ -565,5 +565,160 @@ sp.edit().putInt(key, value).commit()
 
 这里使用了**CountDownLatch**方法来实现线程间的同步问题，有兴趣的小伙伴可以去了解一下。
 
+我们之前所走的流程是**commit**提交之后不需要入队的操作。但是当发生并发的时候，可能会存在commit()的时候，有其他的正在进行写入的操作。这时候需要进行入队操作了。
 
+```java
+        //这里会将写入磁盘的runnable放入到队列中进行处理
+        QueuedWork.queue(writeToDiskRunnable, !isFromSyncCommit);
+```
+
+
+
+```java
+    public static void queue(Runnable work, boolean shouldDelay) {
+        Handler handler = getHandler();
+
+        synchronized (sLock) {
+            //放入到队列中
+            sWork.add(work);
+            //是否需要延迟（commit()方法不会进行延迟）
+            if (shouldDelay && sCanDelay) {
+                handler.sendEmptyMessageDelayed(QueuedWorkHandler.MSG_RUN, DELAY);
+            } else {
+                handler.sendEmptyMessage(QueuedWorkHandler.MSG_RUN);
+            }
+        }
+    }
+```
+
+这会将我们需要执行的写入操作放入到队列中，然后通过Handler机制去执行。
+
+```java
+    private static Handler getHandler() {
+        synchronized (sLock) {
+            if (sHandler == null) {
+                //HandlerThread，一种含有Handler的线程，可以进行handler消息的处理
+                HandlerThread handlerThread = new HandlerThread("queued-work-looper", Process.THREAD_PRIORITY_FOREGROUND);
+                handlerThread.start();
+                sHandler = new QueuedWorkHandler(handlerThread.getLooper());
+            }
+            return sHandler;
+        }
+    }
+    
+    private static class QueuedWorkHandler extends Handler {
+        static final int MSG_RUN = 1;
+
+        QueuedWorkHandler(Looper looper) {
+            super(looper);
+        }
+
+        public void handleMessage(Message msg) {
+            if (msg.what == MSG_RUN) {
+                processPendingWork();
+            }
+        }
+    }
+```
+
+所以这里最终消息的执行，会在**QueuedWorkHandler** 中进行消息的处理。
+
+```java
+    private static void processPendingWork() {
+        synchronized (sProcessingWork) {//保证同一时间只有一个线程在执行操作
+            LinkedList<Runnable> work;
+            synchronized (sLock) {
+                //复制之后，将原队列清空
+                work = (LinkedList<Runnable>) sWork.clone();
+                sWork.clear();
+                getHandler().removeMessages(QueuedWorkHandler.MSG_RUN);
+            }
+            if (work.size() > 0) {
+                //执行所有的方法
+                for (Runnable w : work) {
+                    w.run();
+                }
+            }
+        }
+    }
+```
+
+会将所有的队列消息取出来，然后顺序执行。因为我们之前往队列丢的是**Runable**对象，所以这里就会逐个执行。
+
+我们剩下一个**apply()**需要看看。
+
+```java
+        public void apply() {
+            final MemoryCommitResult mcr = commitToMemory();
+            //子线程，将数据写入到磁盘中
+            final Runnable awaitCommit = new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        //等待写入完成
+                        mcr.writtenToDiskLatch.await();
+                    } catch (InterruptedException ignored) {
+                    }
+
+                }
+            };
+            QueuedWork.addFinisher(awaitCommit);
+            //子线程，执行await子线程，并将数据移除
+            Runnable postWriteRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    awaitCommit.run();//调用写入磁盘等待的方法
+                    QueuedWork.removeFinisher(awaitCommit);
+                }
+            };
+            //入队写数据
+            SharedPreferencesImpl.this.enqueueDiskWrite(mcr, postWriteRunnable);
+
+            notifyListeners(mcr);
+        }
+
+   private void enqueueDiskWrite(final MemoryCommitResult mcr, final Runnable postWriteRunnable) {
+        //是否是同步
+        final boolean isFromSyncCommit = (postWriteRunnable == null);
+        //真正执行将数据写入到磁盘的线程
+        final Runnable writeToDiskRunnable = new Runnable() {
+            @Override
+            public void run() {
+                synchronized (mWritingToDiskLock) {
+                    //写入磁盘
+                    writeToFile(mcr, isFromSyncCommit);
+                }
+                synchronized (mLock) {
+                    //计数器-1
+                    mDiskWritesInFlight--;
+                }
+                if (postWriteRunnable != null) {
+                    postWriteRunnable.run();
+                }
+            }
+        };
+        //这里会将写入磁盘的runnable放入到队列中进行处理
+        QueuedWork.queue(writeToDiskRunnable, !isFromSyncCommit);
+    }
+```
+
+这里其实分为了3个步骤。
+
+1. 将写入操作入队操作。这样，当队列按照上面的顺序去执行的时候，会调用**writeToDiskRunnable** 方法进行磁盘的写入。
+2. 写入完以后，调用**postWriteRunnable**方法。也就是会执行**awaitCommit** 这个线程，而这个线程会等待磁盘的写入完成操作。
+
+### 总结
+
+1. SharedPreference支持使用**registerOnSharedPreferenceChangeListener**方法注册sp文件的变化。
+2. 通过apply()方法提交的会延迟100ms后再进行磁盘的写入工作。
+
+#### 疑问
+
+这里一直有一个疑问，也没想明白怎么回事。
+
+在apply或者commit提交的时候，会创建一个**MemoryCommitResult**对象。在创建的时候，如果发现当前正在进行磁盘写入的话，会将原来的mMap进行备份之后再修改。
+
+例如下面的情况：A正在提交文件。这时候，如果B和C都进行了提交。那么B和C就会对原来的mMap进行备份之后，再进行修改。B和C就不知道对方互相修改了哪些资源。在最后进行提交的时候，不会丢失其中的一个修改文件么？
+
+有知道的小伙伴，希望能帮我解惑一下。
 

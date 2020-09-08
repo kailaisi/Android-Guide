@@ -14,6 +14,7 @@
   * Android的inflate源码详解（完成）
   * Android的View绘制机制（完成）
   * Android触摸事件源码解析（完成）
+  * Android屏幕刷新机制（进行中）
 * JetPack
   * LiveData 源码解析（完成）
   * Lifecycle源码解析（完成）
@@ -41,7 +42,7 @@
   * AsynTask源码（待写）
   * CopyOnWriteArrayList源码解析（待写）
   * PriorityQueue 排队序列（待研究）
-  * SharedPreferences源码解析（进行中）
+* SharedPreferences源码解析（完成）
 * 通讯(待写)
   * 
 * 杂项

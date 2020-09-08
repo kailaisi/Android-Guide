@@ -706,7 +706,7 @@ private void updateViewTreeDisplayList(View view) {
 
 在这个方法里会调用View的draw(canvas)绘制方法，由于DecorView方法重写了draw方法，所以先执行DecorView的draw方法。
 
-```
+```java
 //DecorView
 	@Override
     public void draw(Canvas canvas) {
@@ -719,7 +719,7 @@ private void updateViewTreeDisplayList(View view) {
 
 所以最终还是调用View类中的draw方法。
 
-```
+```java
     public void draw(Canvas canvas) {
         final int privateFlags = mPrivateFlags;
         mPrivateFlags = (privateFlags & ~PFLAG_DIRTY_MASK) | PFLAG_DRAWN;
