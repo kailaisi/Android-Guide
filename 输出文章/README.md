@@ -22,6 +22,7 @@
   * RecyclerView源码解析（完成）
   * GridLayout源码解析（待写）
   * GestureDector高级玩法（待写）
+  * Bitmap压缩等原理研究
 * 三方源码系列
   * Gson源码解析（完成）
     * JsonReader/JsonWriter解析(待写)
