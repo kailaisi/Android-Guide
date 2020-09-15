@@ -542,37 +542,221 @@ status_t DisplayEventDispatcher::initialize() {
 
 这里之所以能够加入到监听，是因为我们的
 
-这里整个方法比较简单，就是进行异常的检测，让后将在步l'l
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-骤一中创建的fd文件加入到Looper的监听中。
+这里整个方法比较简单，就是进行异常的检测，让后将在步骤一中创建的fd文件加入到Looper的监听中。
 
 到这里为止，整个流程算是打通了。
 
 **java层通过DisplayEventReceive的nativeInit函数，创建了应用层和SurfaceFlinger的连接，通过一对socket，对应mReceiveFd和mSendFd，应用层通过native层Looper将mReceiveFd加入监听，等待mSendFd的写入。**
 
 那么mSendFd什么时候写入，又是如何传递到应用层的呢？
+
+
+
+
+
+
+
+
+
+当我们进行页面刷新绘制的时候，看一下如何注册对于Vsync的监听给的
+
+```java
+
+    @UnsupportedAppUsage
+    void scheduleTraversals() {
+       	...
+            mChoreographer.postCallback(Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
+		...	
+    }
+
+    public void postCallback(int callbackType, Runnable action, Object token) {
+        postCallbackDelayed(callbackType, action, token, 0);
+    }
+
+    public void postCallbackDelayed(int callbackType,Runnable action, Object token, long delayMillis) {
+        postCallbackDelayedInternal(callbackType, action, token, delayMillis);
+    }
+
+    private void postCallbackDelayedInternal(int callbackType,Object action, Object token, long delayMillis) {
+        	...
+				//需要立即进行绘制
+                scheduleFrameLocked(now);
+            ...
+    }
+
+    private void scheduleFrameLocked(long now) {
+    	...
+                    scheduleVsyncLocked();
+        ...
+    }
+
+    private void scheduleVsyncLocked() {
+        //执行同步功能，进行一次绘制。这里会进行一个VSYNC事件的监听注册，如果有有
+        mDisplayEventReceiver.scheduleVsync();
+    }
+
+    public void scheduleVsync() {
+        ..
+            nativeScheduleVsync(mReceiverPtr);
+        ...
+    }
+```
+
+这里的**nativeScheduleVsync()**就是应用层向native层注册监听下一次Vsync信号的方法。
+
+### nativeScheduleVsync
+
+```c++
+//base\core\jni\android_view_DisplayEventReceiver.cpp		8492	2020/9/14	96
+static void nativeScheduleVsync(JNIEnv* env, jclass clazz, jlong receiverPtr) {
+    sp<NativeDisplayEventReceiver> receiver =
+            reinterpret_cast<NativeDisplayEventReceiver*>(receiverPtr);
+    //调用Recivier的调度方法
+    status_t status = receiver->scheduleVsync();
+}
+
+```
+
+这里的receiver，是**NativeDisplayEventReceiver**。而**NativeDisplayEventReceiver**是继承自**DisplayEventDispatcher**
+
+#### DisplayEventDispatcher->scheduleVsync();
+
+```c++
+//调度Vsync
+status_t DisplayEventDispatcher::scheduleVsync() {
+	//如果当前正在等待Vsync信号，那么直接返回
+    if (!mWaitingForVsync) {
+        nsecs_t vsyncTimestamp;
+        PhysicalDisplayId vsyncDisplayId;
+        uint32_t vsyncCount;
+		//重点方法1   处理对应的准备事件，如果获取到了Vsync信号的话，这里会返回true
+        if (processPendingEvents(&vsyncTimestamp, &vsyncDisplayId, &vsyncCount)) {
+            ALOGE("dispatcher %p ~ last event processed while scheduling was for %" PRId64 "",
+                    this, ns2ms(static_cast<nsecs_t>(vsyncTimestamp)));
+        }
+		//重点方法2   请求下一个Vsync信号
+        status_t status = mReceiver.requestNextVsync();
+        ...
+		//设置正在等待Vsync信号
+        mWaitingForVsync = true;
+    }
+    return OK;
+}
+```
+
+这里我们跟踪一下方法1
+
+##### DisplayEventDispatcher::processPendingEvents
+
+```c++
+bool DisplayEventDispatcher::processPendingEvents(
+        nsecs_t* outTimestamp, PhysicalDisplayId* outDisplayId, uint32_t* outCount) {
+    bool gotVsync = false;
+    DisplayEventReceiver::Event buf[EVENT_BUFFER_SIZE];
+    ssize_t n;
+    //获取对应的事件
+    while ((n = mReceiver.getEvents(buf, EVENT_BUFFER_SIZE)) > 0) {
+        ALOGV("dispatcher %p ~ Read %d events.", this, int(n));
+        for (ssize_t i = 0; i < n; i++) {
+            const DisplayEventReceiver::Event& ev = buf[i];
+            switch (ev.header.type) {
+            case DisplayEventReceiver::DISPLAY_EVENT_VSYNC://Vsync类型
+                //获取到最新的Vsync信号，然后将时间戳等信息保存下来
+                gotVsync = true;
+                *outTimestamp = ev.header.timestamp;
+                *outDisplayId = ev.header.displayId;
+                *outCount = ev.vsync.count;
+                break;
+           ...
+    return gotVsync;
+}
+```
+
+会通过**getEvents**方法获取到对应的事件类型，然后返回是否为Vsync信号。
+
+##### DisplayEventReceiver::getEvents
+
+```c++
+//	native\libs\gui\DisplayEventReceiver.cpp
+
+ssize_t DisplayEventReceiver::getEvents(DisplayEventReceiver::Event* events,size_t count) {
+	//这里的mDataChannel是在init中创建的，用来接收Vsync信号
+    return DisplayEventReceiver::getEvents(mDataChannel.get(), events, count);
+}
+ssize_t DisplayEventReceiver::getEvents(gui::BitTube* dataChannel,
+        Event* events, size_t count)
+{
+    return gui::BitTube::recvObjects(dataChannel, events, count);
+}
+
+//native\libs\gui\BitTube.cpp
+    static ssize_t recvObjects(BitTube* tube, T* events, size_t count) {
+        return recvObjects(tube, events, count, sizeof(T));
+    }
+
+ssize_t BitTube::recvObjects(BitTube* tube, void* events, size_t count, size_t objSize) {
+    char* vaddr = reinterpret_cast<char*>(events);
+	//通过socket读取数据
+    ssize_t size = tube->read(vaddr, count * objSize);
+    return size < 0 ? size : size / static_cast<ssize_t>(objSize);
+}
+//读取数据
+ssize_t BitTube::read(void* vaddr, size_t size) {
+    ssize_t err, len;
+    do {
+		//将mReceiveFd接收到的数据，放入到size大小的vaddr缓冲区。并返回实际接收到的数据大小len
+        len = ::recv(mReceiveFd, vaddr, size, MSG_DONTWAIT);
+        err = len < 0 ? errno : 0;
+    } while (err == EINTR);
+    if (err == EAGAIN || err == EWOULDBLOCK) {
+        //如果接收出现异常，返回0
+        return 0;
+    }
+    return err == 0 ? len : -err;
+}
+```
+
+这里将接收到的数据放入到对应的缓冲区，并返回数据之后，会校验返回的具体的数据类型。
+
+
+
+```c++
+status_t DisplayEventReceiver::requestNextVsync() {
+	//校验当前连接存在
+    if (mEventConnection != nullptr) {
+		//通过连接请求下一个Vsync信号。这个mEventConnection。是在DisplayEventReceiver初始化的时候创建的
+		//具体的是EventThreadConnection（位于EventThread中）
+        mEventConnection->requestNextVsync();
+        return NO_ERROR;
+    }
+    return NO_INIT;
+}
+
+void EventThreadConnection::requestNextVsync() {
+    ATRACE_NAME("requestNextVsync");
+    mEventThread->requestNextVsync(this);
+}
+
+void EventThread::requestNextVsync(const sp<EventThreadConnection>& connection) {
+    if (connection->resyncCallback) {
+        connection->resyncCallback();
+    }
+	//线程锁机制
+    std::lock_guard<std::mutex> lock(mMutex);
+	//vsyncRequest默认值是None.定义在EventThread.h文件中
+    if (connection->vsyncRequest == VSyncRequest::None) {
+		//之所以Vsync是一次性的，是因为，当我们当前是None之后，会将这个字段设置为Single。
+		//后续硬件再有Vsync信号过来的时候，不会再执行这个方法
+        connection->vsyncRequest = VSyncRequest::Single;
+        mCondition.notify_all();
+    }
+}
+
+```
+
+
+
+
 
 [回到主线](#main)
 
