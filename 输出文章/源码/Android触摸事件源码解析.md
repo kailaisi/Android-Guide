@@ -4,7 +4,7 @@
 
 ### Activity 的事件分发处理
 
-```
+```java
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
         	//空方法
@@ -22,7 +22,7 @@
 
 我们看一下**superDispatchTouchEvent**的实现方法
 
-```
+```java
  	@Override
     public boolean superDispatchTouchEvent(MotionEvent event) {
         return mDecor.superDispatchTouchEvent(event);
@@ -31,7 +31,7 @@
 
 这里使用的是
 
-```
+```java
 public class DecorView extends FrameLayout implements RootViewSurfaceTaker, WindowCallbacks
 ...
 ```
@@ -44,7 +44,7 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
 
 当从Activity分发到ViewGroup之后，事件交给了ViewGroup的**dispatchTouchEvent**来进行处理
 
-```
+```java
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (mInputEventConsistencyVerifier != null) {
@@ -261,7 +261,7 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
 
 下面我们看一下**dispatchTransformedTouchEvent**做了什么工作
 
-```
+```java
     private boolean dispatchTransformedTouchEvent(MotionEvent event, boolean cancel,
                                                   View child, int desiredPointerIdBits) {
         	final boolean handled;
@@ -283,7 +283,7 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
 
 现在我们知道了**Activity**以及**ViewGroup**的事件分发机制。那么下一个我们来看看**View**是如何处理的
 
-```
+```java
 public boolean dispatchTouchEvent(MotionEvent event) {
     // If the event should be handled by accessibility focus first.
     //首先判断当前事件是否能获得焦点
