@@ -106,7 +106,7 @@ void MessageQueue::init(const sp<SurfaceFlinger>& flinger) {
 ```java
 	mChoreographer = Choreographer.getInstance();
 	
-	Choreographer.java	frameworks\base\core\java\android\view
+	//Choreographer.java	frameworks\base\core\java\android\view
     public static Choreographer getInstance() {
         return sThreadInstance.get();
     }	
@@ -134,18 +134,7 @@ void MessageQueue::init(const sp<SurfaceFlinger>& flinger) {
         ...
     }
 
-	//DisplayEventReceiver.java	frameworks\base\core\java\android\view	
-    public DisplayEventReceiver(Looper looper, int vsyncSource) {
-        if (looper == null) {
-            throw new IllegalArgumentException("looper must not be null");
-        }
 
-        mMessageQueue = looper.getQueue();
-		//调用底层初始化，并将本身以及对应的mMessageQueue传入进去
-        mReceiverPtr = nativeInit(new WeakReference<DisplayEventReceiver>(this), mMessageQueue,vsyncSource);
-
-        mCloseGuard.open("dispose");
-    }
 ```
 
 这里初始化的**FrameDisplayEventReceiver**类继承自**DisplayEventReceiver**类
@@ -558,7 +547,7 @@ status_t DisplayEventDispatcher::initialize() {
 
 
 
-当我们进行页面刷新绘制的时候，看一下如何注册对于Vsync的监听给的
+当我们进行页面刷新绘制的时候，看一下如何注册对于Vsync的监听的
 
 ```java
 
