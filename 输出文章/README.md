@@ -61,3 +61,8 @@
   * 深入理解Android之Gradle，
   * Transform API，
   * Javassist分析
+* 计算机基础
+  * MMU（待学习）
+  * Mmap（待写）
+  * 透视HTTP协议（已完成）
+  * protoful、buffer、dom解析

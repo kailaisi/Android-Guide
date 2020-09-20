@@ -10,98 +10,13 @@ VSync来源自底层硬件驱动程序的上报，对于Android能看到的接�
 
 #### View绘制
 
-这部分在之前的文章有过专门的说明
+这部分在之前的文章有过专门的说明[Android的View绘制机制](https://mp.weixin.qq.com/s/ic__vhXRdVlzDt3cXP3JPw)
 
 ![](http://cdn.qiniu.kailaisii.com/typora/20200913090942-343699.png)
 
-#### 同步屏障
+在我们之前的代码中，对于15-17这部分并没有进行任何的详解，那么底层是如何产生Vsync的信号，然后又是如何通知到我们的应用进行屏幕刷新呢？这不分就是我们这篇文章的关注点。
 
-#### Vsync
-
-　**1.**硬件或者软件创建vsyncThread产生vsync。
-　**2.**DispSyncThread处理vsync，把vsync虚拟化成vsync-app和vsync-sf。
-　**3.**vsync-app/sf按需产生（如果App和SurfaceFlinger都没有更新请求，则休眠省电）：
-　　APP端：APP需要更新界面时发出vsync请求给EventThread（设置connection.count>=0），DispSyncThread收到vsync信号后休眠offset，然后唤醒EventThread通知APP开始渲染。
-　　SF端：sf请求EventThread-sf，EventThread-sf收到vsync后通知SF可以开始合成。
-
-#### EventThread
-
-EventThread被设计用来接收VSync事件通知，并分发VSync通知给系统中的每一个感兴趣的注册者。
-
-### 源码
-
-#### SurfaceFling
-
-SurfaceFling的启动：frameworks\native\services\surfaceflinger\main_surfaceflinger.cpp
-
-```c++
-
-int main(int, char**) {
-    signal(SIGPIPE, SIG_IGN);
-    hardware::configureRpcThreadpool(1 /* maxThreads */,false /* callerWillJoin */);
-    startGraphicsAllocatorService();
-    //设置线程池最多只能有4个Binder线程
-    ProcessState::self()->setThreadPoolMaxThreadCount(4);
-    //创建进行的ProcessState对象，打开Binder设备，同时创建并映射一部分Binder共享内存
-    sp<ProcessState> ps(ProcessState::self());
-	//开启Binder线程，里面会循环不断的talkWithDriver
-    ps->startThreadPool();
-    //重点方法1   通过工厂方法，创建Surfaceflinger。这里会初始化很多线程信息。
-    //这里使用了sp强指针，而且SurfaceFlinger->DeathRecipient->RefBase的继承关系，所以在赋值给sp指针后，会立即调用其onFirstRef方法
-    sp<SurfaceFlinger> flinger = surfaceflinger::createSurfaceFlinger();
-	//设置Surfaceflinger的优先级
-    setpriority(PRIO_PROCESS, 0, PRIORITY_URGENT_DISPLAY);
-    set_sched_policy(0, SP_FOREGROUND);
-    //初始化Surfaceflinger对象信息。位置：SurfaceFlinger.cpp
-    flinger->init();
-
-    // publish surface flinger
-    //获取一个SM对象，相当于是new BpServiceManager(new BpBinder(0))
-    sp<IServiceManager> sm(defaultServiceManager());
-	//向ServiceManager守护进行注册SurfaceFling服务
-    sm->addService(String16(SurfaceFlinger::getServiceName()), flinger, false,
-                   IServiceManager::DUMP_FLAG_PRIORITY_CRITICAL | IServiceManager::DUMP_FLAG_PROTO);
-	//在SurfaceFlinger调用init方法的时候，会初始化Display的相关信息
-    startDisplayService(); // dependency on SF getting registered above
-    struct sched_param param = {0};
-    param.sched_priority = 2;
-    //运行SurfaceFling
-    flinger->run();
-
-    return 0;
-}
-
-```
-
-我们这里按照标注的重点方法进行跟踪
-
-* **SurfaceFlinger的onFirstRef方法**
-
-```c++
-void SurfaceFlinger::onFirstRef()
-{
-	//初始化消息队列，创建对应的loop和handler
-    mEventQueue->init(this);
-}
-
-MessageQueue.cpp	frameworks\native\services\surfaceflinger\Scheduler\
-void MessageQueue::init(const sp<SurfaceFlinger>& flinger) {
-    mFlinger = flinger;
-    mLooper = new Looper(true);
-    mHandler = new Handler(*this);
-}
-
-```
-
-该方法中会创建对应的Handler和Looper信息
-
-* SurfaceFlinger::init()
-
-
-
-
-
-#### 入口
+### 入口
 
 ```java
 	mChoreographer = Choreographer.getInstance();
@@ -539,14 +454,6 @@ status_t DisplayEventDispatcher::initialize() {
 
 那么mSendFd什么时候写入，又是如何传递到应用层的呢？
 
-
-
-
-
-
-
-
-
 当我们进行页面刷新绘制的时候，看一下如何注册对于Vsync的监听的
 
 ```java
@@ -743,13 +650,231 @@ void EventThread::requestNextVsync(const sp<EventThreadConnection>& connection) 
 
 ```
 
+这里当有Vsync的信号过来的时候，会调用一个**notify_all()**。这个方法会唤醒所有执行了**wait()**方法的线程。
+
+那么这个到底会唤醒谁呢？
+
+这里就不得不说一下**EventThread**创建过程中了。
+
+```c++
+EventThread::EventThread(VSyncSource* src, std::unique_ptr<VSyncSource> uniqueSrc,
+                         InterceptVSyncsCallback interceptVSyncsCallback, const char* threadName)
+      : mVSyncSource(src),
+        mVSyncSourceUnique(std::move(uniqueSrc)),
+        mInterceptVSyncsCallback(std::move(interceptVSyncsCallback)),
+        mThreadName(threadName) {
+    ...
+	//创建了mThread线程
+    mThread = std::thread([this]() NO_THREAD_SAFETY_ANALYSIS {
+        std::unique_lock<std::mutex> lock(mMutex);
+		//创建线程的时候调用了threadMain函数
+        threadMain(lock);
+    });
+	...
+}
+```
+
+在**EventThread**创建时，会创建一个线程，然后调用threadMain方法。
+
+```c++
+//在创建EventThread的时候会调用该方法。会不断的遍历
+void EventThread::threadMain(std::unique_lock<std::mutex>& lock) {
+    DisplayEventConsumers consumers;
+	//只要没有退出，则一直遍历循环
+    while (mState != State::Quit) {
+        std::optional<DisplayEventReceiver::Event> event;
+        ...
+		//是否有Vsync请求
+        bool vsyncRequested = false;
+		...
+        //查询所有的连接，其实这里一个连接就是一个监听
+        auto it = mDisplayEventConnections.begin();
+        while (it != mDisplayEventConnections.end()) {
+            if (const auto connection = it->promote()) {
+                vsyncRequested |= connection->vsyncRequest != VSyncRequest::None;
+				//遍历，将需要通知的监听放入到consumers中
+                if (event && shouldConsumeEvent(*event, connection)) {
+                    consumers.push_back(connection);
+                }
+
+                ++it;
+            } else {
+                it = mDisplayEventConnections.erase(it);
+            }
+        }
+
+        if (!consumers.empty()) {
+			//进行事件的分发。最终会调用gui::BitTube::sendObjects函数
+            dispatchEvent(*event, consumers);
+            consumers.clear();
+        }
+
+        State nextState;
+        if (mVSyncState && vsyncRequested) {
+            nextState = mVSyncState->synthetic ? State::SyntheticVSync : State::VSync;
+        } else {
+            ALOGW_IF(!mVSyncState, "Ignoring VSYNC request while display is disconnected");
+            nextState = State::Idle;
+        }
+
+        if (mState != nextState) {
+            if (mState == State::VSync) {
+                mVSyncSource->setVSyncEnabled(false);
+            } else if (nextState == State::VSync) {
+                mVSyncSource->setVSyncEnabled(true);
+            }
+
+            mState = nextState;
+        }
+
+        if (event) {
+            continue;
+        }
+
+        //空闲状态，则等待事件请求
+        if (mState == State::Idle) {
+            mCondition.wait(lock);
+        } else {
+            ...
+        }
+    }
+}
+
+```
+
+**threadMain**函数会不断的循环。如果找到了能够消耗事件的EventThreadConnection，则调用dispatchEvent分发事件。如果当前为空闲状态，则会让线程进入到等待，等待唤醒。
+
+也就是我们在前面所说的唤醒。
+
+当有Vsync信号到来的时候，会调用**dispatchEvent**方法进行分发
+
+```c++
+void EventThread::dispatchEvent(const DisplayEventReceiver::Event& event,
+                                const DisplayEventConsumers& consumers) {
+    //这里的DisplayEventConsumers是vector，内部保存的是EventThreadConnection。                            
+    for (const auto& consumer : consumers) {
+        switch (consumer->postEvent(event)) {
+            case NO_ERROR:
+                break;
+            case -EAGAIN:
+                ALOGW("Failed dispatching %s for %s", toString(event).c_str(),
+                      toString(*consumer).c_str());
+                break;
+            default:
+                // Treat EPIPE and other errors as fatal.
+                removeDisplayEventConnectionLocked(consumer);
+        }
+    }
+}
+```
+
+我们看一下**postEvent**方法
+
+```c++
+//EventThread.cpp	frameworks\native\services\surfaceflinger\Scheduler	
+status_t EventThreadConnection::postEvent(const DisplayEventReceiver::Event& event) {
+    ssize_t size = DisplayEventReceiver::sendEvents(&mChannel, &event, 1);
+    return size < 0 ? status_t(size) : status_t(NO_ERROR);
+}
+
+//DisplayEventReceiver.cpp	frameworks\native\libs\gui	
+ssize_t DisplayEventReceiver::sendEvents(gui::BitTube* dataChannel,
+        Event const* events, size_t count)
+{
+    return gui::BitTube::sendObjects(dataChannel, events, count);
+}
+
+ssize_t DisplayEventReceiver::sendEvents(gui::BitTube* dataChannel,
+        Event const* events, size_t count)
+{
+	//这里会发送Vsync信号，往BitTube所对应的
+    return gui::BitTube::sendObjects(dataChannel, events, count);
+}
+
+//BitTube.h	frameworks\native\libs\gui\include\private\gui	
+    static ssize_t sendObjects(BitTube* tube, T const* events, size_t count) {
+        return sendObjects(tube, events, count, sizeof(T));
+    }
+
+ssize_t BitTube::sendObjects(BitTube* tube, void const* events, size_t count, size_t objSize) {
+    const char* vaddr = reinterpret_cast<const char*>(events);
+	//往vaddr中写数据。当mSendFd写入文件以后以后,与之对应的mReceiveFd则能接收到数据。
+	//然后mReceiveFd则会调用对应的回调函数
+    ssize_t size = tube->write(vaddr, count * objSize);
+	...
+    return size < 0 ? size : size / static_cast<ssize_t>(objSize);
+}
+```
+
+当sendObjects像mSendFd写入数据以后，mReceiveFd能够接收到消息。而在nativeInit过程中，会将mReceiveFd添加到handler的epoll进行监听。所以当写入数据以后，就会回调对应的handleEvent回调函数。而这个回调在添加mReceiveFd的时候，是一起注册的
+
+### 回调流程
+
+```c++
+
+//mReceiveFd能接收到对应写入的数据，然后调用此方法。
+int DisplayEventDispatcher::handleEvent(int, int events, void*) {
+    if (events & (Looper::EVENT_ERROR | Looper::EVENT_HANGUP)) {
+        ALOGE("Display event receiver pipe was closed or an error occurred.  "
+                "events=0x%x", events);
+        return 0; // remove the callback
+    }
+
+    nsecs_t vsyncTimestamp;
+    PhysicalDisplayId vsyncDisplayId;
+    uint32_t vsyncCount;
+    if (processPendingEvents(&vsyncTimestamp, &vsyncDisplayId, &vsyncCount)) {
+        ALOGV("dispatcher %p ~ Vsync pulse: timestamp=%" PRId64 ", displayId=%"
+                ANDROID_PHYSICAL_DISPLAY_ID_FORMAT ", count=%d",
+                this, ns2ms(vsyncTimestamp), vsyncDisplayId, vsyncCount);
+		//这里已经获取到一个Vsync信息，所以将正在等待Vsync标志位置为false。
+        mWaitingForVsync = false;
+		//进行分发。这个的具体是现在DisplayEventDispater（android_view_DisplayEventReceiver中定义的）的子类NativeDisplayEventReceiver中
+        dispatchVsync(vsyncTimestamp, vsyncDisplayId, vsyncCount);
+    }
+
+    return 1; // keep the callback
+}
+
+
+//android_view_DisplayEventReceiver.cpp	frameworks\base\core\jni	
+void NativeDisplayEventReceiver::dispatchVsync(nsecs_t timestamp, PhysicalDisplayId displayId,
+                                               uint32_t count) {
+    //JNI的上下文环境                                           
+    JNIEnv* env = AndroidRuntime::getJNIEnv();
+	//这里的mReceiverWeakGlobal
+    ScopedLocalRef<jobject> receiverObj(env, jniGetReferent(env, mReceiverWeakGlobal));
+    if (receiverObj.get()) {
+        ALOGV("receiver %p ~ Invoking vsync handler.", this);
+		//通过JNI方法，调用dispatchVsync方法，参数传入了对应的时间戳、显示屏和对应的Vsync的个数
+		//实际上就是DisplayEventReceiver的dispatchVsync方法
+        env->CallVoidMethod(receiverObj.get(),
+                gDisplayEventReceiverClassInfo.dispatchVsync, timestamp, displayId, count);
+        ALOGV("receiver %p ~ Returned from vsync handler.", this);
+    }
+
+    mMessageQueue->raiseAndClearException(env, "dispatchVsync");
+}
+```
+
+最终会调用我们Java中的**dispatchVsync**方法。
+
+```JAVA
+   //DisplayEventReceiver.java	frameworks\base\core\java\android\view	
+    private void dispatchVsync(long timestampNanos, long physicalDisplayId, int frame) {
+        onVsync(timestampNanos, physicalDisplayId, frame);
+    }
+```
+
+终于回到我们的主线了。。。
+
+![image-20200920161202323](http://cdn.qiniu.kailaisii.com/typora/20200920161203-975048.png)
+
+我们划线这部分也算是打通了。剩下得Java层的回调处理，我们在之前的View绘制讲解过，有兴趣的可以了解一下。
 
 
 
-
-[回到主线](#main)
-
-
+### 引用
 
 http://dandanlove.com/2018/04/25/android-source-choreographer/
 
@@ -759,8 +884,14 @@ https://blog.csdn.net/stven_king/article/details/80098798
 
 [Android垂直同步信号VSync的产生及传播结构详解](https://blog.csdn.net/houliang120/article/details/50908098)
 
-EventThread
-
 https://blog.csdn.net/qq_34211365/article/details/105123790
 
 https://blog.csdn.net/qq_34211365/article/details/105155801
+
+
+
+> 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
+>
+> 同步公众号[开了肯]
+
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)
