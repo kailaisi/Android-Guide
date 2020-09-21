@@ -97,5 +97,40 @@ ActivityCompat.startIntentSenderForResult(this, intent,
 
 我们看一下实际的onActivityresult方法的返回。这个方法的实现，是在FragmentActivity中的。
 
+```java
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        mFragments.noteStateNotSaved();
+        //将对应的requestCode右移16位，获取到对应的fragment所使用的index信息
+        int requestIndex = requestCode>>16;
+        if (requestIndex != 0) {
+            //这里做-1，是因为使用的时候，进行了(requestIndex + 1) << 16的操作。所以需要--的处理
+            requestIndex--;
+
+            String who = mPendingFragmentActivityResults.get(requestIndex);
+            mPendingFragmentActivityResults.remove(requestIndex);
+            if (who == null) {
+                Log.w(TAG, "Activity result delivered for unknown Fragment.");
+                return;
+            }
+            Fragment targetFragment = mFragments.findFragmentByWho(who);
+            if (targetFragment == null) {
+                Log.w(TAG, "Activity result no fragment exists for who: " + who);
+            } else {
+                targetFragment.onActivityResult(requestCode & 0xffff, resultCode, data);
+            }
+            return;
+        }
+
+        ActivityCompat.PermissionCompatDelegate delegate =
+                ActivityCompat.getPermissionCompatDelegate();
+        if (delegate != null && delegate.onActivityResult(this, requestCode, resultCode, data)) {
+            // Delegate has handled the activity result
+            return;
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+```
+
 
 
