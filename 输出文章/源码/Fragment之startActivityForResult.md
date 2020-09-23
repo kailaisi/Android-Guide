@@ -103,19 +103,23 @@ ActivityCompat.startIntentSenderForResult(this, intent,
         //将对应的requestCode右移16位，获取到对应的fragment所使用的index信息
         int requestIndex = requestCode>>16;
         if (requestIndex != 0) {
+            //如果是activity发起请求的话，requestIndex是=0的，所以进入这个分支表示是由Fragment发起的请求
             //这里做-1，是因为使用的时候，进行了(requestIndex + 1) << 16的操作。所以需要--的处理
             requestIndex--;
-
+            //获取到对应的调用请求的Fragment类
             String who = mPendingFragmentActivityResults.get(requestIndex);
+            //既然已经返回了，那么这里就直接将缓存的请求信息移除
             mPendingFragmentActivityResults.remove(requestIndex);
             if (who == null) {
                 Log.w(TAG, "Activity result delivered for unknown Fragment.");
                 return;
             }
+            //找到fragment
             Fragment targetFragment = mFragments.findFragmentByWho(who);
             if (targetFragment == null) {
                 Log.w(TAG, "Activity result no fragment exists for who: " + who);
             } else {
+                //调用对应fragment的onActivityResult方法。这里会将requestCode进行一次处理，只取低16位的信息，因为高16位存的是Fragment类的信息
                 targetFragment.onActivityResult(requestCode & 0xffff, resultCode, data);
             }
             return;
@@ -123,11 +127,12 @@ ActivityCompat.startIntentSenderForResult(this, intent,
 
         ActivityCompat.PermissionCompatDelegate delegate =
                 ActivityCompat.getPermissionCompatDelegate();
+        //调用activity的onActivityResult方法
         if (delegate != null && delegate.onActivityResult(this, requestCode, resultCode, data)) {
             // Delegate has handled the activity result
             return;
         }
-
+        //
         super.onActivityResult(requestCode, resultCode, data);
     }
 ```
