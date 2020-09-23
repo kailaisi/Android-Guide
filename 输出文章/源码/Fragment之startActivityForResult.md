@@ -129,7 +129,7 @@ ActivityCompat.startIntentSenderForResult(this, intent,
                 ActivityCompat.getPermissionCompatDelegate();
         //调用activity的onActivityResult方法
         if (delegate != null && delegate.onActivityResult(this, requestCode, resultCode, data)) {
-            // Delegate has handled the activity result
+            //如果代理已经处理了消息，那么这里直接返回
             return;
         }
         //
