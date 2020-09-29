@@ -8,7 +8,7 @@
 - FragmentManager系列
   - Android之Fragment状态管理源码解析（完成）
   - ChildFragmentManager vs FragmentManager
-  - startActivityForResult（待记录）
+  - startActivityForResult（完成）
 
 * 绘制相关系列
   * Android的inflate源码详解（完成）
