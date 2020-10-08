@@ -4,6 +4,8 @@
 
 **编程必备基础知识：计算机组成原理 操作系统 计算机网络**（进行中）
 
+**[计算机科学速成课Android基础(强烈推荐)](https://www.bilibili.com/video/BV1EW411u7th?p=36&t=154)**
+
 极客时间2019年最新Web协议详解与抓包实战完整版
 
 HTTP权威指南。三方笔记https://github.com/woai30231/http
@@ -22,7 +24,7 @@ TCPIP协议详解卷三：
 
 Web性能权威指南
 
-### Android基础
+
 
 * 第一行代码
 
