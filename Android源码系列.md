@@ -31,3 +31,11 @@
 * AsynTask源码（待写）
 * CopyOnWriteArrayList源码解析（待写）
 * PriorityQueue 排队序列（待研究）
+
+### 三方源码
+
+#### RecyclerView封装
+
+* https://github.com/drakeet/MultiType
+
+* https://github.com/XiaoBaiCZ/RecyclerViewExtend/
