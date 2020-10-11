@@ -65,15 +65,15 @@ Web性能权威指南
 
 ### 数据结构
 
-邓俊辉《数据结构》上、下
+* 邓俊辉《数据结构》上、下
 
-Java数据结构（进行中）[学习笔记](https://github.com/kailaisi/data-structure/tree/master/src/datalearning)
+* Java数据结构（进行中）[学习笔记](https://github.com/kailaisi/data-structure/tree/master/src/datalearning)
 
-[力扣题解(进行中)](https://github.com/kailaisi/data-structure)
+* [力扣题解(进行中)](https://github.com/kailaisi/data-structure)
 
-《漫画算法：小灰的算法之旅》（完成）
+* 《漫画算法：小灰的算法之旅》（完成）
 
-《数据结构与算法分析》
+* 《数据结构与算法分析》
 
 ### 架构技能
 
@@ -81,15 +81,20 @@ Java数据结构（进行中）[学习笔记](https://github.com/kailaisi/data-s
 * 《代码简洁之道》
 * 《设计模式之禅》
 * 《Android源码设计模式》
+* 《移动架构》
 * 慕课网之 实战企业级项目 践行App重构之路（进行中）
 
 ### [JNI、音视频、图像](NDK音视频图像.md)
 
 ### Flutter
 
-[Flutter开发者文档](https://flutter.cn/docs/get-started/install/windows)
+* [Flutter开发者文档](https://flutter.cn/docs/get-started/install/windows)
 
-[Flutter实战](https://book.flutterchina.club/chapter2/first_flutter_app.html)
+* [Flutter实战](https://book.flutterchina.club/chapter2/first_flutter_app.html)
+
+* [闲鱼Flutter系列](https://www.yuque.com/xytech/flutter)
+
+* [Dart Flutter入门实战视频教程](https://www.bilibili.com/video/BV1S4411E7LY?p=31&t=1842)
 
 ### 软技能(进行中)
 
