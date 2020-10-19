@@ -62,6 +62,7 @@ Web性能权威指南
 
 * Kotlin 实战（进行中）
 * **[慕课网之Kotlin从入门到精通](https://coding.imooc.com/class/chapter/398.html#Anchor)**（进行中）
+* https://github.com/CarGuo/gsy_flutter_book
 
 ### 数据结构
 
