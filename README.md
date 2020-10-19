@@ -4,15 +4,13 @@
 
 **编程必备基础知识：计算机组成原理 操作系统 计算机网络**（进行中）
 
-**[计算机科学速成课Android基础(强烈推荐)](https://www.bilibili.com/video/BV1EW411u7th?p=36&t=154)**
+**[计算机科学速成课Android基础(强烈推荐)](https://www.bilibili.com/video/BV1EW411u7th?p=36&t=154)**（已完成）
 
 极客时间2019年最新Web协议详解与抓包实战完整版
 
 HTTP权威指南。三方笔记https://github.com/woai30231/http
 
 极客时间-透视HTTP协议。[笔记](输出文章/计算机基础/透视HTTP协议.md)
-
-计算机科学速成课：https://www.bilibili.com/video/BV1EW411u7th?p=1
 
 HTTP2详解
 
@@ -60,7 +58,7 @@ Web性能权威指南
 
 ### Kotlin系列
 
-* Kotlin 实战（进行中）
+* Kotlin 实战（已完成，待记录）
 * **[慕课网之Kotlin从入门到精通](https://coding.imooc.com/class/chapter/398.html#Anchor)**（进行中）
 
 ### 数据结构
