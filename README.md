@@ -90,12 +90,13 @@ Web性能权威指南
 ### Flutter
 
 * [Flutter开发者文档](https://flutter.cn/docs/get-started/install/windows)
-
 * [Flutter实战](https://book.flutterchina.club/chapter2/first_flutter_app.html)
-
 * [闲鱼Flutter系列](https://www.yuque.com/xytech/flutter)
-
 * [Dart Flutter入门实战视频教程](https://www.bilibili.com/video/BV1S4411E7LY?p=31&t=1842)
+
+### 组件化、插件化
+
+优秀项目：https://github.com/winlee28/Jetpack-WanAndroid.git
 
 ### 软技能(进行中)
 
