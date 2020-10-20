@@ -69,3 +69,9 @@ enum ActivityState {
 ```
 
 这个枚举类是用来表达Activity的状态的
+
+
+
+
+
+**Instrumentation**：跟踪application及activity生命周期的功能。
