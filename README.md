@@ -60,7 +60,6 @@ Web性能权威指南
 
 * Kotlin 实战（已完成，待记录）
 * **[慕课网之Kotlin从入门到精通](https://coding.imooc.com/class/chapter/398.html#Anchor)**（进行中）
-* https://github.com/CarGuo/gsy_flutter_book
 
 ### 数据结构
 
@@ -91,10 +90,17 @@ Web性能权威指南
 * [Flutter实战](https://book.flutterchina.club/chapter2/first_flutter_app.html)
 * [闲鱼Flutter系列](https://www.yuque.com/xytech/flutter)
 * [Dart Flutter入门实战视频教程](https://www.bilibili.com/video/BV1S4411E7LY?p=31&t=1842)
+* https://github.com/CarGuo/gsy_flutter_book
 
 ### 组件化、插件化
 
 优秀项目：https://github.com/winlee28/Jetpack-WanAndroid.git
+
+组件化专项问题：https://www.jianshu.com/p/d0f5cf304fa4
+
+组件化项目研究：https://github.com/1170762202/WanAndroid.git
+
+仍物线五期组件化详解。
 
 ### 软技能(进行中)
 
