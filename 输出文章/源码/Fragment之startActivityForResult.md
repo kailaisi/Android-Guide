@@ -139,7 +139,9 @@ ActivityCompat.startIntentSenderForResult(this, intent,
     }
 ```
 
-注释很详细了，相信你能看懂。
+注释很详细了，相信你能看懂。O(∩_∩)O
+
+
 
 > 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
 >
