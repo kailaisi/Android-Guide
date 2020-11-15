@@ -1,3 +1,4 @@
+学习路程Android-Guide。包括各种待学习知识以及对应的文章输出
 ### 学习路程Android-Guide
 
 ### 计算机基础
