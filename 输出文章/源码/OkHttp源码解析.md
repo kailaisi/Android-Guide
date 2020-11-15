@@ -18,7 +18,7 @@ Interceptor：拦截器，通过责任链模式，一层层的将请求处理交
 
 首先我们来看一下具体的调用
 
-```
+```java
 OkHttpClient.Builder builder = new OkHttpClient.Builder();
 //设置超时时间
 builder.connectTimeout(TIMEOUT_CONNECT, TimeUnit.MILLISECONDS);
@@ -29,7 +29,7 @@ okHttpClient = builder.build();
 
 在 **Builder** 中进行了一些数据的初始化工作，我们在这里可以进行一些自己的设置，比如代理，超时时间，线程池，SSL认证等。
 
-```
+```java
 public Builder() {
   dispatcher = new Dispatcher();
   protocols = DEFAULT_PROTOCOLS;
@@ -79,7 +79,7 @@ String run(String url) throws IOException {
 
 先调用了 **newCall(request)** 方法，我们继续跟踪
 
-```
+```java
 @Override public Call newCall(Request request) {
   //生成了一个RealCall类
   return RealCall.newRealCall(this, request, false /* for web socket */);
@@ -88,7 +88,7 @@ String run(String url) throws IOException {
 
 所以，**enqueue** 的具体实现，是由 **RealCall** 这个类来实现的。
 
-```
+```java
 @Override public void enqueue(Callback responseCallback) {
   synchronized (this) {
     //线程安全，为了保证方法不能重复执行
@@ -103,7 +103,7 @@ String run(String url) throws IOException {
 
 我们看下一 **Dispatcher** 这个类的具体操作
 
-```
+```java
 //线程安全方法，保证多线程执行时，该方法不会有线程安全问题
 synchronized void enqueue(AsyncCall call) {
   //如果现在正在执行的请求数小于允许的最大请求数，而且host数据 也小于允许的host数据，则执行方法
@@ -121,7 +121,7 @@ synchronized void enqueue(AsyncCall call) {
 
 我们知道，OkHttp对于请求的处理，是可以多线程并发处理的，那么可以想到，其实最后的执行肯定是通过线程池来处理。我们看一下 **executorService()** 这个方法
 
-```
+```java
 //线程安全，防止创建多个线程池
 public synchronized ExecutorService executorService() {
   if (executorService == null) {
@@ -134,7 +134,7 @@ public synchronized ExecutorService executorService() {
 
 可以看到，其实最后返回的是一个线程池，然后通过线程池的 **execute()** 方法来执行 **AsyncCall** 里面的 **run()** 方法。
 
-```
+```java
 final class AsyncCall extends NamedRunnable {
   private final Callback responseCallback;
 
@@ -209,7 +209,7 @@ public abstract class NamedRunnable implements Runnable {
 
 最神秘的 **getResponseWithInterceptorChain()** 方法我们稍后再讲，现在我们看看最后的资源释放 **finished(this)** 方法
 
-```
+```java
 void finished(AsyncCall call) {
   //方法复用
   finished(runningAsyncCalls, call, true);
@@ -237,7 +237,7 @@ private <T> void finished(Deque<T> calls, T call, boolean promoteCalls) {
 
 我们看下 **promoteCalls()** 的处理方法
 
-```
+```java
 private void promoteCalls() {
   //异步执行的队列已经满了，则直接返回
   if (runningAsyncCalls.size() >= maxRequests) return; // Already running max capacity.
@@ -260,7 +260,7 @@ private void promoteCalls() {
 
 上面就是Okhttp的网络请求的一个整体的过程。我们还遗留了一个最重要的 **getResponseWithInterceptorChain()** 这个方法还没有解析。之前我分析过一篇 [Mybatis Plugin插件源码分析](http://www.kailaisii.com//archives/Mybatis Plugin插件源码分析) ，其实两个有异曲同工之妙，都通过责任链模式来实现对于拦截器的处理，只是责任链的实现方式有所区别。
 
-```
+```java
 Response getResponseWithInterceptorChain() throws IOException {
   // Build a full stack of interceptors.
   List<Interceptor> interceptors = new ArrayList<>();
@@ -285,7 +285,7 @@ Response getResponseWithInterceptorChain() throws IOException {
 
 我们看看 **proceed()** 这个方法的执行。
 
-```
+```java
 public final class RealInterceptorChain implements Interceptor.Chain {
   private final List<Interceptor> interceptors;//记录了所有的拦截器
   private final StreamAllocation streamAllocation;//
