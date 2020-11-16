@@ -1,9 +1,12 @@
 ### Fragment之startActivityForResult
 
-为什么Activity和Fragment能使用startActivityForResult，并且返回之后能够分发到具体的Fragment中。
+一直很好奇为什么Activity和Fragment能使用startActivityForResult，并且返回之后能够分发到具体的Fragment中。
+
+今天正好抽空看一看，源码里面到底干了什么事
 
 ```java
 //android.support.v4.app.Fragment.java
+
 public void startActivityForResult(Intent intent, int requestCode) {
         startActivityForResult(intent, requestCode, null);
     }
@@ -132,10 +135,11 @@ ActivityCompat.startIntentSenderForResult(this, intent,
             //如果代理已经处理了消息，那么这里直接返回
             return;
         }
-        //
         super.onActivityResult(requestCode, resultCode, data);
     }
 ```
+
+注释很详细了，相信你能看懂。O(∩_∩)O
 
 
 

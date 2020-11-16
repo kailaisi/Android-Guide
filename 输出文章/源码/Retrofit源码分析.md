@@ -117,7 +117,7 @@ public <T> T create(final Class<T> service) {
 
 这个方法其实就是我们Retrofit相关功能的实现方法了。我们看一下在 **loadServiceMethod** 中对我们所调用的方法做了什么处理。
 
-```
+```java
 ServiceMethod<?, ?> loadServiceMethod(Method method) {
   //先检查缓存中是否已经有这个方法了相关信息了
   ServiceMethod<?, ?> result = serviceMethodCache.get(method);
