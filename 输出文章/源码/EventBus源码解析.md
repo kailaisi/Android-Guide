@@ -8,7 +8,7 @@ EventBus是一种用于Android的事件发布-订阅总线，由GreenRobot开发
 
 Event的使用非常简单
 
-```
+```java
 
 //注册和取消消息的注册
  @Override
@@ -35,7 +35,7 @@ public void onMessageEvent(MessageEvent event) {/* Do something */};
 
 我们从消息的注册开始分析
 
-```
+```java
     //单例获取方法双重检测
     public static EventBus getDefault() {
         EventBus instance = defaultInstance;
@@ -67,7 +67,7 @@ public void onMessageEvent(MessageEvent event) {/* Do something */};
 
 我们先从获取订阅的方法**findSubscriberMethods()**来跟踪看一下
 
-```
+```java
     List<SubscriberMethod> findSubscriberMethods(Class<?> subscriberClass) {
         //先获取缓存
         List<SubscriberMethod> subscriberMethods = METHOD_CACHE.get(subscriberClass);
@@ -79,6 +79,7 @@ public void onMessageEvent(MessageEvent event) {/* Do something */};
         } else {
             subscriberMethods = findUsingInfo(subscriberClass);
         }
+        
         if (subscriberMethods.isEmpty()) {
             throw new EventBusException("Subscriber " + subscriberClass
                     + " and its super classes have no public methods with the @Subscribe annotation");
@@ -90,11 +91,11 @@ public void onMessageEvent(MessageEvent event) {/* Do something */};
     }
 ```
 
-先根据类名从缓存中获取，如果缓存中不粗按在，根据相应的属性进行不同的处理。我们这里按照默认配置，会通过**findUsingInfo**方法来获取订阅的方法。
+先根据类名从缓存中获取，如果缓存中不存在，根据相应的属性进行不同的处理。我们这里按照默认配置，会通过**findUsingInfo**方法来获取订阅的方法。
 
-```
+```java
 private List<SubscriberMethod> findUsingInfo(Class<?> subscriberClass) {
-    //准备FindState，FindState对象用于获取注解的方法
+    //准备FindState，FindState对象用于保存注解的方法的相关信息。prepareFindState是通过享元方法，在池中获取对应的对象。
     FindState findState = prepareFindState();
     //初始化FindState
     findState.initForSubscriber(subscriberClass);
@@ -122,7 +123,7 @@ private List<SubscriberMethod> findUsingInfo(Class<?> subscriberClass) {
 
 在上面的代码中，会从当前订阅者类开始直到它最顶层的父类进行遍历来获取订阅方法信息。这里在循环的内部会根据我们是否使用了**MyEventBusIndex**走两条路线，对于我们没有使用它的，会直接使用反射来获取订阅方法信息，即进入2处。
 
-```
+```java
 private void findUsingReflectionInSingleClass(FindState findState) {
     Method[] methods;
     //获取类中所有的方法
@@ -165,7 +166,7 @@ private void findUsingReflectionInSingleClass(FindState findState) {
 
 到现在为止，已经拿到了所有的方法。那么是如何将相关的方法进行订阅处理的呢？
 
-```
+```java
 private void subscribe(Object subscriber, SubscriberMethod subscriberMethod) {
     //订阅方法中的参数类型
     Class<?> eventType = subscriberMethod.eventType;
