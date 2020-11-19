@@ -228,7 +228,7 @@ private void subscribe(Object subscriber, SubscriberMethod subscriberMethod) {
 
 到这里，我们已经知道了是如何对消息进行注册的。那么当有新的消息来临时，肯定是根据这里面维护的相关列表来进行查询。我们来看一下源码的处理
 
-```
+```java
 public void post(Object event) {
     //ThreaLocal获取当前线程的PostingThreadState对象。
     PostingThreadState postingState = currentPostingThreadState.get();
@@ -260,7 +260,7 @@ public void post(Object event) {
 
 **post**方法主要是将消息放入到当前线程的队列，然后遍历队列进行消息的发送。这里最主要的就是**postSingleEvent**方法。
 
-```
+```java
 private void postSingleEvent(Object event, PostingThreadState postingState) throws Error {
     Class<?> eventClass = event.getClass();
     boolean subscriptionFound = false;
@@ -288,11 +288,11 @@ private void postSingleEvent(Object event, PostingThreadState postingState) thro
 }
 ```
 
-这段代码主要根据eventInheritance进行了不同的处理。如果没有对应的消息接收者，进行了日志的答应，并发送了一个**NoSubscriberEvent**时间消息。
+这段代码主要根据eventInheritance进行了不同的处理。如果没有对应的消息接收者，进行了日志的打印，并发送了一个**NoSubscriberEvent**时间消息。
 
 我们看一下**postSingleEventForEventType**函数，是如何发送消息的。
 
-```
+```java
 private boolean postSingleEventForEventType(Object event, PostingThreadState postingState, Class<?> eventClass) {
     CopyOnWriteArrayList<Subscription> subscriptions;
     synchronized (this) {
@@ -328,7 +328,7 @@ private boolean postSingleEventForEventType(Object event, PostingThreadState pos
 
 这里比较简单，就是通过遍历获取订阅者列表，然后逐个发送相关消息，每发送一个都进行一下检测，检测消息是否进行了取消操作。如果取消的话，直接跳出循环。在最后对**postingState**的变量进行了资源的释放。这里面最重要的就是发送给注册者的函数**postToSubscription**。
 
-```
+```java
 private void postToSubscription(Subscription subscription, Object event, boolean isMainThread) {
     switch (subscription.subscriberMethod.threadMode) {
         case POSTING://没有线程处理，直接反射调用方法
@@ -357,6 +357,7 @@ private void postToSubscription(Subscription subscription, Object event, boolean
             }
             break;
         case ASYNC:
+            //BACKGROUND的区别是，它直接通过线程池去执行。而backgrand会通过synchronize和标志位，来保证消息队列是一个个执行，而不会两个同时执行。而ASYNC则不会这么做，而是直接就通过线程池去执行。
             asyncPoster.enqueue(subscription, event);
             break;
         default:
@@ -369,7 +370,7 @@ private void postToSubscription(Subscription subscription, Object event, boolean
 
 这里对**mainThreadPoster**进行一下跟踪，看看里面做了什么处理。**mainThreadPoster**这里默认的是HandlerPoster对象，继承了Handler对象。
 
-```
+```java
 public void enqueue(Subscription subscription, Object event) {
     PendingPost pendingPost = PendingPost.obtainPendingPost(subscription, event);
     synchronized (this) {
@@ -388,5 +389,15 @@ public void enqueue(Subscription subscription, Object event) {
 
 ### 总结
 
-EventBus消息主要使用了**订阅者模式**，**单例模式**，**Handler**，**CopyOnWriteArrayList队列**等相关技术
+EventBus消息主要使用了**观察者模式**，**单例模式（双重锁）**，**Handler**，**CopyOnWriteArrayList队列**等相关技术
 
+EventBus是一种事件总线，是基于模式（发布者、订阅者模式）。register()方法，通过反射获取到对应的类中Subscribe方法，并将其封装为SubsriberMethod对象，并缓存起来，这里会缓存观察者和对应的方法。在反射获取方法对象的过程中使用了一种享元技术，会存在4个对象来进行对应的临时数据的保存，当超过4个的时候，才会进行重新创建。
+当通过post的时候，会通过ThreadLocal获取当前线程所使用的消息队列。然后通过遍历将消息队列发送到总线中。
+会去内存中获取到具体的订阅者的方法并调用。
+
+post消息的时候，会根据post的数据类型，在缓存中找到对应的订阅方法，然后调用其对应方法。这里会有一个线程切换的，比如说我订阅的在主线程执行，但是post是在子线程发送的消息，那么会通过handler发送到对应的线程去执行。
+在往子线程去post消息的时候，会使用线程池来进行消息的处理。线程池默认使用的是newCachedThreadPool。
+
+EventBus的订阅模式有4种：MAIN（只会在主线程执行，如果post是主线程，则直接调用，可能会阻塞线程，如果不在主线程，通过Handler发送到主线程去执行）；POSTING：不处理，哪儿调用就在哪儿执行，直接invoke；MAIN_ORDERED：不管当前啥线程，都通过Handler放入到队列去执行，这样可以保证不会阻塞主线程。BACKGROUND：子线程执行，通过线程池来处理，会通过synchronize和标志位，来保证消息队列是一个个执行，而不会两个消息同时执行。ASYNC：异步线程，直接扔给线程池处理，不会按照顺序去执行。
+
+BACKGROUND和ASYNC使用的是同一个线程池，都是EventBus默认的newCachedThreadPool。

@@ -27,7 +27,7 @@
 1. 在activity的布局文件中，生命fragment。
 2. 通过Java代码，将Fragment添加到已存的**ViewGroup**中
 
-这两种方式其实最终效果是相同的，在进行代码处理中红会根据不同的创建方式进行一定的区分处理。比如说第二种，那么必须保证Fragment有对应的container。而且需要有对应的containerId。
+这两种方式其实最终效果是相同的，在进行代码处理中会根据不同的创建方式进行一定的区分处理。比如说第二种，那么必须保证Fragment有对应的container。而且需要有对应的containerId。
 
 ### 生命周期源码
 
