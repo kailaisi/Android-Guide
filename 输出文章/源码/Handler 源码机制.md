@@ -37,7 +37,7 @@
 
 #### Handler大揭秘
 
-```
+```java
     public Handler() {
         this(null, false);
     }
@@ -67,7 +67,7 @@
 
 在获取 **Looper** 时，使用的是 **myLooper()** 来获取的对象，
 
-```
+```java
     public static @Nullable Looper myLooper() {
         return sThreadLocal.get();
     }
@@ -75,7 +75,7 @@
 
 所以每个线程所对应的Looper对象都是不同的，那么通过什么方式设置的呢？答案是 **prepare()** 方法。
 
-```
+```java
 public static void prepare() {
     prepare(true);
 }
@@ -91,7 +91,7 @@ private static void prepare(boolean quitAllowed) {
 
 以前经常遇到的一个问题就是在子线程创建了Handler对象，直接就报错了，百度答案告诉你要先调用 **Looper.prepare()** 方法，原因就在这儿。那么很多人问了，为什么主线程创建Handler对象不用管啊？因为系统已经帮你做了啊~~~我可是有证据的
 
-```
+```java
     public static void prepareMainLooper() {
         prepare(false);
         synchronized (Looper.class) {
@@ -115,7 +115,7 @@ private static void prepare(boolean quitAllowed) {
 
 我们按照我们最开始的测试代码来进行跟踪
 
-```
+```java
     public final boolean sendEmptyMessage(int what)
     {
         return sendEmptyMessageDelayed(what, 0);
@@ -148,7 +148,7 @@ private static void prepare(boolean quitAllowed) {
 
 发现了么，其实不管调用那个方法，其实最后都会进入到 **sendMessageAtTime** 这个函数里面。并且通过 **enqueueMessage** 将消息放到对应的消息队列中。
 
-```
+```java
     private boolean enqueueMessage(MessageQueue queue, Message msg, long uptimeMillis) {
         msg.target = this;
         if (mAsynchronous) {
@@ -160,7 +160,7 @@ private static void prepare(boolean quitAllowed) {
 
 也是个入队的操作，只是对消息进行了一些相关的设置，设置了对应的target，和同步参数。最重要的是 **enqueueMessage** 操作
 
-```
+```java
     boolean enqueueMessage(Message msg, long when) {
         if (msg.target == null) {//这个target是对应的Handler，总得需要知道消息发给谁吧？
             throw new IllegalArgumentException("Message must have a target.");
@@ -217,7 +217,7 @@ private static void prepare(boolean quitAllowed) {
 
 到现在为止，我们**Message**（邮件）已经进入到了消息队列**MessageQueue**（邮箱）中了，那么程序是什么时候从 **MessageQueue** 中读取数据的呢？  主要就是靠我们的**Looper**（邮差）。Looper会通过 **loop()**函数一直遍历循环。
 
-```
+```java
     //消息循环，即从消息队列中获取消息、分发消息到Handler
     public static void loop() {
         final Looper me = myLooper();
@@ -250,7 +250,7 @@ private static void prepare(boolean quitAllowed) {
 
 那么**queue.next()** 里面是如何来进行消息什么时候执行操作的呢？
 
-```
+```java
    Message next() {
         //用于确定下一个消息的执行时间
         int nextPollTimeoutMillis = 0;
@@ -315,3 +315,4 @@ private static void prepare(boolean quitAllowed) {
 
 1. 对于message的获取，最好使用obtainMessage方法，这种方式会从池中获取可以使用的消息，而不需要每次都new对象出来。
 2. Handler的消息，是放在其发送的线程的。只有需要执行的时候，通过target。调用到handler所在的线程。
+3. Handler，是进行线程间通讯。主要有4个列，Message消息，内部含有消息类的具体的执行的对象，也就是target:Handler,下一个消息。MessageQueue：消息队列，是以一个以链表形式存在的，每一个消息都指向了下一个要执行的消息。Looper：循环，能够不断地从queue中获取对应的消息来执行。需要通过prepare()来启动执行，而主线程是在ActivityThread中启动了。循环并不会阻塞，当没有到时间的时候，会休眠，时间到了以后通过epoll机制重新启动。消息队列有一个Idle队列，可以存放并不是特别紧急的消息，当CPU空闲以后再执行的操作。对于停止则可以使用quit和quitSafe两种方式。对于Looper是通过ThreadLocal来保证线程安全的.
