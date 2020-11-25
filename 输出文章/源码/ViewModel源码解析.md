@@ -8,7 +8,7 @@
 
 还是从最简单的小例子开始一点点的追踪，一般我们使用时，直接继承 ViewModel即可。
 
-```
+```java
 class TestViewModel: ViewModel() {
     override fun onCleared() {
         super.onCleared()
@@ -30,7 +30,7 @@ class TestActivity : FragmentActivity() {
 
 我们看看 **ViewModelProviders.of(this)** 帮我们做了什么
 
-```
+```java
     public static ViewModelProvider of(@NonNull FragmentActivity activity) {
         return of(activity, null);
     }
@@ -52,7 +52,7 @@ class TestActivity : FragmentActivity() {
 
 1. 先看一下第一个factory的单例获取
 
-```
+```java
 public static class AndroidViewModelFactory extends ViewModelProvider.NewInstanceFactory {
     private static AndroidViewModelFactory sInstance;
 	//单例模式，最简单的饿汉模式，非线程安全的。
@@ -102,7 +102,7 @@ public static class AndroidViewModelFactory extends ViewModelProvider.NewInstanc
 
 2. 我们继续看一下ViewModelStore的创建过程
 
-```
+```java
     public static ViewModelStore of(@NonNull FragmentActivity activity) {
         if (activity instanceof ViewModelStoreOwner) {
         	//如果activity实现了ViewModelStoreOwner接口，那么直接调用其getViewModelStore()方法，返回其对应的ViewModelStore对象
@@ -115,7 +115,7 @@ public static class AndroidViewModelFactory extends ViewModelProvider.NewInstanc
 
 第一种情况我们先放下，我们主要跟踪一下第二种情况。
 
-```
+```java
     private static final HolderFragmentManager sHolderFragmentManager = new HolderFragmentManager();
     //返回一个持有
     public static HolderFragment holderFragmentFor(FragmentActivity activity) {
@@ -156,7 +156,7 @@ public static class AndroidViewModelFactory extends ViewModelProvider.NewInstanc
 
 回到主线，通过调用**HolderFragment**的**getViewModelStore()**方法来获取了一个**ViewModelStore**对象。那么这时候通过
 
-```
+```java
 public ViewModelProvider(@NonNull ViewModelStore store, @NonNull Factory factory) {
     mFactory = factory;
     this.mViewModelStore = store;
@@ -167,7 +167,7 @@ public ViewModelProvider(@NonNull ViewModelStore store, @NonNull Factory factory
 
 3. 当ViewModelProvider创建完以后，我们就可以通过get()方法来进行ViewModel的获取了。我们跟踪一下，看看做了什么处理。
 
-```
+```java
     public <T extends ViewModel> T get(@NonNull Class<T> modelClass) {
         ...
         return get(DEFAULT_KEY + ":" + canonicalName, modelClass);
@@ -205,7 +205,7 @@ public ViewModelProvider(@NonNull ViewModelStore store, @NonNull Factory factory
 
 答：主要就是我们自己无页面的**HolderFragment**来实现的。通过源码分析，我们知道是通过创建无页面的持有**ViewModelStore**对象**HolderFragment**来进行对**Activity**的监听。那么当Activity销毁的时候，就可以通过对HolderFragment的生命周期的**onDestroy()**监听来调用**ViewModelStore**的销毁。
 
-```
+```java
     public void onDestroy() {
         super.onDestroy();
         mViewModelStore.clear();

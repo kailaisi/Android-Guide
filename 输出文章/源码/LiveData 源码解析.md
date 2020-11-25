@@ -9,7 +9,7 @@
 
 惯例，先来个简单的测试demo
 
-```
+```java
 object SplashViewModel{
     var logined = MutableLiveData<Boolean>()
     init {
@@ -27,7 +27,7 @@ class SplashActivity : BaseBindingActivity<ActivitySplashBinding, SplashViewMode
 
 只需要一个简单的 **observe()** 方法，就可以实现生命周期的监听，然后将数据发送到我们的Activity中，我们看看这个方法里面到底做了什么
 
-```
+```java
 public void observe(@NonNull LifecycleOwner owner, @NonNull Observer<? super T> observer) {
     assertMainThread("observe");
     if (owner.getLifecycle().getCurrentState() == DESTROYED) {
@@ -53,7 +53,7 @@ public void observe(@NonNull LifecycleOwner owner, @NonNull Observer<? super T> 
 
 在之前的[Lifecycle的源码解析](https://mp.weixin.qq.com/s/lbPbqMeVMtJaTbqo55-UXQ)文章中，我们了解到，当页面发生变化时，会调用监听者的 **onStateChanged()** 方法。
 
-```
+```java
         @Override
         boolean shouldBeActive() {//判断当前页面是否属于激活状态（即可见状态）
             return mOwner.getLifecycle().getCurrentState().isAtLeast(STARTED);
@@ -75,7 +75,7 @@ public void observe(@NonNull LifecycleOwner owner, @NonNull Observer<? super T> 
 
 所以当界面的生命周期变化时，会调用 **activeStateChanged()** 来进行状态的变更处理
 
-```
+```java
         //进行状态的转变
         void activeStateChanged(boolean newActive) {
             if (newActive == mActive) {
@@ -104,7 +104,7 @@ public void observe(@NonNull LifecycleOwner owner, @NonNull Observer<? super T> 
 
 这里主要根据页面的激活数，预留了两个钩子函数，用户可以做一些自己的数据处理。最主要的还是 **dispatchingValue()** 中的数据处理。
 
-```
+```java
     //分发数据
     void dispatchingValue(@Nullable ObserverWrapper initiator) {
         if (mDispatchingValue) {
@@ -170,7 +170,7 @@ public void observe(@NonNull LifecycleOwner owner, @NonNull Observer<? super T> 
 
 我们先看看 **setValue()** 
 
-```
+```java
     protected void setValue(T value) {
         assertMainThread("setValue");
         //记录当前数据的版本号
@@ -186,7 +186,7 @@ public void observe(@NonNull LifecycleOwner owner, @NonNull Observer<? super T> 
 
 我们再看看 **postValue()** 
 
-```
+```java
      protected void postValue(T value) {
         boolean postTask;
         synchronized (mDataLock) {

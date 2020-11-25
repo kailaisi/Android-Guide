@@ -222,7 +222,7 @@ HashMap这3个构造函数是相似的，最后一个构造函数的唯一的需
 
 为什么槽位必须是2^n?
 
-当槽位数值是2^n的时候，计算槽位的公式-1，能够保证所有的位置都是1，进行 **(n - 1) & hash**操作，分配的槽值位置的均匀度就不会受槽值的影响，而之受hash的影响。而我们在计算hash的时候又通过移位异或的计算从而保证其均匀性，从而减少了哈希碰撞。
+当槽位数值是2^n的时候，计算槽位的公式-1，能够保证所有的位置都是1，进行 **(n - 1) & hash**操作，分配的槽值位置的均匀度就不会受槽值的影响，而只受hash的影响。而我们在计算hash的时候又通过移位异或的计算从而保证其均匀性，从而减少了哈希碰撞。
 
 对于HashMap的hash值的计算原理我们就说到这里有兴趣的小伙伴可以研究研究。我们这就继续源码了~
 
@@ -370,7 +370,7 @@ HashMap这3个构造函数是相似的，最后一个构造函数的唯一的需
                         ((TreeNode<K, V>) e).split(this, newTab, j, oldCap);
                     else { //链表 preserve order
                         //进行2倍扩容的话，其实相当于把原来的数组内部的数据分别放到了i+n的位置和当前的i内。并不会放到其他的位置。
-                        //e.hash & (newCap - 1)->因为位数都是以，所以得出的信息
+                        //e.hash & (newCap - 1)->因为位数都是1，所以得出的信息
                         Node<K, V> loHead = null, loTail = null;
                         Node<K, V> hiHead = null, hiTail = null;
                         Node<K, V> next;
@@ -609,7 +609,7 @@ HashMap这3个构造函数是相似的，最后一个构造函数的唯一的需
 
 在JDK8中的HashMap是非线程安全的，会发生数据覆盖问题。而非线程安全的问题主要出现在数据的插入操作。
 
-```
+```java
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
         ...
 		if ((p = tab[i = (n - 1) & hash]) == null) // 如果没有hash碰撞则直接插入元素
