@@ -43,7 +43,7 @@ Glide的**with**函数为我们提供了不同的入参，其最终的返回对�
 
 可以看到 **RequestManagerRetriever** 对象的创建，肯定是在 **Glide.get()** 中进行了处理
 
-```
+```java
   //通过双重加锁单例方法，创建Glide对象
   public static Glide get(@NonNull Context context) {
     if (glide == null) {
@@ -61,8 +61,6 @@ Glide的**with**函数为我们提供了不同的入参，其最终的返回对�
   @GuardedBy("Glide.class")
   private static void checkAndInitializeGlide(
       @NonNull Context context, @Nullable GeneratedAppGlideModule generatedAppGlideModule) {
-    // In the thread running initGlide(), one or more classes may call Glide.get(context).
-    // Without this check, those calls could trigger infinite recursion.
     if (isInitializing) {//如果正在创建，则直接报错
       throw new IllegalStateException(
           "You cannot call Glide.get() in registerComponents(),"
@@ -101,7 +99,7 @@ Glide的**with**函数为我们提供了不同的入参，其最终的返回对�
 
 可以看到，这里使用建造者设计模式，来创建了 **glide** 对象。在 **builder** 中设置了一个 **RequestManagerFactory** 的属性。看下在builder中，具体帮我们做了什么工作。
 
-```
+```java
   @NonNull
   Glide build(@NonNull Context context) {
     if (sourceExecutor == null) {//创建资源执行器
