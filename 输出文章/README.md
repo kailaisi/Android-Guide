@@ -9,6 +9,8 @@
   - Android之Fragment状态管理源码解析（完成）
   - ChildFragmentManager vs FragmentManager
   - startActivityForResult（完成）
+- 系统级别
+  - Binder机制源码（待写）
 
 * 绘制相关系列
   * Android的inflate源码详解（完成）
@@ -29,7 +31,7 @@
     * JsonReader/JsonWriter解析(待写)
     * TypeToken的补充(待写)
   * OkHttp源码解析（完成）
-    * 5个拦截器分析（进行中）
+    * 5个拦截器分析（完成）
     * 缓存实现方案
   * Glide万字解密（完成）
   * Picasso解密(完成)
@@ -45,6 +47,7 @@
   * CopyOnWriteArrayList源码解析（待写）
   * PriorityQueue 排队序列（待研究）
 * SharedPreferences源码解析（完成）
+* DataBinding源码解析（下一步）
 * 通讯(待写)
   * 
 * 杂项
