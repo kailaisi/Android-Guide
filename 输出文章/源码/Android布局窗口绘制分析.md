@@ -243,8 +243,8 @@ public void callActivityOnCreate(Activity activity, Bundle icicle) {
 #### installDecor()
 
 ```java
-   #PhoneWindow.java
-   //进行Decor的处理工作
+    #PhoneWindow.java
+    //进行Decor的处理工作
     private void installDecor() {
         mForceDecorInstall = false;
         if (mDecor == null) {
@@ -507,7 +507,7 @@ public void addView(View view, ViewGroup.LayoutParams params, Display display, W
 }
 ```
 
-在**addView()**方法中，会首先创建**ViewRootImpl**对象，然后通过ViewRootImpl.setView方法将我们的view设置进去。这里的panelParentView参数是空。
+在**addView()**方法中，会首先创建**ViewRootImpl**对象，然后通过ViewRootImpl.setView方法将我们的view（这里是DecerView）设置进去。这里的panelParentView参数是空。
 
 我们继续跟踪一下 **setView()** 方法
 

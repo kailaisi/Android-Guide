@@ -6,17 +6,19 @@
 
  不记得了也没关系，我把代码贴出来就是了~
 
-       //ViewRootImpl.java
-       public void setView(View view, WindowManager.LayoutParams attrs, View panelParentView) {
-            synchronized (this) {
-                if (mView == null) {
-                    ...
-                    // 这里调用异步刷新请求，最终会调用performTraversals方法来完成View的绘制
-                    //重点方法  这里面会进行view的 测量，layout，以及绘制工作
-                    requestLayout();
-                    ...
-            }
+```java
+   //ViewRootImpl.java
+   public void setView(View view, WindowManager.LayoutParams attrs, View panelParentView) {
+        synchronized (this) {
+            if (mView == null) {
+                ...
+                // 这里调用异步刷新请求，最终会调用performTraversals方法来完成View的绘制
+                //重点方法  这里面会进行view的 测量，layout，以及绘制工作
+                requestLayout();
+                ...
         }
+    }
+```
 
 这句代码就是View的绘制的入口，经过measure,layout,draw最终将我们在【Android的inflate源详解】中所形成的View树绘制出来。当这篇文章完成之后，安卓如何从xml到view树，然后将view树进行绘制，然后将view添加到DecterView并显示出来，这一整套流程就可以结束了。
 
@@ -360,12 +362,12 @@ void scheduleTraversals() {
 
 有时候我们的界面没有必要进行测量工作，毕竟测量属于一个比较耗时而又繁琐的工作。所以对于测量工作的进行，是有一定的执行条件的，而上面的代码就能够告诉我们什么情况下才会进行整个页面的测量工作。
 
-* mFirst为true。表示窗口是第一次执行测量、布局和绘制操作。
-* windowShouldResize标志位为true。而这个标志位主要就是判断窗口大小是否发生了变化。
-* insetsChanged为true。这个表示此次窗口overscan等一些边衬区域发生了改变
-* viewVisibilityChanged为true。这个标志位是View的可见性发生了变化
-* params说明窗口的属性发生了变化。
-* mForceNextWindowRelayout为true。表示设置了要强制了layout操作
+* `mFirst`为true。表示窗口是第一次执行测量、布局和绘制操作。
+* `windowShouldResize`标志位为true。而这个标志位主要就是判断窗口大小是否发生了变化。
+* `insetsChanged`为true。这个表示此次窗口overscan等一些边衬区域发生了改变
+* `viewVisibilityChanged`为true。这个标志位是View的可见性发生了变化
+* `params`说明窗口的属性发生了变化。
+* `mForceNextWindowRelayout`为true。表示设置了要强制了layout操作
 
 当我们确定需要进行测量的话，下一步就是进行具体的测量工作了。
 
@@ -766,7 +768,7 @@ private void updateViewTreeDisplayList(View view) {
 
 ### 总结
 
-1. handler是有一种同步屏障机制的，能够屏蔽同步消息(有什么用图以后再开发)。
+1. handler是有一种同步屏障机制的，能够屏蔽同步消息(有什么用途以后再开发)。
 2. 对于屏幕的帧绘制是通过choreographer来进行的，它来进行屏幕的刷新，帧的丢弃等工作。
 3. 如果Dialog的宽高设置的wrap，会先用默认的高度试试是否可行，不可行就(屏幕高+默认高)/2来进行试验，再不行就直接给屏幕高了。
 4. 对于测量工作，在整个过程中会发生很多次。
