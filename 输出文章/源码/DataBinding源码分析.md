@@ -92,7 +92,7 @@ DataBinding源码分析
     }
 ```
 
-可以看到这里的**mMappers**其实就是我们在创建对象的时候，添加进去的数据。也就是*com.honeywell.hch.mobilesubphone.DataBinderMapperImpl()*对象。所以这里的getDataBinder是这个生成的对象。
+可以看到这里的**mMappers**其实就是我们在创建对象的时候，添加进去的数据。也就是*.*****DataBinderMapperImpl()*对象。所以这里的getDataBinder是这个生成的对象。
 
 ```java
   @Override
@@ -134,7 +134,7 @@ DataBinding源码分析
 
 而另一个文件，则是关于tag的信息
 
-![image-20201205101348770](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20201205101348770.png)
+![image-20201205101348770](http://cdn.qiniu.kailaisii.com/typora/202012/08/150009-344849.png)
 
 所以这里就是通过根布局的tag来获取对应的DataBindingImpl文件的。
 
@@ -309,7 +309,221 @@ public abstract class ItemBcfDashBinding extends ViewDataBinding {
     }
 ```
 
-这里最终又回归到了`bindToAddedViews()`方法，和上面的`setContentView`走到了同一个入口。所以就不再重复了
+这里最终又回归到了`bindToAddedViews()`方法，和上面的`setContentView`走到了同一个入口。所以就不再重复了。
+
+#### 控件和布局的绑定
+
+继承关系是：DataBindingImpl->DataBinding->ViewDataBinding。
+
+```
+  static {
+        //静态代码块，将id和对应的值保存到SparseIntArray中。
+        sIncludes = null;
+        sViewsWithIds = new android.util.SparseIntArray();
+        sViewsWithIds.put(R.id.title_loginPage, 3);
+        sViewsWithIds.put(R.id.phone_layout, 4);
+        sViewsWithIds.put(R.id.select_nation_spinner, 5);
+        sViewsWithIds.put(R.id.tv_plus, 6);
+        sViewsWithIds.put(R.id.nation_code_text, 7);
+        sViewsWithIds.put(R.id.login_phone_edit, 8);
+        sViewsWithIds.put(R.id.iv_del, 9);
+        sViewsWithIds.put(R.id.divider_phone, 10);
+        sViewsWithIds.put(R.id.login_pwd_edit, 11);
+        sViewsWithIds.put(R.id.iv_del_pwd, 12);
+        sViewsWithIds.put(R.id.divider_pwd, 13);
+        sViewsWithIds.put(R.id.vcode_edit, 14);
+        sViewsWithIds.put(R.id.divider_code, 15);
+        sViewsWithIds.put(R.id.login_button, 16);
+        sViewsWithIds.put(R.id.forget_button, 17);
+        sViewsWithIds.put(R.id.register_button, 18);
+    }
+    // views
+    @NonNull
+    private final androidx.constraintlayout.widget.ConstraintLayout mboundView0;
+
+    //构造方法
+    public ActivityLoginPageBindingImpl(@Nullable androidx.databinding.DataBindingComponent bindingComponent, @NonNull View root) {
+        //重点方法  ：  这里通过mapBindings进行了数据处理，
+        this(bindingComponent, root, mapBindings(bindingComponent, root, 19, sIncludes, sViewsWithIds));
+    }
+
+    private ActivityLoginPageBindingImpl(androidx.databinding.DataBindingComponent bindingComponent, View root, Object[] bindings) {
+        super(bindingComponent, root, 4
+            , (android.view.View) bindings[15]
+            , (android.view.View) bindings[10]
+            , (android.view.View) bindings[13]
+            , (android.widget.TextView) bindings[17]
+            , (android.widget.ImageView) bindings[9]
+            , (android.widget.ImageView) bindings[12]
+            , (android.widget.ImageView) bindings[16]
+            , (android.widget.EditText) bindings[8]
+            , (android.widget.EditText) bindings[11]
+            , (android.widget.TextView) bindings[7]
+            , (android.widget.LinearLayout) bindings[4]
+            , (android.widget.TextView) bindings[18]
+            , (android.widget.Spinner) bindings[5]
+            , (android.widget.TextView) bindings[2]
+            , (androidx.constraintlayout.widget.ConstraintLayout) bindings[1]
+            , (android.widget.ImageView) bindings[3]
+            , (android.widget.TextView) bindings[6]
+            , (android.widget.EditText) bindings[14]
+            );
+        this.mboundView0 = (androidx.constraintlayout.widget.ConstraintLayout) bindings[0];
+        this.mboundView0.setTag(null);
+        this.sendButtonText.setTag(null);
+        this.smsCodeLayout.setTag(null);
+        setRootTag(root);
+        // listeners
+        invalidateAll();
+    }
+```
+
+我们先看一下`mapBindings`方法
+
+##### mapBindings进行控件和id的绑定
+
+```
+    //androidx.databinding.ViewDataBinding.java
+    protected static Object[] mapBindings(DataBindingComponent bindingComponent, View root,
+            int numBindings, IncludedLayouts includes, SparseIntArray viewsWithIds) {
+        Object[] bindings = new Object[numBindings];
+        mapBindings(bindingComponent, root, bindings, includes, viewsWithIds, true);
+        return bindings;
+    }
+    //控件和id的映射
+    private static void mapBindings(DataBindingComponent bindingComponent, View view,
+            Object[] bindings, IncludedLayouts includes, SparseIntArray viewsWithIds,
+            boolean isRoot) {
+        final int indexInIncludes;
+        //已经存在，直接返回
+        final ViewDataBinding existingBinding = getBinding(view);
+        if (existingBinding != null) {
+            return;
+        }
+        Object objTag = view.getTag();
+        final String tag = (objTag instanceof String) ? (String) objTag : null;
+        boolean isBound = false;
+        if (isRoot && tag != null && tag.startsWith("layout")) {
+            final int underscoreIndex = tag.lastIndexOf('_');
+            if (underscoreIndex > 0 && isNumeric(tag, underscoreIndex + 1)) {
+                final int index = parseTagInt(tag, underscoreIndex + 1);
+                if (bindings[index] == null) {
+                    bindings[index] = view;
+                }
+                indexInIncludes = includes == null ? -1 : index;
+                isBound = true;
+            } else {
+                indexInIncludes = -1;
+            }
+        } else if (tag != null && tag.startsWith(BINDING_TAG_PREFIX)) {
+            int tagIndex = parseTagInt(tag, BINDING_NUMBER_START);
+            if (bindings[tagIndex] == null) {
+                bindings[tagIndex] = view;
+            }
+            isBound = true;
+            indexInIncludes = includes == null ? -1 : tagIndex;
+        } else {
+            // Not a bound view
+            indexInIncludes = -1;
+        }
+        if (!isBound) {
+            final int id = view.getId();
+            if (id > 0) {
+                int index;
+                if (viewsWithIds != null && (index = viewsWithIds.get(id, -1)) >= 0 &&
+                        bindings[index] == null) {
+                    bindings[index] = view;
+                }
+            }
+        }
+
+        if (view instanceof  ViewGroup) {
+            final ViewGroup viewGroup = (ViewGroup) view;
+            final int count = viewGroup.getChildCount();
+            int minInclude = 0;
+            for (int i = 0; i < count; i++) {
+                final View child = viewGroup.getChildAt(i);
+                boolean isInclude = false;
+                if (indexInIncludes >= 0 && child.getTag() instanceof String) {
+                    String childTag = (String) child.getTag();
+                    if (childTag.endsWith("_0") &&
+                            childTag.startsWith("layout") && childTag.indexOf('/') > 0) {
+                        // This *could* be an include. Test against the expected includes.
+                        int includeIndex = findIncludeIndex(childTag, minInclude,
+                                includes, indexInIncludes);
+                        if (includeIndex >= 0) {
+                            isInclude = true;
+                            minInclude = includeIndex + 1;
+                            final int index = includes.indexes[indexInIncludes][includeIndex];
+                            final int layoutId = includes.layoutIds[indexInIncludes][includeIndex];
+                            int lastMatchingIndex = findLastMatching(viewGroup, i);
+                            if (lastMatchingIndex == i) {
+                                bindings[index] = DataBindingUtil.bind(bindingComponent, child,
+                                        layoutId);
+                            } else {
+                                final int includeCount =  lastMatchingIndex - i + 1;
+                                final View[] included = new View[includeCount];
+                                for (int j = 0; j < includeCount; j++) {
+                                    included[j] = viewGroup.getChildAt(i + j);
+                                }
+                                bindings[index] = DataBindingUtil.bind(bindingComponent, included,
+                                        layoutId);
+                                i += includeCount - 1;
+                            }
+                        }
+                    }
+                }
+                if (!isInclude) {
+                    mapBindings(bindingComponent, child, bindings, includes, viewsWithIds, false);
+                }
+            }
+        }
+    }
+```
+
+1. 从View的tag中获取缓存，防止多次初始化。
+2. 将view储存在`bindings`数组内，分为三种情况：
+   1. 根布局，tag以layout开头；
+   2. 设置@{}的，tag以binding开头
+   3. 设置了id的view
+3. 第三部分判断根布局是不是ViewGroup，如果是则遍历根布局，并判断子View是不是include的，如果是的话，则使用`DataBindingUtil.bind`进行递归；如果不是include，则直接使用`mapBindings`进行递归。
+
+这里将对应的id保存到了`mapBindings`中了，然后就可以通过`ItemBcfDashBinding`的构造方法进行view和id的控件绑定。
+
+我们看一下这里的控件是如何进行绑定的获取的情况。
+
+我们知道这里的super肯定是对应了DataBinding类的。
+
+```java
+  protected ItemBcfDashBinding(Object _bindingComponent, View _root, int _localFieldCount,
+      View dividerCode, View dividerPhone, View dividerPwd, TextView forgetButton, ImageView ivDel,
+      ImageView ivDelPwd, ImageView loginButton, EditText loginPhoneEdit, EditText loginPwdEdit,
+      TextView nationCodeText, LinearLayout phoneLayout, TextView registerButton,
+      Spinner selectNationSpinner, TextView sendButtonText, ConstraintLayout smsCodeLayout,
+      ImageView titleLoginPage, TextView tvPlus, EditText vcodeEdit) {
+    super(_bindingComponent, _root, _localFieldCount);
+    this.dividerCode = dividerCode;
+    this.dividerPhone = dividerPhone;
+    this.dividerPwd = dividerPwd;
+    this.forgetButton = forgetButton;
+    this.ivDel = ivDel;
+    this.ivDelPwd = ivDelPwd;
+    this.loginButton = loginButton;
+    this.loginPhoneEdit = loginPhoneEdit;
+    this.loginPwdEdit = loginPwdEdit;
+    this.nationCodeText = nationCodeText;
+    this.phoneLayout = phoneLayout;
+    this.registerButton = registerButton;
+    this.selectNationSpinner = selectNationSpinner;
+    this.sendButtonText = sendButtonText;
+    this.smsCodeLayout = smsCodeLayout;
+    this.titleLoginPage = titleLoginPage;
+    this.tvPlus = tvPlus;
+    this.vcodeEdit = vcodeEdit;
+  }
+```
+
+对父类中的控件，进行了赋值工作。这就相当于我们以前经常写的`findViewById`方法一样。
 
 #### setModel()
 
@@ -520,6 +734,7 @@ executeBindings是由具体的实现类来处理的。
                         // read model.countDown
                         modelCountDown = model.getCountDown();
                     }
+                	//重点方法，更新监听函数
                     updateRegistration(1, modelCountDown);
                     if (modelCountDown != null) {
                         // read model.countDown.get()
@@ -530,13 +745,56 @@ executeBindings是由具体的实现类来处理的。
         }
         // batch finished
         if ((dirtyFlags & 0x32L) != 0) {
-		   //重点方法：进行赋值
+		   //重点方法：将View中的值与viewModel中的值做绑定
             androidx.databinding.adapters.TextViewBindingAdapter.setText(this.sendButtonText, modelCountDownGet);
         }
     }
     ...
 }
 ```
+
+##### updateRegistration
+
+当数据发生变化的时候，会调用`updateRegistration()`实现值变化的时候，更新数据。
+
+```java
+    private static final CreateWeakListener CREATE_PROPERTY_LISTENER = new CreateWeakListener() {
+        @Override
+        public WeakListener create(ViewDataBinding viewDataBinding, int localFieldId) {
+            return new WeakPropertyListener(viewDataBinding, localFieldId).getListener();
+        }
+    };
+
+	protected boolean updateRegistration(int localFieldId, Observable observable) {
+        return updateRegistration(localFieldId, observable, CREATE_PROPERTY_LISTENER);
+    }
+```
+
+这里的`CREATE_PROPERTY_LISTENER`是一个具体的实现类，会创建一个`WeakPropertyListener`类
+
+```java
+    private boolean updateRegistration(int localFieldId, Object observable,
+            CreateWeakListener listenerCreator) {
+        if (observable == null) {//
+            return unregisterFrom(localFieldId);
+        }
+        //从已注册的进行查询
+        WeakListener listener = mLocalFieldObservers[localFieldId];
+        if (listener == null) {//没有查到则进行注册
+            registerTo(localFieldId, observable, listenerCreator);
+            return true;
+        }
+        if (listener.getTarget() == observable) {
+            return false;//nothing to do, same object
+        }
+        //证明和原来的不一样，需要解除注册，然后再注册
+        unregisterFrom(localFieldId);
+        registerTo(localFieldId, observable, listenerCreator);
+        return true;
+    }
+```
+
+##### setText
 
 这里会读取module中的值，然后通过Adapter来进行赋值工作。
 
@@ -562,119 +820,14 @@ executeBindings是由具体的实现类来处理的。
     }
 ```
 
-我们看一下这里的赋值情况。
-
-继承关系是：DataBindingImpl->DataBinding->ViewDataBinding。
-
-```java
-  static {
-      	//静态代码块，将id和对应的值保存到SparseIntArray中。
-        sIncludes = null;
-        sViewsWithIds = new android.util.SparseIntArray();
-        sViewsWithIds.put(R.id.title_loginPage, 3);
-        sViewsWithIds.put(R.id.phone_layout, 4);
-        sViewsWithIds.put(R.id.select_nation_spinner, 5);
-        sViewsWithIds.put(R.id.tv_plus, 6);
-        sViewsWithIds.put(R.id.nation_code_text, 7);
-        sViewsWithIds.put(R.id.login_phone_edit, 8);
-        sViewsWithIds.put(R.id.iv_del, 9);
-        sViewsWithIds.put(R.id.divider_phone, 10);
-        sViewsWithIds.put(R.id.login_pwd_edit, 11);
-        sViewsWithIds.put(R.id.iv_del_pwd, 12);
-        sViewsWithIds.put(R.id.divider_pwd, 13);
-        sViewsWithIds.put(R.id.vcode_edit, 14);
-        sViewsWithIds.put(R.id.divider_code, 15);
-        sViewsWithIds.put(R.id.login_button, 16);
-        sViewsWithIds.put(R.id.forget_button, 17);
-        sViewsWithIds.put(R.id.register_button, 18);
-    }
-    // views
-    @NonNull
-    private final androidx.constraintlayout.widget.ConstraintLayout mboundView0;
-
-	//构造方法
-    public ActivityLoginPageBindingImpl(@Nullable androidx.databinding.DataBindingComponent bindingComponent, @NonNull View root) {
-        //重点方法  ：  这里通过mapBindings进行了数据处理，
-        this(bindingComponent, root, mapBindings(bindingComponent, root, 19, sIncludes, sViewsWithIds));
-    }
-
-    private ActivityLoginPageBindingImpl(androidx.databinding.DataBindingComponent bindingComponent, View root, Object[] bindings) {
-        super(bindingComponent, root, 4
-            , (android.view.View) bindings[15]
-            , (android.view.View) bindings[10]
-            , (android.view.View) bindings[13]
-            , (android.widget.TextView) bindings[17]
-            , (android.widget.ImageView) bindings[9]
-            , (android.widget.ImageView) bindings[12]
-            , (android.widget.ImageView) bindings[16]
-            , (android.widget.EditText) bindings[8]
-            , (android.widget.EditText) bindings[11]
-            , (android.widget.TextView) bindings[7]
-            , (android.widget.LinearLayout) bindings[4]
-            , (android.widget.TextView) bindings[18]
-            , (android.widget.Spinner) bindings[5]
-            , (android.widget.TextView) bindings[2]
-            , (androidx.constraintlayout.widget.ConstraintLayout) bindings[1]
-            , (android.widget.ImageView) bindings[3]
-            , (android.widget.TextView) bindings[6]
-            , (android.widget.EditText) bindings[14]
-            );
-        this.mboundView0 = (androidx.constraintlayout.widget.ConstraintLayout) bindings[0];
-        this.mboundView0.setTag(null);
-        this.sendButtonText.setTag(null);
-        this.smsCodeLayout.setTag(null);
-        setRootTag(root);
-        // listeners
-        invalidateAll();
-    }
-```
-
-我们先看一下`mapBindings`方法
-
-```java
-    protected static Object[] mapBindings(DataBindingComponent bindingComponent, View root,
-            int numBindings, IncludedLayouts includes, SparseIntArray viewsWithIds) {
-        Object[] bindings = new Object[numBindings];
-        mapBindings(bindingComponent, root, bindings, includes, viewsWithIds, true);
-        return bindings;
-    }
-```
-
-我们知道这里的super肯定是对应了DataBinding类的。
-
-```java
-  protected ActivityLoginPageBinding(Object _bindingComponent, View _root, int _localFieldCount,
-      View dividerCode, View dividerPhone, View dividerPwd, TextView forgetButton, ImageView ivDel,
-      ImageView ivDelPwd, ImageView loginButton, EditText loginPhoneEdit, EditText loginPwdEdit,
-      TextView nationCodeText, LinearLayout phoneLayout, TextView registerButton,
-      Spinner selectNationSpinner, TextView sendButtonText, ConstraintLayout smsCodeLayout,
-      ImageView titleLoginPage, TextView tvPlus, EditText vcodeEdit) {
-    super(_bindingComponent, _root, _localFieldCount);
-    this.dividerCode = dividerCode;
-    this.dividerPhone = dividerPhone;
-    this.dividerPwd = dividerPwd;
-    this.forgetButton = forgetButton;
-    this.ivDel = ivDel;
-    this.ivDelPwd = ivDelPwd;
-    this.loginButton = loginButton;
-    this.loginPhoneEdit = loginPhoneEdit;
-    this.loginPwdEdit = loginPwdEdit;
-    this.nationCodeText = nationCodeText;
-    this.phoneLayout = phoneLayout;
-    this.registerButton = registerButton;
-    this.selectNationSpinner = selectNationSpinner;
-    this.sendButtonText = sendButtonText;
-    this.smsCodeLayout = smsCodeLayout;
-    this.titleLoginPage = titleLoginPage;
-    this.tvPlus = tvPlus;
-    this.vcodeEdit = vcodeEdit;
-  }
-```
-
-对父类中的控件，进行了赋值工作。这就相当于我们以前经常写的`findViewById`方法一样。
-
 
 
 ### 总结
 
-1. databinding可以通过addOnRebindCallback增加对于重新绑定的回调通知
+1. databinding可以通过addOnRebindCallback增加对于重新绑定的回调通知。
+
+2. #### DataBinderMapperImpl用于生成的布局文件和ViewDataBinding文件的映射关系
+
+3. 每个数据变化的时候，会有对应的dirty字段来标识哪个数据变化了，然后会更新对应的显示数据
+
+4. DataBinding通过apt技术生成对应的文件么？

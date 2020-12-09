@@ -17,7 +17,7 @@
   * Android的View绘制机制（完成）
   * Android触摸事件源码解析（完成）
   * Android屏幕刷新机制（完成）
-  * **Context研究（待进行）**
+  * **Context研究（进行中）**
 * JetPack
   * LiveData 源码解析（完成）
   * Lifecycle源码解析（完成）
