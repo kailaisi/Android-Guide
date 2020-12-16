@@ -78,7 +78,7 @@ sp.getInt(key,defaultValue).
     }
 ```
 
-所以这里会找到 /data/shared_prefs文件夹，然后创建一个以name为名称的xml文件。
+所以这里会找到 `/data/shared_prefs`文件夹，然后创建一个以name为名称的xml文件。
 
 ##### 生成实例
 
@@ -246,7 +246,7 @@ public SharedPreferences getSharedPreferences(File file, int mode) {
 
 #### 保存
 
-```
+```java
 sp.edit().putInt(key, value).commit()
 ```
 
