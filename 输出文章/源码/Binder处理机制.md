@@ -1,4 +1,25 @@
+### IPC通讯
+
+* IPC通信是跨越不同进程之间的通信。
+* 一般一个Android应用程序里的各个组件是在同一个进程里执行。
+
+### IPC设定通信
+
+使用AndroidManifest.xml
+
+* 一个应用，，通常含有多个Java类，这些类可以在一个进程里执行，也可以在不同的进程执行
+* 一个进程只能有一个APP，但是一个APP可以占用多个进程。
+
+### IBinder接口
+
+* 当两个类都在同一个进城的时候，只需要函数调用就可以了。一旦两个类在不同的进程时，就不能使用函数调用了，只能采取IPC沟通机制。
+* IPC依赖IBinder接口。Client端调用接口的`trancact()`函数，透过IPC机制调用远程的`onTransact()`函数
+
+
+
 ![img](http://cdn.qiniu.kailaisii.com/typora/202012/02/160410-784686.png)
+
+
 
 **Binder通信流程如下：**
 
