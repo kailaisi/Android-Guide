@@ -47,7 +47,8 @@
   * CopyOnWriteArrayList源码解析（待写）
   * PriorityQueue 排队序列（待研究）
 * SharedPreferences源码解析（完成）
-* DataBinding源码解析（下一步）
+* DataBinding源码解析（待整理）
+* 通知栏Notification（待写）
 * 通讯(待写)
   * 
 * 杂项
