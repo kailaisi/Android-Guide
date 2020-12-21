@@ -176,7 +176,28 @@
 **openZygoteSocketIfNeeded** 会创建一个和Zygote的socket连接。
 
 ```java
-    //如果初始的Zygote的连接不存在或者未连接。则创建一个Socket连接，并将相关信息封装为ZygoteState
+    private ZygoteState openZygoteSocketIfNeeded(String abi) throws ZygoteStartFailedEx {
+        try {
+            //尝试连接到最初始的Zygote进程
+            attemptConnectionToPrimaryZygote();
+            if (primaryZygoteState.matches(abi)) {
+                return primaryZygoteState;
+            }
+            if (mZygoteSecondarySocketAddress != null) {
+                // The primary zygote didn't match. Try the secondary.
+                attemptConnectionToSecondaryZygote();
+
+                if (secondaryZygoteState.matches(abi)) {
+                    return secondaryZygoteState;
+                }
+            }
+        } catch (IOException ioe) {
+            throw new ZygoteStartFailedEx("Error connecting to zygote", ioe);
+        }
+
+        throw new ZygoteStartFailedEx("Unsupported zygote ABI: " + abi);
+    }
+	//如果初始的Zygote的连接不存在或者未连接。则创建一个Socket连接，并将相关信息封装为ZygoteState
     @GuardedBy("mLock")
     private void attemptConnectionToPrimaryZygote() throws IOException {
         //如果没有连接
@@ -208,7 +229,7 @@
         }
 ```
 
- 所以openZygoteSocketIfNeeded的主要作用是**保证和Zygote的socket连接的存在**。当连接存在以后就可以通过socket进行消息的传输了。
+ 所以`openZygoteSocketIfNeeded`的主要作用是**保证和Zygote的socket连接的存在**。当连接存在以后就可以通过socket进行消息的传输了。
 
 #### ZygoteProcess#zygoteSendArgsAndGetResult
 
@@ -562,3 +583,4 @@ handleChildProc会根据将传入的参数信息，返回子进程启动时所�
 
 
 
+ ton

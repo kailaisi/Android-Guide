@@ -225,7 +225,7 @@ ndk {
 
 对性能敏感的模块，都放在armeabi目录，根据CPU类型加载对应架构的so文件。这种是因为如果某个so使用了x86的话，会要求所有的其他模块也都要有x86的so文件，否则就会崩溃。
 
-通过这中方法既能实现敏感模块加载对应架构so资源，也能够实现对无关紧要的模块进行兼容处理。
+通过这种方法既能实现敏感模块加载对应架构so资源，也能够实现对无关紧要的模块进行兼容处理。
 
 ```java
         if(Build.VERSION.SDK_INT<Build.VERSION_CODES.LoLLIPOP){
@@ -271,3 +271,11 @@ https://www.jianshu.com/p/32b4d92d4195
 https://mp.weixin.qq.com/s/X58fK02imnNkvUMFt23OAg
 
 https://blog.csdn.net/tantion/article/details/79634694
+
+
+
+> 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
+>
+> 同步公众号[开了肯]
+
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)

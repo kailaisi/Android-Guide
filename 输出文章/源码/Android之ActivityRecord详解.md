@@ -23,7 +23,7 @@ ActivityRecord是最常遇到的一个类了。它代表的是堆栈中的一个
 
 ActivityInfo保存着我们定义Activity的信息
 
-```jjava
+```java
         <activity
             android:name=".ui.choose.ChooseActivity"
             android:screenOrientation="landscape" />
@@ -39,7 +39,7 @@ ActivityInfo保存着我们定义Activity的信息
 
 **ActivityStack**`,内部维护了一个`**ArrayList**`，用来管理`**TaskRecord**。它继承自ConfigurationContainer类。**ActivityStack**类是由**ActivityStackSupervisor**创建并管理的。
 
-```
+```java
 class ActivityStack extends ConfigurationContainer
 ```
 
