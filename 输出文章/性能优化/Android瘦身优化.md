@@ -90,8 +90,6 @@ Android Studio提供了强大的分析工具，能够很好的帮助我们分析
 
 ![image-20200703153643817](http://cdn.qiniu.kailaisii.com/typora/202007/03/153719-782966.png)
 
-![image-20200703153926772](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20200703153926772.png)
-
 通过一段时间的分析，系统可以辅助我们来找到一些没有用到的资源。但是**注意：这里显示出来的类型并不一定是真的没有用处。删除的时候需要小心一些，不要一股脑的全部移除掉。**
 
 **选择小而精的库**：很多的类库是有相同功能的。大而全的三方库可能未必是最好的选择。小而精才是最佳方案。
@@ -123,7 +121,7 @@ Android Studio提供了强大的分析工具，能够很好的帮助我们分析
 
 在以前经常使用Lint来进行代码的检测。在Android Studio3.0+上增加了Inspect Code来帮助我们来分析代码。
 
-![image-20200703151321912](C:\Users\wu\AppData\Roaming\Typora\typora-user-images\image-20200703151321912.png)
+![image-20201228223621982](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20201228223621982.png)
 
 #### 资源瘦身
 
