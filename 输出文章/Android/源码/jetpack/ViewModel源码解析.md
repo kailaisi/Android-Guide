@@ -2,7 +2,7 @@
 
 ### 前言
 
-之前我们发布过 **LiveDate源码解析** 、**Lifecycle源码解析** 两篇文章，这两个一般都是和本章要说的ViewModel一起使用的，最主要的原因就是因为ViewModel会随着Activity的销毁来自动的调用其销毁函数 **onClear** ，从而能让我们做一些相关的数据解绑、请求的取消等操作，非常的方便。只要 **Activity**或**Fragment**是活动的，那么ViewModel就不会进行销毁。也就意味着ViewModel不会因为配置改变(比如旋转)而被销毁。
+之前我们发布过 [LiveDate源码解析](https://mp.weixin.qq.com/s/joT2I6HT6UgxKZEQUfqG9Q) 、[Lifecycle源码解析](https://mp.weixin.qq.com/s?__biz=MzUzOTE4MTQzNQ==&mid=2247483731&idx=1&sn=a8b0dfcf6fee2665e134844403ab7a9e&scene=21#wechat_redirect) 两篇文章，这两个一般都是和本章要说的ViewModel一起使用的，最主要的原因就是因为ViewModel会随着Activity的销毁来自动的调用其销毁函数 **onClear** ，从而能让我们做一些相关的数据解绑、请求的取消等操作，非常的方便。只要 **Activity**或**Fragment**是活动的，那么ViewModel就不会进行销毁。也就意味着ViewModel不会因为配置改变(比如旋转)而被销毁。
 
 ### 案例
 

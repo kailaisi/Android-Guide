@@ -319,4 +319,7 @@ public Response proceed(Request request, StreamAllocation streamAllocation, Http
 此图来源于https://www.jianshu.com/p/cb444f49a777
 
 每次调用拦截器的时候，都会生成一个责任链，责任链中保存了当前拦截器的pos位置信息，然后在拦截器中去调用下一个下一个责任链的方法（其实核心是拦截器中的方法intecepter），通过层层调用，最后通过 **CallServerInterceptor** 拦截器实现网络的请求调用。然后将返回值层层返回。
+
+![image-20201230115306957](http://cdn.qiniu.kailaisii.com/typora/202012/30/115307-637101.png)
+
 到此，我们的Okhttp的源码解析结束了。。

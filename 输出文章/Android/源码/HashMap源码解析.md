@@ -202,17 +202,15 @@ HashMap这3个构造函数是相似的，最后一个构造函数的唯一的需
 
 为什么要无符号右移16位？
 
-![img](https://i04piccdn.sogoucdn.com/caf3fcdba6304051)
-
 假如说我们现在有一个32位的hashcode值。
 
-![img](https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pbWcyMDE4LmNuYmxvZ3MuY29tL2Jsb2cvOTg0NDIzLzIwMTkwNy85ODQ0MjMtMjAxOTA3MTgxMTM3MzczMzAtNjI1NzkxNTQxLnBuZw?x-oss-process=image/format,png)
+![img](http://cdn.qiniu.kailaisii.com/typora/202012/30/102401-261564.png)
 
 当h无符号右移16位以后，会将h的高16位移动到低16位位置。然后再和原来的h进行异或操作。这样就**可以将高低位的二进制特征进行混合起来**。高16位不会发生变化，只有低16位发生了变化。为什么要这么做呢？我们知道hashmap的数据存储是将其分配到具体的哈希槽中的。所以需要尽量的保证数据能够均匀的分配到不同的槽中。
 
 而分配到哈希槽点的计算方法是 **(n - 1) & hash**（这个我们后面会讲）。在重要属性中我们知道，HashMap数组的大小（也就是哈希槽点的数量）的默认值是16。我们按照16来进行计算处理。
 
-![img](https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pbWcyMDE4LmNuYmxvZ3MuY29tL2Jsb2cvOTg0NDIzLzIwMTkwNy85ODQ0MjMtMjAxOTA3MTgxMTQyNTU1NzAtMTA1MzA2NDg5Ny5wbmc?x-oss-process=image/format,png)
+![img](http://cdn.qiniu.kailaisii.com/typora/202012/30/102502-248201.png)
 
 这时候，hashcode的高16位，因为槽点的数量限制，直接就屏蔽了高16位的信息。**如果我们不做刚才移位异或运算，那么在计算槽位时将丢失高区特征**。这样就会容易造成如果数据的hashcode的值差异在高位，不做移位异或计算，就会发生哈希碰撞。
 

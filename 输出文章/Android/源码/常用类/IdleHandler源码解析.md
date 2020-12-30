@@ -1,6 +1,6 @@
 ## IdleHandler源码解析
 
-在之前看过一遍[Handler源码解析]()，但是最近看各种性能优化的时候，总是能够提到IdleHandler。所以今天我们一起看看，IdleHandler是如何实现空闲时候再去处理消息的。
+在之前看过一遍[Handler源码解析](https://juejin.cn/post/6844904159288754183)，但是最近看各种性能优化的时候，总是能够提到IdleHandler。所以今天我们一起看看，IdleHandler是如何实现空闲时候再去处理消息的。
 
 ### 用法
 

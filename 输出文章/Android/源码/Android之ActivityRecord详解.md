@@ -29,12 +29,6 @@ ActivityInfo保存着我们定义Activity的信息
             android:screenOrientation="landscape" />
 ```
 
-
-
-
-
-
-
 ### ActivityStack详解
 
 **ActivityStack**`,内部维护了一个`**ArrayList**`，用来管理`**TaskRecord**。它继承自ConfigurationContainer类。**ActivityStack**类是由**ActivityStackSupervisor**创建并管理的。
