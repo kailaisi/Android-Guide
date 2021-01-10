@@ -45,7 +45,50 @@ ServiceManager提供的Binder比较特殊，它没有名字也不需要注册，
 
 
 
+
+
+### 架构角度看Binder的跨进程设计
+
+对于跨进程的调用，需要实现IBinder接口来进行接口调用以及数据的传输。其中最主要的就是*tranasct()*的方法调用。
+
+```java
+   public boolean transact(int code, @NonNull Parcel data, @Nullable Parcel reply, int flags)
+        throws RemoteException;
+```
+
+其中code其实代表的是不同的方法所对应的编号，如果用户本身作为程序的编写者，那么Server端和Client端必须要知道编号和函数的对应关系。
+
+![image-20210110214132920](http://cdn.qiniu.kailaisii.com/typora/20210110214135-2869.png)
+
+也就是如图所示。
+
+这种基本无任何框架可言，对于Server提供短还是Client调用端来说都是可怕的。
+
+![img](http://cdn.qiniu.kailaisii.com/typora/20210110214302-269897.gif)
+
+作为用户最希望使用的肯定是直接调用函数，而无需关心编号和函数关系。更不用关心跨进程的过程处理。
+
+![image-20210110214617708](http://cdn.qiniu.kailaisii.com/typora/20210110214620-186881.png)
+
+通过中间一层的**Proxy-Stub**的处理，能够屏蔽实现对于用户的感知。Proxy和Stub类相当于一层封装，将transact()和对应函数的转换进行了封装，对外只提供对应的函数。
+
+#### 设计难点 ：
+
+对于**Proxy-Stub**的这一层的设计难点在于，**接口是由用户来定义的，所以无法提前将code和函数的对应关系进行处理**。
+
+对于这种问题，有两种解决方案：
+
+##### 模板模式
+
+##### AIDL.exe
+
+AIDL.exe属于程序生成器，位于**SDK包下的builde-tools下各个版本之中。例如：e:\\assdk\\build-tools\\29.0.2\\aidl.exe**。通过这种方式，可以工具来协助生成Porxy和Stub类别。 
+
 ### AIDL分析
+
+#### 本质
+
+AIDL的目的是为了减少用户每次都进行复杂的跨进程程序编写。通过定义Proxy/Stub来封装IBinder接口，来生成更加贴心的新接口。
 
 #### 类
 
@@ -71,7 +114,13 @@ Binder代理对象，也实现了Ibinder接口，具体的实现交给Native层�
 
 **Proxy**
 
-实现了IInterface接口；实现了aidl生命的呃方法，但是最后是交给mRemote成员来处理，所以是代理类，mRemote变量实际上就是BinderProxy。
+实现了IInterface接口；实现了aidl生命的方法，但是最后是交给mRemote成员来处理，所以是代理类，mRemote变量实际上就是BinderProxy。
+
+#### 类详解
+
+这里我们看下我们写了AIDL文件之后，工具帮我们生成的类：
+
+* IMyAidlInterface ：定义的可以跨进程通讯的接口：
 
 ```java
 public interface IMyAidlInterface extends android.os.IInterface {
@@ -79,6 +128,11 @@ public interface IMyAidlInterface extends android.os.IInterface {
     public int add(int anInt, long aLong) throws android.os.RemoteException;
 }
 
+```
+
+* Default：接口默认实现：
+
+```java
 //接口默认实现
 public static class Default implements IMyAidlInterface {
     @Override
@@ -92,6 +146,11 @@ public static class Default implements IMyAidlInterface {
     }
 }
 
+```
+
+* Stub类：属于服务端
+
+```java
 //表示是Binder本地对象,实现onTransact。来接收对应的参数信息，然后进行处理，属于Server端
 public static abstract class Stub extends android.os.Binder implements IMyAidlInterface {
     private static final java.lang.String DESCRIPTOR = "IMyAidlInterface";
@@ -144,7 +203,11 @@ public static abstract class Stub extends android.os.Binder implements IMyAidlIn
         }
     }
 }
+```
 
+* Proxy类：属于Client端，用来给Client端来使用
+
+```java
 //代理对象，Client端，内部的mRemote对象是具体的ProxyBinder对象
 private static class Proxy implements IMyAidlInterface {
     private android.os.IBinder mRemote;
@@ -165,6 +228,7 @@ private static class Proxy implements IMyAidlInterface {
 
     @Override
     public int add(int anInt, long aLong) throws android.os.RemoteException {
+        //这里属于Binder通讯的机制，但是通过Proxy类的包装，节省了用户开发的时间，用户直接调用add方法即可。
         android.os.Parcel _data = android.os.Parcel.obtain();
         android.os.Parcel _reply = android.os.Parcel.obtain();
         int _result;
@@ -202,7 +266,7 @@ Stub.asInterface方法返回的是Binder代理对象，需要通过Binder驱动�
 
 
 
-### 请求流程
+### 请求流程汇总
 
 **Client调用Binder代理对象，Client线程挂起**
 
@@ -219,6 +283,8 @@ Binder驱动经过一系列的处理后，将请求派发给了Server，即调�
 **唤醒Client线程，返回结果**
 
 onTransact处理结束后，将结果写入reply并返回至Binder驱动，驱动唤醒挂起的Client线程，并将结果返回。至此，一次跨进程通信完成。
+
+
 
 ### 参考：
 
