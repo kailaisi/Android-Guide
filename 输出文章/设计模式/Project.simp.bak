@@ -47,7 +47,7 @@
       </counter>
       <counter>
         <item-type stereotype="" type="UmlAssociation" />
-        <value>31</value>
+        <value>32</value>
       </counter>
       <counter>
         <item-type stereotype="" type="UmlContainment" />
@@ -75,7 +75,7 @@
       </counter>
       <counter>
         <item-type stereotype="" type="AbstractElementGroup" />
-        <value>61</value>
+        <value>82</value>
       </counter>
     </entity-ids>
     <diagrams>
@@ -1161,7 +1161,7 @@ FactoryMethod(){
           <item id="di849307652851767121" cid="ELEM022" type="shape" name="Element1" style-class="" visibility="package" creation-date="12/21/2020 16:23:56">
             <style class="default" />
           </item>
-          <item id="di177717927274797511" cid="ELEM023" type="shape" name="Element1" style-class="" visibility="package" creation-date="12/27/2020 16:43:47">
+          <item id="di666728978520933887" cid="ELEM023" type="shape" name="Element1" style-class="" visibility="package" creation-date="01/11/2021 22:44:40">
             <style class="default" />
           </item>
         </abstract-items>
@@ -1386,7 +1386,7 @@ FactoryMethod(){
             </attached-parts>
             <interface />
           </item>
-          <item id="di177717927274797511" iid="52f12eeb49d24615a5538e32068e59a3" name="Element1" container="di248684898558763932" container-iid="498944091ae14eb2bb79f18cfc1e9305" creation-date="12/09/2020 22:27:54" order-index="36" type="drawing-line">
+          <item id="di666728978520933887" iid="52f12eeb49d24615a5538e32068e59a3" name="Element1" container="di248684898558763932" container-iid="498944091ae14eb2bb79f18cfc1e9305" creation-date="12/09/2020 22:27:54" order-index="36" type="drawing-line">
             <layout ax="814" ay="951" awidth="720" aheight="5" x="814" y="951" width="719" height="4" angle="0" />
             <drawing-line start-point="814,955" end-point="1533,951" />
             <style class="default" />
@@ -1777,13 +1777,13 @@ FactoryMethod(){
           <item id="di243563590482133339" cid="ELEM044" type="shape" name="Element8" style-class="" visibility="package" creation-date="12/21/2020 16:23:56">
             <style class="default" />
           </item>
-          <item id="di930459668635948848" cid="ELEM045" type="shape" name="Element11" style-class="" visibility="package" creation-date="12/27/2020 16:43:47">
+          <item id="di741581646516750063" cid="ELEM045" type="shape" name="Element11" style-class="" visibility="package" creation-date="01/11/2021 22:44:40">
             <style class="default" />
           </item>
-          <item id="di373844048197752110" cid="ELEM046" type="shape" name="Element7" style-class="" visibility="package" creation-date="12/27/2020 16:43:47">
+          <item id="di519470720882085224" cid="ELEM046" type="shape" name="Element7" style-class="" visibility="package" creation-date="01/11/2021 22:44:40">
             <style class="default" />
           </item>
-          <item id="di971830483205169343" cid="ELEM047" type="shape" name="Element8" style-class="" visibility="package" creation-date="12/27/2020 16:43:47">
+          <item id="di277919518698229625" cid="ELEM047" type="shape" name="Element8" style-class="" visibility="package" creation-date="01/11/2021 22:44:40">
             <style class="default" />
           </item>
         </abstract-items>
@@ -1795,7 +1795,7 @@ FactoryMethod(){
             <layout ax="520" ay="60" awidth="140" aheight="82" x="520" y="60" width="140" height="82" angle="0" />
             <class />
           </item>
-          <item id="di930459668635948848" iid="1c681a34e9324eb8936aa1dada4e8551" name="Element11" container="di472251030421525370" container-iid="d63d74d9680c43579cdbbc40e84a81bd" creation-date="12/09/2020 23:22:04" order-index="37" type="drawing-shape">
+          <item id="di741581646516750063" iid="1c681a34e9324eb8936aa1dada4e8551" name="Element11" container="di472251030421525370" container-iid="d63d74d9680c43579cdbbc40e84a81bd" creation-date="12/09/2020 23:22:04" order-index="37" type="drawing-shape">
             <layout ax="40" ay="40" awidth="260" aheight="420" x="40" y="40" width="260" height="420" angle="0" />
             <drawing-shape type="Rectangle" />
             <style class="default" />
@@ -1826,7 +1826,7 @@ FactoryMethod(){
             </layout>
             <relation from="di470030919945203527" from-iid="e625458fc0424da3a00607fc2873d30a" to="di873143707670195814" to-iid="d0f20c3881ef4fa09d6d7e6ada287a7f" />
           </item>
-          <item id="di373844048197752110" iid="107271c94f9f49b1a287a54cf5330e88" name="Element7" container="di472251030421525370" container-iid="d63d74d9680c43579cdbbc40e84a81bd" creation-date="12/09/2020 22:57:46" order-index="8" type="drawing-art-text">
+          <item id="di519470720882085224" iid="107271c94f9f49b1a287a54cf5330e88" name="Element7" container="di472251030421525370" container-iid="d63d74d9680c43579cdbbc40e84a81bd" creation-date="12/09/2020 22:57:46" order-index="8" type="drawing-art-text">
             <layout ax="500" ay="0" awidth="20" aheight="40" x="500" y="0" width="20" height="40" angle="0" />
             <drawing-art-text>
               <text>I</text>
@@ -1895,7 +1895,7 @@ FactoryMethod(){
             <layout ax="-60" ay="740" awidth="120" aheight="80" x="-60" y="740" width="120" height="80" angle="0" />
             <class />
           </item>
-          <item id="di971830483205169343" iid="2a3f295ee96048b093d5c134ef52cd12" name="Element8" container="di165639645103925981" container-iid="487e9c99999b49a4bfbd29dbc151c4ee" creation-date="12/09/2020 23:19:15" order-index="32" type="drawing-rounded-rect">
+          <item id="di277919518698229625" iid="2a3f295ee96048b093d5c134ef52cd12" name="Element8" container="di165639645103925981" container-iid="487e9c99999b49a4bfbd29dbc151c4ee" creation-date="12/09/2020 23:19:15" order-index="32" type="drawing-rounded-rect">
             <layout ax="300" ay="720" awidth="280" aheight="360" x="300" y="720" width="280" height="360" angle="0" />
             <drawing-rounded-rect radius="10" />
             <style class="default" />
@@ -1977,7 +1977,7 @@ FactoryMethod(){
                 <point x="580" y="1080" />
               </points>
             </layout>
-            <relation from="di745713945611608265" from-iid="9dc624312b3d40bfa746cae428b2525d" to="di971830483205169343" to-iid="2a3f295ee96048b093d5c134ef52cd12" />
+            <relation from="di745713945611608265" from-iid="9dc624312b3d40bfa746cae428b2525d" to="di277919518698229625" to-iid="2a3f295ee96048b093d5c134ef52cd12" />
           </item>
           <item id="di499085465230152619" iid="78bd47bfc32b4a988ace91037f4a09e2" container="di472251030421525370" container-iid="d63d74d9680c43579cdbbc40e84a81bd" creation-date="12/09/2020 23:20:29" order-index="35" type="entity">
             <layout ax="100" ay="320" awidth="140" aheight="80" x="100" y="320" width="140" height="80" angle="0" />
@@ -2002,7 +2002,7 @@ FactoryMethod(){
                 <point x="40" y="142" />
               </points>
             </layout>
-            <relation from="di122398882859983928" from-iid="19161a953a4d40e49ce5db964f1e57fb" to="di930459668635948848" to-iid="1c681a34e9324eb8936aa1dada4e8551" />
+            <relation from="di122398882859983928" from-iid="19161a953a4d40e49ce5db964f1e57fb" to="di741581646516750063" to-iid="1c681a34e9324eb8936aa1dada4e8551" />
           </item>
           <item id="di389389883314100103" iid="bec4b62a3fd3409a8aa859bbfeec9d05" container="di165639645103925981" container-iid="487e9c99999b49a4bfbd29dbc151c4ee" creation-date="12/09/2020 23:24:35" order-index="40" type="entity">
             <layout ax="620" ay="740" awidth="140" aheight="100" x="620" y="740" width="140" height="100" angle="0" />
@@ -2334,7 +2334,7 @@ FactoryMethod(){
           </authors>
           <description />
           <creation-date>12/19/2020 16:25:39</creation-date>
-          <change-date>12/21/2020 17:45:33</change-date>
+          <change-date>01/11/2021 22:44:47</change-date>
           <revision-count>0</revision-count>
           <version />
         </meta>
@@ -2726,13 +2726,13 @@ FactoryMethod(){
             </stereotypes>
             <style class="default" />
           </item>
-          <item id="di273225137189297759" cid="ELEM050" type="shape" name="Element9" style-class="" visibility="package" creation-date="12/27/2020 16:43:47">
+          <item id="di767945249453153210" cid="ELEM050" type="shape" name="Element9" style-class="" visibility="package" creation-date="01/11/2021 22:44:40">
             <style class="default" />
           </item>
-          <item id="di353384193361176942" cid="ELEM051" type="text" name="Element10" style-class="" visibility="package" creation-date="12/27/2020 16:43:47">
+          <item id="di378902392313598160" cid="ELEM051" type="text" name="Element10" style-class="" visibility="package" creation-date="01/11/2021 22:44:40">
             <style class="default" />
           </item>
-          <item id="di539271110571330310" cid="ELEM052" type="shape" name="Element12" style-class="" visibility="package" creation-date="12/27/2020 16:43:47">
+          <item id="di668063890588855769" cid="ELEM052" type="shape" name="Element12" style-class="" visibility="package" creation-date="01/11/2021 22:44:40">
             <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
               <background type="forward-diagonal" color="#FFFFFFFF" color2="#FFEBEBEB" />
               <border color="#FF0000FF" width="1" dash-style="Solid" />
@@ -2752,6 +2752,9 @@ FactoryMethod(){
             <layout ax="680" ay="280" awidth="140" aheight="120" x="680" y="280" width="140" height="120" angle="0" />
             <class />
           </item>
+          <item id="di194155720467634485" iid="70c3253307824568a5f89372f53911b1" creation-date="12/21/2020 16:32:08" order-index="27" type="entity">
+            <layout ax="860" ay="1200" awidth="440" aheight="121" x="860" y="1200" width="440" height="121" angle="0" />
+          </item>
           <item id="di606216430229415928" iid="934e0ca6bc1e45feada836a85a66c9b8" creation-date="12/19/2020 16:26:54" order-index="4" type="entity">
             <layout ax="740" ay="80" awidth="100" aheight="40" x="740" y="80" width="100" height="40" angle="0" />
           </item>
@@ -2764,7 +2767,7 @@ FactoryMethod(){
             </layout>
             <relation from="di606216430229415928" from-iid="934e0ca6bc1e45feada836a85a66c9b8" to="di365183750940551837" to-iid="d0fa3f4562d14a80b222c32443ff62e9" />
           </item>
-          <item id="di273225137189297759" iid="d569e4e571d24c119a542c9b7d260fd1" name="Element9" creation-date="12/19/2020 16:39:23" order-index="8" type="drawing-line">
+          <item id="di767945249453153210" iid="d569e4e571d24c119a542c9b7d260fd1" name="Element9" creation-date="12/19/2020 16:39:23" order-index="8" type="drawing-line">
             <layout ax="120" ay="740" awidth="1121" aheight="1" x="122" y="740" width="1075" height="9" angle="0" />
             <drawing-line start-point="120,740" end-point="1240,740" />
             <style class="default" />
@@ -2866,7 +2869,7 @@ FactoryMethod(){
             </layout>
             <relation from="di832976292185146590" from-iid="dbbcf10b0eac494b84079c7beea7223b" to="di198699098567810393" to-iid="0a4032b114af4045808fb9b65bf18016" />
           </item>
-          <item id="di353384193361176942" iid="c17cbcf34804475faec8e1cde46358c2" name="Element10" creation-date="12/19/2020 16:55:48" order-index="23" type="drawing-text">
+          <item id="di378902392313598160" iid="c17cbcf34804475faec8e1cde46358c2" name="Element10" creation-date="12/19/2020 16:55:48" order-index="23" type="drawing-text">
             <layout ax="1240" ay="700" awidth="60" aheight="60" x="1240" y="700" width="60" height="60" angle="0" />
             <drawing-text>
               <text>JNI</text>
@@ -2886,7 +2889,7 @@ FactoryMethod(){
             </layout>
             <relation from="di543597564242106892" from-iid="7ddaa4494eb94a20ab42f0c0d7cda34f" to="di950287535296973371" to-iid="19f8cb2c3ac44b1a8f287fa898e38b55" />
           </item>
-          <item id="di539271110571330310" iid="6452602ac7b94e9b8274674ca11b70cd" name="Element12" creation-date="12/19/2020 16:56:09" order-index="24" type="drawing-line">
+          <item id="di668063890588855769" iid="6452602ac7b94e9b8274674ca11b70cd" name="Element12" creation-date="12/19/2020 16:56:09" order-index="24" type="drawing-line">
             <layout ax="460" ay="106" awidth="1" aheight="1095" x="440" y="106" width="21" height="1101" angle="0" />
             <drawing-line start-point="460,106" end-point="460,1200" />
             <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
@@ -3002,9 +3005,6 @@ FactoryMethod(){
           </item>
           <item id="di658376729456615051" iid="2a7a2864818b4a07b792d251562cec7e" creation-date="12/19/2020 17:03:53" order-index="32" type="entity">
             <layout ax="80" ay="926" awidth="460" aheight="200" x="80" y="926" width="460" height="200" angle="0" />
-          </item>
-          <item id="di194155720467634485" iid="70c3253307824568a5f89372f53911b1" creation-date="12/21/2020 16:32:08" order-index="27" type="entity">
-            <layout ax="860" ay="1180" awidth="440" aheight="121" x="860" y="1180" width="440" height="121" angle="0" />
           </item>
           <item id="di758302377342219640" iid="a5fb98fff82f4393a29ef2e866b1ba59" creation-date="12/21/2020 17:09:58" order-index="40" type="relation">
             <layout line-style="oblique" lock-start-point="true" lock-end-point="true" lock-to-fields="true" auto-path="" x1="820" y1="376" x2="840" y2="720" start-border-pos="0.448958333333333" end-border-pos="0.35" name-position="10,-10">
@@ -3151,6 +3151,7 @@ FactoryMethod(){
               <owned-item ref="di998647010352041463" />
               <owned-item ref="di110399682729290920" />
               <owned-item ref="di921127202802675369" />
+              <owned-item ref="di103019047339039373" />
             </owned-items>
             <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
               <background type="forward-diagonal" color="#FFFFFFFF" color2="#FFBFBFBF" />
@@ -3246,13 +3247,13 @@ FactoryMethod(){
             <style class="default" />
             <comment>AMS接到mybinder对象指针，就可以找到其在C层对应的JavaBBinderHolder对象。接着调用JavaBBinderHolder的get函数去诞生一个JavaBBinder对象</comment>
           </item>
-          <item id="di676308716986405034" cid="ELEM055" type="shape" name="Element13" style-class="" visibility="package" creation-date="12/27/2020 16:43:47">
+          <item id="di698263510966377028" cid="ELEM055" type="shape" name="Element13" style-class="" visibility="package" creation-date="01/11/2021 22:44:40">
             <style class="default" />
           </item>
-          <item id="di316751194640121774" cid="ELEM056" type="text" name="Element14" style-class="" visibility="package" creation-date="12/27/2020 16:43:47">
+          <item id="di855400700223023581" cid="ELEM056" type="text" name="Element14" style-class="" visibility="package" creation-date="01/11/2021 22:44:40">
             <style class="default" />
           </item>
-          <item id="di310343172580944068" cid="ELEM057" type="shape" name="Element17" style-class="" visibility="package" creation-date="12/27/2020 16:43:47">
+          <item id="di599117136528951167" cid="ELEM057" type="shape" name="Element17" style-class="" visibility="package" creation-date="01/11/2021 22:44:40">
             <style class="default" />
           </item>
         </abstract-items>
@@ -3260,7 +3261,7 @@ FactoryMethod(){
           <item id="di713068550952581492" iid="aeb7717fb567466fb150c375f890d4ad" creation-date="12/21/2020 11:22:50" order-index="20" type="entity">
             <layout ax="0" ay="220" awidth="820" aheight="200" x="0" y="220" width="820" height="200" angle="0" />
           </item>
-          <item id="di103019047339039373" iid="04549398b9b4465884315a7a49a617b6" creation-date="12/21/2020 11:17:04" order-index="1" type="entity">
+          <item id="di103019047339039373" iid="04549398b9b4465884315a7a49a617b6" container="di713068550952581492" container-iid="aeb7717fb567466fb150c375f890d4ad" creation-date="12/21/2020 11:17:04" order-index="1" type="entity">
             <layout ax="60" ay="280" awidth="140" aheight="60" x="60" y="280" width="140" height="60" angle="0" />
             <class />
           </item>
@@ -3330,12 +3331,12 @@ FactoryMethod(){
             </layout>
             <relation from="di406255776407863215" from-iid="ad83383dfaaf4ccbb1990637178a12a8" to="di506148087376243695" to-iid="bcebafc88ca245e29c5ac65b527dc63c" />
           </item>
-          <item id="di676308716986405034" iid="51f844e6e75b474fa6aff0e69b4aa0c9" name="Element13" creation-date="12/21/2020 11:19:02" order-index="12" type="drawing-line">
+          <item id="di698263510966377028" iid="51f844e6e75b474fa6aff0e69b4aa0c9" name="Element13" creation-date="12/21/2020 11:19:02" order-index="12" type="drawing-line">
             <layout ax="260" ay="15" awidth="2" aheight="463" x="260" y="15" width="2" height="462" angle="0" />
             <drawing-line start-point="260,15" end-point="261,477" />
             <style class="default" />
           </item>
-          <item id="di316751194640121774" iid="44f3eb3446e44d0496e96dc672ef1b34" name="Element14" creation-date="12/21/2020 11:19:10" order-index="13" type="drawing-text">
+          <item id="di855400700223023581" iid="44f3eb3446e44d0496e96dc672ef1b34" name="Element14" creation-date="12/21/2020 11:19:10" order-index="13" type="drawing-text">
             <layout ax="220" ay="-40" awidth="94" aheight="40" x="220" y="-40" width="94" height="40" angle="0" />
             <drawing-text>
               <text>IPC</text>
@@ -3424,7 +3425,7 @@ FactoryMethod(){
             </layout>
             <relation from="di232670207308814513" from-iid="5170e8b4c6524017b70fc95846e77f3e" to="di104353638480691228" to-iid="f666204037fa445293ff7ba88a0fb6ef" />
           </item>
-          <item id="di310343172580944068" iid="a5206fac5f85442e91bb7f24dd08c272" name="Element17" creation-date="12/21/2020 17:15:17" order-index="32" type="drawing-line">
+          <item id="di599117136528951167" iid="a5206fac5f85442e91bb7f24dd08c272" name="Element17" creation-date="12/21/2020 17:15:17" order-index="32" type="drawing-line">
             <layout ax="-60" ay="480" awidth="1101" aheight="1" x="-64" y="459" width="1107" height="9" angle="0" />
             <drawing-line start-point="-60,480" end-point="1040,480" />
             <style class="default" />

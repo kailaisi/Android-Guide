@@ -43,10 +43,6 @@ ServiceManager提供的Binder比较特殊，它没有名字也不需要注册，
 
 ![image-20201203155528773](http://cdn.qiniu.kailaisii.com/typora/202012/03/155623-33186.png)
 
-
-
-
-
 ### 架构角度看Binder的跨进程设计
 
 对于跨进程的调用，需要实现IBinder接口来进行接口调用以及数据的传输。其中最主要的就是*tranasct()*的方法调用。
@@ -80,9 +76,24 @@ ServiceManager提供的Binder比较特殊，它没有名字也不需要注册，
 
 ##### 模板模式
 
+由Google来编写模板，而用户来编写具体的接口。
+
+具体实现：
+
+```java
+public class BinderProxy<T>{
+    //定义的模板类
+}
+
+//用户使用模板生成类
+BinderProxy<MyInterface> proxy;
+```
+
+
+
 ##### AIDL.exe
 
-AIDL.exe属于程序生成器，位于**SDK包下的builde-tools下各个版本之中。例如：e:\\assdk\\build-tools\\29.0.2\\aidl.exe**。通过这种方式，可以工具来协助生成Porxy和Stub类别。 
+AIDL.exe属于程序生成器，位于**SDK包下的builde-tools下各个版本之中**。通过这种方式，可以工具来协助生成Porxy和Stub类别。 
 
 ### AIDL分析
 
@@ -264,8 +275,6 @@ Stub.asInterface方法返回的是Stub对象，即Binder本地对象。也就是
 
 Stub.asInterface方法返回的是Binder代理对象，需要通过Binder驱动完成跨进程通信。这种场景下，Client调用方线程会被挂起（Binder也提供了异步的方式，这里不讨论），等待Server响应后返回数据。这里要注意的是，**Server的响应是在Server进程的Binder线程池中处理的，并不是主线程**。
 
-
-
 ### 请求流程汇总
 
 **Client调用Binder代理对象，Client线程挂起**
@@ -284,7 +293,9 @@ Binder驱动经过一系列的处理后，将请求派发给了Server，即调�
 
 onTransact处理结束后，将结果写入reply并返回至Binder驱动，驱动唤醒挂起的Client线程，并将结果返回。至此，一次跨进程通信完成。
 
+### 从Service看进程通信
 
+![image-20210111224634447](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210111224634447.png)
 
 ### 参考：
 
