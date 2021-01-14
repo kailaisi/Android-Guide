@@ -11,8 +11,13 @@ ListView详解
 
 ##### 响应阶段
 
-* 基类透过接口的getItem()函数从子类里取得用户的响应函数。
-* 也可以通过getItemId()函数，从子类中去的各选项的ID值。
+* 基类透过接口的**getItem()**函数从子类里取得用户的响应函数。
+* 也可以通过**getItemId()**函数，从子类中去的各选项的ID值。
 
 #### 设计
 
+
+
+
+
+https://blog.csdn.net/iispring/article/details/50967445

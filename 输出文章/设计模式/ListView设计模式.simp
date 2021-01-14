@@ -19,14 +19,6 @@
         <item-type stereotype="" type="UmlPackage" />
         <value>2</value>
       </counter>
-      <counter>
-        <item-type stereotype="" type="TextItem" />
-        <value>4</value>
-      </counter>
-      <counter>
-        <item-type stereotype="" type="DrawingItem" />
-        <value>5</value>
-      </counter>
     </entity-names>
     <entity-ids>
       <counter>
@@ -43,11 +35,11 @@
       </counter>
       <counter>
         <item-type stereotype="" type="UmlComment" />
-        <value>7</value>
+        <value>8</value>
       </counter>
       <counter>
         <item-type stereotype="" type="UmlCommentConnector" />
-        <value>6</value>
+        <value>7</value>
       </counter>
       <counter>
         <item-type stereotype="" type="UmlAssociation" />
@@ -66,10 +58,6 @@
         <value>3</value>
       </counter>
       <counter>
-        <item-type stereotype="" type="AbstractElementGroup" />
-        <value>351</value>
-      </counter>
-      <counter>
         <item-type stereotype="" type="UmlRealization" />
         <value>2</value>
       </counter>
@@ -78,8 +66,8 @@
         <value>5</value>
       </counter>
       <counter>
-        <item-type stereotype="" type="AbstractDiagramDescription" />
-        <value>9</value>
+        <item-type stereotype="" type="AbstractElementGroup" />
+        <value>46</value>
       </counter>
     </entity-ids>
     <diagrams>
@@ -140,7 +128,7 @@ getView()</comment>
       <style class="default" />
     </item>
     <item id="di111354068516706352" cid="ELEM065" type="group" name="Group" style-class="" visibility="package" creator="P654b4b48f973499ba299ced86fc11f73" creation-date="01/13/2021 18:06:09">
-      <style style-name="Default" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+      <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
         <background type="forward-diagonal" color="#FFFFFF2B" color2="#FFFFAAAA" />
         <border color="#FF000000" width="1" dash-style="Solid" />
         <label-connector color="#80000000" width="1" dash-style="Dash" />
@@ -208,7 +196,7 @@ getView()</comment>
       </meta>
       <abstract-items />
       <sub-models />
-      <diagram type="uml-class" id="pc3543d632eb44bb7ac5f581ec886d813_218866516" name="ClassDiagram1" order-index="1" show-id="false" show-name="true" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" show-template-parameters="true" show-fields="true" show-empty-compartments="true" show-attributes="true" show-attribute-visibility="true" show-operations="true" show-operation-parameters="true" show-operation-visibility="true" show-nullability="true" show-sequence-number="false" show-extension-points="false" show-relationship-texts="true" show-description="false" show-field-description="false" auto-routed-paths="false" view-location="-75,-39" zoom="0.9">
+      <diagram type="uml-class" id="pc3543d632eb44bb7ac5f581ec886d813_218866516" name="ClassDiagram1" order-index="1" show-id="false" show-name="true" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" show-template-parameters="true" show-fields="true" show-empty-compartments="true" show-attributes="true" show-attribute-visibility="true" show-operations="true" show-operation-parameters="true" show-operation-visibility="true" show-nullability="true" show-sequence-number="false" show-extension-points="false" show-relationship-texts="true" show-description="false" show-field-description="false" auto-routed-paths="false" view-location="-67,-35" zoom="0.8">
         <style>
           <background-color index="1" color="#FFFFFFFF" />
           <background-color index="2" color="#FFFFFFFF" />
@@ -220,7 +208,7 @@ getView()</comment>
           </authors>
           <description />
           <creation-date>01/13/2021 17:48:11</creation-date>
-          <change-date>01/13/2021 20:42:47</change-date>
+          <change-date>01/14/2021 15:22:17</change-date>
           <revision-count>0</revision-count>
           <version />
         </meta>
@@ -232,7 +220,7 @@ getView()</comment>
             <stereotypes>
               <stereotype name="" />
             </stereotypes>
-            <style style-name="Default" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
               <background type="forward-diagonal" color="#FFFFFFFF" color2="#FFFF8080" />
               <border color="#FF000000" width="1" dash-style="Solid" />
               <label-connector color="#80000000" width="1" dash-style="Dash" />
@@ -274,7 +262,7 @@ getView()</comment>
             </relation>
           </item>
           <item id="di569301070144053003" cid="ELEM002" type="shape" name="Element8" style-class="" visibility="package" creation-date="01/13/2021 20:36:32">
-            <style style-name="Default" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
               <background type="forward-diagonal" color="#FFFFFFFF" color2="#FFFF952B" />
               <border color="#FF000000" width="1" dash-style="Solid" />
               <label-connector color="#80000000" width="1" dash-style="Dash" />
@@ -311,12 +299,46 @@ getView()</comment>
             <style class="default" />
             <comment>在这种设计中，如果由用户来实现所有的ListAdapter的方法的话话，可能相对来说需要做相当多的复杂工作</comment>
           </item>
+          <item id="di958104987668016417" cid="ELEM008" type="shape" name="Element8" style-class="" visibility="package" creation-date="01/14/2021 13:22:37">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+              <background type="forward-diagonal" color="#FFFFFFFF" color2="#FFFF952B" />
+              <border color="#FF000000" width="1" dash-style="Solid" />
+              <label-connector color="#80000000" width="1" dash-style="Dash" />
+              <alternate-styles>
+                <alternate-style style-name="Alternate" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+                  <background type="vertical-linear" color="#FF1E90FF" color2="#FF87CEFA" />
+                  <border color="#FF00008B" width="1" dash-style="Solid" />
+                  <label-connector color="#FF000000" width="1" dash-style="Solid" />
+                </alternate-style>
+              </alternate-styles>
+            </style>
+          </item>
+          <item id="di506619100463990327" cid="ELEM009" type="text" name="Element9" style-class="" visibility="package" creation-date="01/14/2021 13:22:37">
+            <style class="default" />
+          </item>
+          <item id="di829543624189218420" cid="ELEM010" type="shape" name="Element6" style-class="" visibility="package" creation-date="01/14/2021 13:22:37">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+              <background type="forward-diagonal" color="#FFFFFFFF" color2="#FFEBEBEB" />
+              <border color="#FF000000" width="1" dash-style="Solid" />
+              <label-connector color="#80000000" width="1" dash-style="Dash" />
+              <alternate-styles>
+                <alternate-style style-name="Alternate" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+                  <background type="vertical-linear" color="#FF1E90FF" color2="#FF87CEFA" />
+                  <border color="#FF00008B" width="1" dash-style="Solid" />
+                  <label-connector color="#FF000000" width="1" dash-style="Solid" />
+                </alternate-style>
+              </alternate-styles>
+            </style>
+          </item>
+          <item id="di493399242574650108" cid="ELEM013" type="text" name="Element7" style-class="" visibility="package" creation-date="01/14/2021 13:22:37">
+            <style class="default" />
+          </item>
         </abstract-items>
         <layer name="Default" visible="true" enabled="true" locked="false">
-          <item id="di569301070144053003" iid="dc82ae07fe134dfbb15522b91ff229e6" name="Element8" creation-date="01/13/2021 18:08:12" order-index="13" type="drawing-shape">
+          <item id="di958104987668016417" iid="dc82ae07fe134dfbb15522b91ff229e6" name="Element8" creation-date="01/13/2021 18:08:12" order-index="13" type="drawing-shape">
             <layout ax="20" ay="60" awidth="580" aheight="240" x="20" y="60" width="580" height="240" angle="0" />
             <drawing-shape type="Rectangle" />
-            <style style-name="Default" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
               <background type="forward-diagonal" color="#FFFFFFFF" color2="#FFFF952B" />
               <border color="#FF000000" width="1" dash-style="Solid" />
               <label-connector color="#80000000" width="1" dash-style="Dash" />
@@ -354,7 +376,7 @@ getView()</comment>
             </layout>
             <relation from="di155471049590509158" from-iid="2ee4394c7d604c459c607128394e4824" to="di916230195234178372" to-iid="2e7a982bd23f415ebcc93f71d922ecb7" />
           </item>
-          <item id="di294629511431800007" iid="e8e28c257bb64be3beb7716f0ff0b26e" name="Element9" creation-date="01/13/2021 18:08:19" order-index="14" type="drawing-text">
+          <item id="di506619100463990327" iid="e8e28c257bb64be3beb7716f0ff0b26e" name="Element9" creation-date="01/13/2021 18:08:19" order-index="14" type="drawing-text">
             <layout ax="20" ay="80" awidth="92" aheight="60" x="20" y="80" width="92" height="60" angle="0" />
             <drawing-text>
               <text>通用性设计</text>
@@ -384,7 +406,7 @@ getView()</comment>
           <item id="di783430499665352538" iid="ebf417fafee74cbabdce398aa617874c" creation-date="01/13/2021 20:42:47" order-index="15" type="entity">
             <layout ax="540" ay="800" awidth="140" aheight="100" x="540" y="800" width="140" height="100" angle="0" />
           </item>
-          <item id="di759669053561653259" iid="281abb5d07ea4bfd9175e0ae745caf06" name="Element6" creation-date="01/13/2021 18:06:52" order-index="11" type="drawing-shape">
+          <item id="di829543624189218420" iid="281abb5d07ea4bfd9175e0ae745caf06" name="Element6" creation-date="01/13/2021 18:06:52" order-index="11" type="drawing-shape">
             <layout ax="230" ay="490" awidth="529" aheight="213" x="230" y="490" width="529" height="213" angle="0" />
             <drawing-shape type="Rectangle" />
             <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
@@ -430,7 +452,7 @@ getView()</comment>
             </layout>
             <relation from="di781806640786821785" from-iid="54473b421e3f4e31a3cda5b301ba6a25" to="di111354068516706352" to-iid="56c938356ac347f7a814ab4940a1e318" />
           </item>
-          <item id="di444076411290040605" iid="0e0936d0ca824b6fa9e832e7466ff921" name="Element7" creation-date="01/13/2021 18:07:27" order-index="12" type="drawing-text">
+          <item id="di493399242574650108" iid="0e0936d0ca824b6fa9e832e7466ff921" name="Element7" creation-date="01/13/2021 18:07:27" order-index="12" type="drawing-text">
             <layout ax="600" ay="400" awidth="140" aheight="160" x="600" y="400" width="140" height="160" angle="0" />
             <drawing-text>
               <text>开发者特殊性要求</text>
@@ -439,7 +461,7 @@ getView()</comment>
           </item>
         </layer>
       </diagram>
-      <diagram type="uml-class" id="pf13671c63831492680dcb3f2999a83d0_211330304" name="listview改进" order-index="2" overview-order-index="0" show-id="false" show-name="true" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" show-template-parameters="true" show-fields="true" show-empty-compartments="true" show-attributes="true" show-attribute-visibility="true" show-operations="true" show-operation-parameters="true" show-operation-visibility="true" show-nullability="true" show-sequence-number="false" show-extension-points="false" show-relationship-texts="true" show-description="false" show-field-description="false" auto-routed-paths="false" view-location="-75,-39" zoom="0.9">
+      <diagram type="uml-class" id="pf13671c63831492680dcb3f2999a83d0_211330304" name="listview改进" order-index="2" overview-order-index="0" show-id="false" show-name="true" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" show-template-parameters="true" show-fields="true" show-empty-compartments="true" show-attributes="true" show-attribute-visibility="true" show-operations="true" show-operation-parameters="true" show-operation-visibility="true" show-nullability="true" show-sequence-number="false" show-extension-points="false" show-relationship-texts="true" show-description="false" show-field-description="false" auto-routed-paths="false" view-location="-58,38" zoom="0.7">
         <style>
           <background-color index="1" color="#FFFFFFFF" />
           <background-color index="2" color="#FFFFFFFF" />
@@ -483,12 +505,46 @@ getView()</comment>
               <end-role id="" name="" navigability="yes" association-type="association" visibility="private" />
             </relation>
           </item>
+          <item id="di252468149814446513" cid="ELEM014" type="shape" name="Element8" style-class="" visibility="package" creation-date="01/14/2021 13:22:37">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+              <background type="forward-diagonal" color="#FFFFFFFF" color2="#FFFF952B" />
+              <border color="#FF000000" width="1" dash-style="Solid" />
+              <label-connector color="#80000000" width="1" dash-style="Dash" />
+              <alternate-styles>
+                <alternate-style style-name="Alternate" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+                  <background type="vertical-linear" color="#FF1E90FF" color2="#FF87CEFA" />
+                  <border color="#FF00008B" width="1" dash-style="Solid" />
+                  <label-connector color="#FF000000" width="1" dash-style="Solid" />
+                </alternate-style>
+              </alternate-styles>
+            </style>
+          </item>
+          <item id="di658826302948228308" cid="ELEM015" type="text" name="Element9" style-class="" visibility="package" creation-date="01/14/2021 13:22:37">
+            <style class="default" />
+          </item>
+          <item id="di105209890275597851" cid="ELEM016" type="shape" name="Element6" style-class="" visibility="package" creation-date="01/14/2021 13:22:37">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+              <background type="forward-diagonal" color="#FFFFFFFF" color2="#FFEBEBEB" />
+              <border color="#FF000000" width="1" dash-style="Solid" />
+              <label-connector color="#80000000" width="1" dash-style="Dash" />
+              <alternate-styles>
+                <alternate-style style-name="Alternate" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+                  <background type="vertical-linear" color="#FF1E90FF" color2="#FF87CEFA" />
+                  <border color="#FF00008B" width="1" dash-style="Solid" />
+                  <label-connector color="#FF000000" width="1" dash-style="Solid" />
+                </alternate-style>
+              </alternate-styles>
+            </style>
+          </item>
+          <item id="di765917458173738777" cid="ELEM019" type="text" name="Element7" style-class="" visibility="package" creation-date="01/14/2021 13:22:37">
+            <style class="default" />
+          </item>
         </abstract-items>
         <layer name="Default" visible="true" enabled="true" locked="false">
-          <item id="di569301070144053003" iid="49d90d6a7de14d288cc932d0dcd35898" name="Element8" creation-date="01/13/2021 18:08:12" order-index="13" type="drawing-shape">
+          <item id="di252468149814446513" iid="49d90d6a7de14d288cc932d0dcd35898" name="Element8" creation-date="01/13/2021 18:08:12" order-index="13" type="drawing-shape">
             <layout ax="20" ay="60" awidth="820" aheight="560" x="20" y="60" width="820" height="560" angle="0" />
             <drawing-shape type="Rectangle" />
-            <style style-name="Default" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
               <background type="forward-diagonal" color="#FFFFFFFF" color2="#FFFF952B" />
               <border color="#FF000000" width="1" dash-style="Solid" />
               <label-connector color="#80000000" width="1" dash-style="Dash" />
@@ -526,7 +582,7 @@ getView()</comment>
             </layout>
             <relation from="di155471049590509158" from-iid="ae89602f9e624b438946ae67cf09ff2c" to="di916230195234178372" to-iid="c54c8a7514b34393845712603380d28a" />
           </item>
-          <item id="di294629511431800007" iid="19f0d5e24b894e40ac1fbe3db6109609" name="Element9" creation-date="01/13/2021 18:08:19" order-index="14" type="drawing-text">
+          <item id="di658826302948228308" iid="19f0d5e24b894e40ac1fbe3db6109609" name="Element9" creation-date="01/13/2021 18:08:19" order-index="14" type="drawing-text">
             <layout ax="20" ay="80" awidth="92" aheight="60" x="20" y="80" width="92" height="60" angle="0" />
             <drawing-text>
               <text>通用性设计</text>
@@ -572,7 +628,7 @@ getView()</comment>
           <item id="di601871371750645870" iid="0b1f6c8790844cf7ad0c3068a2002cd0" creation-date="01/13/2021 22:48:38" order-index="21" type="entity">
             <layout ax="860" ay="420" awidth="140" aheight="100" x="860" y="420" width="140" height="100" angle="0" />
           </item>
-          <item id="di759669053561653259" iid="ace3999cc5144b57b27d03006b8ac9c0" name="Element6" creation-date="01/13/2021 18:06:52" order-index="11" type="drawing-shape">
+          <item id="di105209890275597851" iid="ace3999cc5144b57b27d03006b8ac9c0" name="Element6" creation-date="01/13/2021 18:06:52" order-index="11" type="drawing-shape">
             <layout ax="480" ay="902" awidth="529" aheight="213" x="480" y="902" width="529" height="213" angle="0" />
             <drawing-shape type="Rectangle" />
             <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
@@ -600,12 +656,12 @@ getView()</comment>
           <item id="di111354068516706352" iid="747d46d10cca4b7d81a524c7e197f9d2" creation-date="01/13/2021 18:06:09" order-index="9" type="group">
             <layout ax="760" ay="942" awidth="120" aheight="120" x="760" y="942" width="120" height="120" angle="0" />
             <group-items>
-              <item id="di430824319621575430" iid="b4e9dd35d4ed4459af6dedda56a2dd0b" name="Element1" creation-date="01/13/2021 18:05:15" order-index="7" type="drawing-rounded-rect">
+              <item id="di195164174229707871" iid="b4e9dd35d4ed4459af6dedda56a2dd0b" name="Element1" creation-date="01/13/2021 18:05:15" order-index="7" type="drawing-rounded-rect">
                 <layout ax="760" ay="942" awidth="120" aheight="120" x="760" y="942" width="120" height="120" angle="0" />
                 <drawing-rounded-rect radius="10" />
                 <style class="default" />
               </item>
-              <item id="di530080376807800853" iid="926a5334fd454d6da428c6f45ffcbf11" name="Element2" creation-date="01/13/2021 18:05:25" order-index="8" type="drawing-text">
+              <item id="di285500754976540142" iid="926a5334fd454d6da428c6f45ffcbf11" name="Element2" creation-date="01/13/2021 18:05:25" order-index="8" type="drawing-text">
                 <layout ax="769.4286" ay="960" awidth="102.8571" aheight="90" x="769.4286" y="960" width="102.8571" height="90" angle="0" />
                 <drawing-text>
                   <text>DataSource</text>
@@ -614,7 +670,7 @@ getView()</comment>
               </item>
             </group-items>
           </item>
-          <item id="di444076411290040605" iid="6c5e5027c3374470b5769ef83028f91e" name="Element7" creation-date="01/13/2021 18:07:27" order-index="12" type="drawing-text">
+          <item id="di765917458173738777" iid="6c5e5027c3374470b5769ef83028f91e" name="Element7" creation-date="01/13/2021 18:07:27" order-index="12" type="drawing-text">
             <layout ax="820" ay="802" awidth="140" aheight="160" x="820" y="802" width="140" height="160" angle="0" />
             <drawing-text>
               <text>开发者特殊性要求</text>
@@ -657,7 +713,7 @@ getView()</comment>
           </authors>
           <description />
           <creation-date>01/13/2021 22:56:02</creation-date>
-          <change-date>01/13/2021 23:05:25</change-date>
+          <change-date>01/14/2021 13:39:47</change-date>
           <revision-count>0</revision-count>
           <version />
         </meta>
@@ -696,13 +752,13 @@ getView()</comment>
           </item>
           <item id="di275076224294718353" cid="REL006" type="relationship" name="" style-class="" visibility="package" change-tracking-state="added" creation-date="01/13/2021 23:02:38">
             <style class="default" />
-            <relation from="di420321106297444349" to="di569696624626262349">
+            <relation from="di420321106297444349" to="di706101299924753231">
               <start-role id="" name="" navigability="" association-type="association" visibility="private" />
               <end-role id="" name="" navigability="" association-type="association" visibility="private" />
             </relation>
           </item>
           <item id="di435485255918670811" cid="PKG002" type="package" name="特殊型接口" style-class="" visibility="package" change-tracking-state="added" creation-date="01/13/2021 23:04:28">
-            <style style-name="Default" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
               <background type="forward-diagonal" color="#FFFFFFFF" color2="#FFFFD5D5" />
               <border color="#FF000000" width="1" dash-style="Solid" />
               <label-connector color="#80000000" width="1" dash-style="Dash" />
@@ -714,6 +770,52 @@ getView()</comment>
                 </alternate-style>
               </alternate-styles>
             </style>
+          </item>
+          <item id="di262862147769766159" cid="ELEM020" type="text" name="Element3" style-class="" visibility="package" creation-date="01/14/2021 13:22:37">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;10;" text-horizontal-alignment="center" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+              <background type="solid" color="#FF00D56A" color2="#FF0000D5" />
+              <border color="#FF000000" width="0" dash-style="Solid" />
+              <label-connector color="#80000000" width="1" dash-style="Dash" />
+              <alternate-styles>
+                <alternate-style style-name="Alternate" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+                  <background type="vertical-linear" color="#FF1E90FF" color2="#FF87CEFA" />
+                  <border color="#FF00008B" width="1" dash-style="Solid" />
+                  <label-connector color="#FF000000" width="1" dash-style="Solid" />
+                </alternate-style>
+              </alternate-styles>
+            </style>
+          </item>
+          <item id="di569696624626262349" cid="ELEM021" type="text" name="Element4" style-class="" visibility="package" creation-date="01/14/2021 13:22:37">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;10;" text-horizontal-alignment="center" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+              <background type="solid" color="#FF00D500" color2="#00FFFFFF" />
+              <border color="#FF000000" width="0" dash-style="Solid" />
+              <label-connector color="#80000000" width="1" dash-style="Dash" />
+              <alternate-styles>
+                <alternate-style style-name="Alternate" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+                  <background type="vertical-linear" color="#FF1E90FF" color2="#FF87CEFA" />
+                  <border color="#FF00008B" width="1" dash-style="Solid" />
+                  <label-connector color="#FF000000" width="1" dash-style="Solid" />
+                </alternate-style>
+              </alternate-styles>
+            </style>
+          </item>
+          <item id="di706101299924753231" cid="ELEM022" type="text" name="Element4" style-class="" visibility="package" creation-date="01/14/2021 13:22:37">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;10;" text-horizontal-alignment="center" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+              <background type="solid" color="#FF00D500" color2="#00FFFFFF" />
+              <border color="#FF000000" width="0" dash-style="Solid" />
+              <label-connector color="#80000000" width="1" dash-style="Dash" />
+              <alternate-styles>
+                <alternate-style style-name="Alternate" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+                  <background type="vertical-linear" color="#FF1E90FF" color2="#FF87CEFA" />
+                  <border color="#FF00008B" width="1" dash-style="Solid" />
+                  <label-connector color="#FF000000" width="1" dash-style="Solid" />
+                </alternate-style>
+              </alternate-styles>
+            </style>
+          </item>
+          <item id="di302996356420954014" cid="CMT007" type="comment" name="" style-class="" visibility="package" change-tracking-state="added" creation-date="01/14/2021 13:39:47">
+            <style class="default" />
+            <comment>所以在设计接口的时候，如果存在一些通用性的方法，那么就可以将通用性方法抽取为通用性的类。然后特殊型的类来实现特殊的实现。</comment>
           </item>
         </abstract-items>
         <layer name="Default" visible="true" enabled="true" locked="false">
@@ -776,11 +878,11 @@ getView()</comment>
             <relation from="di223317669954262840" from-iid="2a5b21797ccf4a69af7d1fef1a3c3dc7" to="di781806640786821785" to-iid="48f2cd4545614276a8689635254b81e1" />
           </item>
           <item id="di262862147769766159" iid="8ee125cad8564e7fa275a4719fd87037" name="Element3" creation-date="01/13/2021 23:00:52" order-index="29" type="drawing-text">
-            <layout ax="160" ay="660" awidth="100" aheight="120" x="160" y="660" width="100" height="120" angle="0" />
+            <layout ax="160" ay="660" awidth="120" aheight="120" x="160" y="660" width="120" height="120" angle="0" />
             <drawing-text>
               <text>MyDataSource</text>
             </drawing-text>
-            <style style-name="Text" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;10;" text-horizontal-alignment="center" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;10;" text-horizontal-alignment="center" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
               <background type="solid" color="#FF00D56A" color2="#FF0000D5" />
               <border color="#FF000000" width="0" dash-style="Solid" />
               <label-connector color="#80000000" width="1" dash-style="Dash" />
@@ -798,7 +900,7 @@ getView()</comment>
             <drawing-text>
               <text>Array Of Objects</text>
             </drawing-text>
-            <style style-name="Text" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;10;" text-horizontal-alignment="center" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;10;" text-horizontal-alignment="center" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
               <background type="solid" color="#FF00D500" color2="#00FFFFFF" />
               <border color="#FF000000" width="0" dash-style="Solid" />
               <label-connector color="#80000000" width="1" dash-style="Dash" />
@@ -811,12 +913,12 @@ getView()</comment>
               </alternate-styles>
             </style>
           </item>
-          <item id="di569696624626262349" iid="995dfbab93924550ae16fbb07f419e76" name="Element4" creation-date="01/13/2021 23:01:36" order-index="30" type="drawing-text">
+          <item id="di706101299924753231" iid="995dfbab93924550ae16fbb07f419e76" name="Element4" creation-date="01/13/2021 23:01:36" order-index="30" type="drawing-text">
             <layout ax="480" ay="660" awidth="100" aheight="120" x="480" y="660" width="100" height="120" angle="0" />
             <drawing-text>
               <text>DataBase</text>
             </drawing-text>
-            <style style-name="Text" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;10;" text-horizontal-alignment="center" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+            <style style-name="Custom Style" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;10;" text-horizontal-alignment="center" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
               <background type="solid" color="#FF00D500" color2="#00FFFFFF" />
               <border color="#FF000000" width="0" dash-style="Solid" />
               <label-connector color="#80000000" width="1" dash-style="Dash" />
@@ -830,10 +932,10 @@ getView()</comment>
             </style>
           </item>
           <item id="di721505577925146997" iid="b54daefaad66403592e1faf6b04c05a9" creation-date="01/13/2021 23:02:29" order-index="31" type="relation">
-            <layout start-role-position="25,15" end-role-position="25,-15" start-multiplicity-position="25,-15" end-multiplicity-position="25,15" line-style="oblique" lock-start-point="true" lock-end-point="false" lock-to-fields="false" auto-path="" x1="215" y1="580" x2="212" y2="660" start-border-pos="0.633928571428571" end-border-pos="0.130357131958008" name-position="10,-10">
+            <layout start-role-position="25,15" end-role-position="25,-15" start-multiplicity-position="25,-15" end-multiplicity-position="25,15" line-style="oblique" lock-start-point="true" lock-end-point="false" lock-to-fields="false" auto-path="" x1="215" y1="580" x2="218" y2="660" start-border-pos="0.633928571428571" end-border-pos="0.120535723368327" name-position="10,-10">
               <points>
                 <point x="215" y="580" />
-                <point x="212" y="660" />
+                <point x="218" y="660" />
               </points>
             </layout>
             <relation from="di223317669954262840" from-iid="2a5b21797ccf4a69af7d1fef1a3c3dc7" to="di262862147769766159" to-iid="8ee125cad8564e7fa275a4719fd87037" />
@@ -854,7 +956,7 @@ getView()</comment>
                 <point x="540" y="660" />
               </points>
             </layout>
-            <relation from="di420321106297444349" from-iid="8d17b21c7d5348508b5c13ebb5a3675e" to="di569696624626262349" to-iid="995dfbab93924550ae16fbb07f419e76" />
+            <relation from="di420321106297444349" from-iid="8d17b21c7d5348508b5c13ebb5a3675e" to="di706101299924753231" to-iid="995dfbab93924550ae16fbb07f419e76" />
           </item>
           <item id="di242580880558165813" iid="ec966ce6ad214b32b2813dae6cb45962" creation-date="01/13/2021 23:05:06" order-index="35" type="entity">
             <layout ax="760" ay="160" awidth="140" aheight="100" x="760" y="160" width="140" height="100" angle="0" />
@@ -879,6 +981,9 @@ getView()</comment>
               </points>
             </layout>
             <relation from="di506844899254904519" from-iid="4176712de54f49cfbd607909ad2037d3" to="di435485255918670811" to-iid="0ab484a7e37a4615b917a8ba68226f21" />
+          </item>
+          <item id="di302996356420954014" iid="a5a6ecbd7b044e89aac8908f752add11" creation-date="01/14/2021 13:39:47" order-index="39" type="entity">
+            <layout ax="120" ay="160" awidth="297" aheight="100" x="120" y="160" width="297" height="100" angle="0" />
           </item>
         </layer>
       </diagram>
