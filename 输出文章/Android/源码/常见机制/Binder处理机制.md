@@ -1,31 +1,104 @@
-### IPC通讯
+### 基础
 
-* IPC通信是跨越不同进程之间的通信。
-* 一般一个Android应用程序里的各个组件是在同一个进程里执行。
 
-### IPC设定通信
 
-使用AndroidManifest.xml
+#### 进程间通讯（IPC）
 
-* 一个应用，，通常含有多个Java类，这些类可以在一个进程里执行，也可以在不同的进程执行
-* 一个进程只能有一个APP，但是一个APP可以占用多个进程。
+Android是基于Linux开发的，而且Linux已经有了很多线程的进程间的通讯机制。
 
-### IBinder接口
+* **管道**：在创建时分配一个page大小的内存，缓存区大小比较有限
+* **消息队列**：信息复制两次，消耗额外的CPU；不适合频繁或者信息量大的通讯
+* **共享内存**：无需复制，速度快。但是进程间的同步问题需要操作系统来处理。比较繁琐
+* **套接字**：更通用的通讯方式，但是传输效率比较低，适用于不同机器或者跨网络的通讯
+* **信号量**：能够处理并发问题，常作为一种锁机制，防止某个进程访问共享资源时，其他进程也访问该资源。
+* **信号**：不适用于信息交换，更加适合用于进程中断控制等等。
 
-* 当两个类都在同一个进城的时候，只需要函数调用就可以了。一旦两个类在不同的进程时，就不能使用函数调用了，只能采取IPC沟通机制。
-* IPC依赖IBinder接口。Client端调用接口的`trancact()`函数，透过IPC机制调用远程的`onTransact()`函数
+#### Binder
+
+Binder是Android所独有的采用的两个进程间进行通讯交流的一种机制。
+
+#### 对比
+
+谷歌放弃Linux已有的进程间通讯的机制，而采用Binder机制，那么肯定是由于一些无法满足的需求，而不得不创造Android独有的进程间通讯方式。
+
+
+|          |                            Binder                            |                           共享内存                           |                     套接字                     |
+| :------: | :----------------------------------------------------------: | :----------------------------------------------------------: | :--------------------------------------------: |
+| 拷贝次数 |                             1次                              |                             0次                              |                      2次                       |
+|   特点   | 基于C/S架构，架构清晰明朗，Server端和Cliend端相互独立，稳定性好 | 实现方式复杂，没有客户端、服务端区别，需要考虑资源同步并发问题，容易出现死锁 |        C/S架构，但是传输效率低，开销大         |
+|  安全性  |   **为每个进程分配对应的UID/PID。从而能够鉴别对方身份。**    |        依赖上层协议。访问接入点是完全开放的，不安全。        | 依赖上层协议。访问接入点是完全开放的，不安全。 |
+
+IBinder**决胜点主要在于安全性**上。Android作为一个开放性的平台，用户可以自由的安装各种应用，很可能就有各种非法盗取用户信息的程序，所以在安全性对于Android平台是及其重要的。肯定你不想有一天你拍的美美的照片被pdd给删了，也不希望你的聊天记录某天出现在网上被人围观，更不希望自己的联系人被各种"广告平台"悄悄拿走~。
+
+为了解决这个问题，采用了Binder这种方式来作为跨进程通讯方式。
+
+* 为每一个安装好的APP都分配一个UID，将身份标识交给IPC机制在内核中完成，而不是用户自行填入。
+
+* 在进行跨进程通讯的时候，都需要验证对方的UID/PID，从而能够有效的辨别恶意程序。
+
+Android一直在安全性上做着努力，不管是Android6.0上的动态权限申请，还是Android7上的私有目录访问，Android8上的后台执行限制、后台位置限制；Android9上的 Android Protected Confirmation 的能力；Android10上的限制外部存储访问等等。这些功能的实现，大体上都是通过Binder的身份识别来进行保证的。
+
+具体的实现方式，大家可以参考：[Android源码的Binder权限是如何控制？](https://www.zhihu.com/question/41003297/answer/89328987?from=profile_answer_card)
+
+### Binder整体架构
+
+本文不会从代码层次去说Binder的整个流程。可能会更加注重理念层次的东西。
+
+#### 设定通信
+
+在软件开发过程中，对于Activity或者Service的进程配置，是通过AndroidManifest.xml来进行设定的。如果我们想让Service在单独的进程中去运行，那么只需要如下设置即可：
+
+```xml
+<service 
+    ...
+    android:process="****" >
+</service>
+```
+
+如果没有这种设定，默认是所有的Activity和Service都是在同一个进程中执行的。
+
+所以可以知道一个进程只能有一个APP，但是一个APP其实是可以占用多个进程的。
+
+#### 接口约定
+
+当两个类都在同一个进程的时候，只需要函数调用就可以了。一旦两个类在不同的进程时，就不能使用函数调用了，只能采取IPC沟通机制。而IPC依赖**IBinder**接口。
+
+Ibinder接口定义了一些函数，可以让Client程序可以跨进程去掉用。最主要的函数就是**transact()**函数。
+
+```java
+    public boolean transact(int code, @NonNull Parcel data, @Nullable Parcel reply, int flags)
+```
+
+Client端调用接口的`trancact()`函数，透过IPC机制调用远程的`trancact()`函数。 
+
+#### Binder通讯模型
+
+##### 四大角色
+
+在Android中进行跨进程的通讯，是由4部分协作来完成的：**Client、Server、Binder驱动和ServiceManager。**四个角色和我们平时打电话的流程是相似的。
+
+|            Binder角色            |  通讯角色  |
+| :------------------------------: | :--------: |
+|              客户端              | 打电话的人 |
+|     服务端，能够提供各种服务     | 接电话的人 |
+|   ServiceManager，管理各种服务   |   电话簿   |
+| Binder驱动，提供进程间通讯的能力 |  通信网络  |
+
+##### **通信流程**
+
+跨进程的流程是通过四个角色的相互配合来实现的。
+
+整个具体流程模型如下（图片来源于网络）：
 
 ![img](http://cdn.qiniu.kailaisii.com/typora/202012/02/160410-784686.png)
-
-
-
-**Binder通信流程如下：**
 
 1.首先服务端需要向ServiceManager进行服务注册，ServiceManager有一个全局的service列表svcinfo，用来缓存所有服务的handler和name。
 
 2.客户端与服务端通信，需要拿到服务端的对象，由于进程隔离，客户端拿到的其实是服务端的代理，也可以理解为引用。客户端通过ServiceManager从svcinfo中查找服务，ServiceManager返回服务的代理。
 
 3.拿到服务对象后，我们需要向服务发送请求，实现我们需要的功能。通过 BinderProxy 将我们的请求参数发送给 内核，通过共享内存的方式使用内核方法 copy_from_user() 将我们的参数先拷贝到内核空间，这时我们的客户端进入等待状态。然后 Binder 驱动向服务端的 todo 队列里面插入一条事务，执行完之后把执行结果通过 copy_to_user() 将内核的结果拷贝到用户空间（这里只是执行了拷贝命令，并没有拷贝数据，binder只进行一次拷贝），唤醒等待的客户端并把结果响应回来，这样就完成了一次通讯。
+
+##### 难点
 
 在这里其实会存在一个问题，Client和Server之间通信是称为进程间通信，使用了Binder机制，那么Server和ServiceManager之间通信也叫进程间通信，Client和Server之间还会用到ServiceManager，也就是说Binder进程间通信通过Binder进程间通信来完成，这就好比是 孵出鸡前提却是要找只鸡来孵蛋，这是怎么实现的呢？
 
@@ -37,15 +110,13 @@ ServiceManager提供的Binder比较特殊，它没有名字也不需要注册，
 
 类比网络通信，0号引用就好比域名服务器的地址，你必须预先手工或动态配置好。要注意这里说的Client是相对ServiceManager而言的，一个应用程序可能是个提供服务的Server，但对ServiceManager来说它仍然是个Client。
 
-![image-20201209085011538](http://cdn.qiniu.kailaisii.com/typora/202012/09/085013-414777.png)
+#### 数据传输架构演化
 
-![image-20201203155331528](http://cdn.qiniu.kailaisii.com/typora/202012/03/155332-722377.png)
+当整个通讯模型流程建立完成之后，进行的就是数据传输的工作。
 
-![image-20201203155528773](http://cdn.qiniu.kailaisii.com/typora/202012/03/155623-33186.png)
+##### 极简版本
 
-### 架构角度看Binder的跨进程设计
-
-对于跨进程的调用，需要实现IBinder接口来进行接口调用以及数据的传输。其中最主要的就是*tranasct()*的方法调用。
+在接口约定中，我们提过，对于跨进程的调用，需要实现IBinder接口来进行接口调用以及数据的传输。
 
 ```java
    public boolean transact(int code, @NonNull Parcel data, @Nullable Parcel reply, int flags)
@@ -56,25 +127,25 @@ ServiceManager提供的Binder比较特殊，它没有名字也不需要注册，
 
 ![image-20210110214132920](http://cdn.qiniu.kailaisii.com/typora/20210110214135-2869.png)
 
-也就是如图所示。
-
-这种基本无任何框架可言，对于Server提供短还是Client调用端来说都是可怕的。
+这种基本无任何框架可言，对于Server提供端还是Client调用端来说都是可怕的。
 
 ![img](http://cdn.qiniu.kailaisii.com/typora/20210110214302-269897.gif)
 
-作为用户最希望使用的肯定是直接调用函数，而无需关心编号和函数关系。更不用关心跨进程的过程处理。
+##### 进化版
+
+作为开发人员最希望使用的肯定是直接调用函数，而无需关心编号和函数对应关系，更不用关心跨进程的过程处理，希望由系统层级的方式来帮我们解决编码解码工作：
 
 ![image-20210110214617708](http://cdn.qiniu.kailaisii.com/typora/20210110214620-186881.png)
 
-通过中间一层的**Proxy-Stub**的处理，能够屏蔽实现对于用户的感知。Proxy和Stub类相当于一层封装，将transact()和对应函数的转换进行了封装，对外只提供对应的函数。
+也就是通过中间一层的**Proxy/Stub**的处理，能够屏蔽实现对于用户的感知。Proxy和Stub类这一层的封装，将transact()和对应函数的转换进行了封装，对外只提供对应的函数。
 
-#### 设计难点 ：
+##### 设计难点 ：
 
 对于**Proxy-Stub**的这一层的设计难点在于，**接口是由用户来定义的，所以无法提前将code和函数的对应关系进行处理**。
 
 对于这种问题，有两种解决方案：
 
-##### 模板模式
+###### 模板模式
 
 由Google来编写模板，而用户来编写具体的接口。
 
@@ -89,11 +160,11 @@ public class BinderProxy<T>{
 BinderProxy<MyInterface> proxy;
 ```
 
+该方案是在JNI层使用的方案（后续会进行源码级分析）。
 
+###### AIDL.exe
 
-##### AIDL.exe
-
-AIDL.exe属于程序生成器，位于**SDK包下的builde-tools下各个版本之中**。通过这种方式，可以工具来协助生成Porxy和Stub类别。 
+AIDL.exe属于程序生成器，位于**SDK包下的builde-tools下各个版本之中**。通过这种方式，可以工具来协助生成Porxy和Stub类别。 该方案是Java层使用的方案。
 
 ### AIDL分析
 
@@ -105,7 +176,7 @@ AIDL的目的是为了减少用户每次都进行复杂的跨进程程序编写�
 
 **IBinder**
 
-跨进程的Base接口，声明跨进程通信需要实现的一系列抽象方法，实现了这个接口就可以进行跨进程的通信。Client和Server端都要实现该功能
+跨进程的Base接口，声明跨进程通信需要实现的一系列抽象方法，实现了这个接口就可以进行跨进程的通信。Client和Server端都要实现该功能。
 
 **IInterface**
 
@@ -265,11 +336,11 @@ private static class Proxy implements IMyAidlInterface {
 
 ```
 
-这里会自动帮我们生成**Stub**和**Proxy**类。
+这里会自动帮我们生成**Stub**和**Proxy**类，也就是在架构角度中的Binder封装类。
 
 **Client和Server在同一个进程**
 
-Stub.asInterface方法返回的是Stub对象，即Binder本地对象。也就是说和Binder跨进程通信无关，直接调用即可，此时Client调用方和Server响应方在同一个线程中。
+Stub.asInterface方法返回的是Stub对象，即Binder本地对象。也就是说和Binder跨进程通信无关，直接调用即可，此时Client调用方和Server响应方在同一个进程中。
 
 **Client和Server在不同的进程**
 
@@ -293,13 +364,24 @@ Binder驱动经过一系列的处理后，将请求派发给了Server，即调�
 
 onTransact处理结束后，将结果写入reply并返回至Binder驱动，驱动唤醒挂起的Client线程，并将结果返回。至此，一次跨进程通信完成。
 
-### 从Service看进程通信
+### 总结
 
-![image-20210111224634447](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210111224634447.png)
+Binder这种进程间通讯方式可以说是Android的一种核心机制，在我们做源码解析工作的时候，随处都可以看到它的影子。理解它能够使我们在做源码解析工作的时候更加的得心应手。后期我也会从源码角度去将这里面的各个流程进行梳理，敬请期待~
 
 ### 参考：
 
-https://mp.weixin.qq.com/s?__biz=MzAxMTI4MTkwNQ==&mid=2650826010&idx=1&sn=491e295e6a6c0fe450ad7aa91b6e97cc&chksm=80b7b184b7c03892392015840e4ebc7f2c3533ce8c1a98a5dc6d6d3dd19d53562805d76f6dcb&scene=38#wechat_redirect
+[关于Binder，作为应用开发者你需要知道的全部](https://mp.weixin.qq.com/s?__biz=MzAxMTI4MTkwNQ==&mid=2650826010&idx=1&sn=491e295e6a6c0fe450ad7aa91b6e97cc&chksm=80b7b184b7c03892392015840e4ebc7f2c3533ce8c1a98a5dc6d6d3dd19d53562805d76f6dcb&scene=38#wechat_redirect)
 
-https://blog.csdn.net/universus/article/details/6211589
+[Android Binder设计与实现](https://blog.csdn.net/freekiteyu/article/details/70082302?depth_1-utm_source=distribute.pc_relevant_right.none-task&utm_source=distribute.pc_relevant_right.none-task)
 
+[Android源码的Binder权限是如何控制](https://www.zhihu.com/question/41003297/answer/89328987?from=profile_answer_card)
+
+[Binder系列](http://gityuan.com/2015/10/31/binder-prepare/)
+
+[Android从程序员到架构师之路]()
+
+
+
+> 同步公众号[开了肯]
+
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)

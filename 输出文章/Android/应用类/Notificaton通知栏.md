@@ -1,4 +1,4 @@
-Notificaton通知栏
+## Notificaton通知栏详解
 
 最近在做一些关于通知栏的功能，在各种兼容和机型上遇到了不同的坑。查阅了各种不同的资料。所以打算记录一下通知栏以及遇到的问题。
 
@@ -6,7 +6,7 @@ Notificaton通知栏
 
 通知是Android在应用程序UI之外显示的一种信息，可以向用户提供提醒、来自他人交流或者应用程序的其他及时信息。用户可以通过点击通知来打开应用程序，或者一些其他操作行为。
 
-#### 通知
+### 通知知识点
 
 ##### 样式
 
@@ -95,7 +95,7 @@ Notificaton通知栏
 
 ##### 通知渠道
 
-从Android8.0开始，必须为所有的通知分配渠道，否则通知就不会显示。可以将通知归类为不同的渠道，用户也可以根据渠道的重要程度来进行区分对待（这些都可以在设置中完成）。而在Android7.1及更低版本的设备商，用户仅可以按照应用来管理通知信息。
+从Android8.0开始，必须为所有的通知分配渠道，否则通知就不会显示。可以将通知归类为不同的渠道，用户也可以根据渠道的重要程度来进行区分对待（这些都可以在设置中完成）。而在Android7.1及更低版本的设备上，用户仅可以按照应用来管理通知信息。
 
 ![image-20201227111103741](http://cdn.qiniu.kailaisii.com/typora/202012/27/111106-778360.png)
 
@@ -109,7 +109,7 @@ Notificaton通知栏
 ★注意：界面将渠道称作“类别”。
 ```
 
-##### 通知兼容性
+### 通知兼容性
 
 Android的通知系统页面以及相关的API一直在发展。谷歌推荐使用`NotificationCompat` 及其子类，以及 `NotificationManagerCompat`来进行旧设备的兼容处理。
 
@@ -292,7 +292,7 @@ val notification: NotificationCompat.Builder = NotificationCompat.Builder(this, 
     }
 ```
 
-#### 遇到的问题
+### 遇到的问题
 
 在对接国内各个手机的时候，总是遇到一些奇葩的问题。
 
@@ -339,7 +339,7 @@ val notification: NotificationCompat.Builder = NotificationCompat.Builder(this, 
             //8.0以上需要同时打开渠道通知和通知。
             val notificationChannels = notificationManagerCompat.notificationChannels
             for (channel in notificationChannels) {
-                //检测渠道通知功能被关系
+                //检测渠道通知功能是否被关闭
                 if (channel.importance == NotificationManager.IMPORTANCE_NONE) {
                     return false
                 }
@@ -350,15 +350,13 @@ val notification: NotificationCompat.Builder = NotificationCompat.Builder(this, 
     }
 ```
 
-#### 总结
+### 总结
 
 * 对于通知栏，现在可以按照渠道来设置。
 * 安卓8.0及以后通知栏是否显示同时受：应用通知权限+渠道通知权限来控制。如果发现收不到了，就去检查这两个权限。
 * 安卓原生通知的应用角标是小圆点，而国内对这部分定制比较多。有的是数字，有的是圆点。
 * 对于通知，最好按照对应的重要等级来设置优先级，防止滥用。
 
-> 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
->
 > 同步公众号[开了肯]
 
 ![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)
