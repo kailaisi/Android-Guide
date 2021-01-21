@@ -18,10 +18,16 @@ ListView详解
 
 
 
-HeaderViewListAdapter
+HeaderViewListAdapter：当有header或者footer的时候的包装类
 
+VelocityTracker：快速滑动辅助类，速度跟踪
 
+DataSetObserver观察者模式
 
 https://blog.csdn.net/iispring/article/details/50967445
 
 https://blog.csdn.net/sunmc1204953974/article/details/38657137
+
+https://blog.csdn.net/androiddevelop/article/details/8550455
+
+https://developer.android.google.cn/reference/kotlin/android/widget/ListView?hl=en
