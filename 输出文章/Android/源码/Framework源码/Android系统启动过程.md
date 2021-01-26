@@ -93,7 +93,7 @@ init.rc 脚本文件配置了一些重要的服务，init 进程通过创建子�
 
 以上工作执行完，init 进程就会进入 loop 状态。
 
-### ### service_manager 进程
+###  service_manager 进程
 
 ServiceManager 是 Binder IPC 通信过程中的守护进程，本身也是一个 Binder 服务。ServiceManager 进程主要是启动 Binder，提供服务的查询和注册。
 
@@ -104,6 +104,8 @@ SurfaceFlinger 负责图像绘制，是应用 UI 的和兴，其功能是合成�
 MediaServer 进程主要是启动 AudioFlinger 音频服务，CameraService 相机服务。负责处理音频解析播放，相机相关的处理。
 
 ### Zygote 进程
+
+zygote有两个作用：启动systemService和孵化应用进程。
 
 Zygote 进程孵化了所有的 Android 应用进程，是 Android Framework 的基础，该进程的启动也标志着 Framework 框架初始化启动的开始。
 
