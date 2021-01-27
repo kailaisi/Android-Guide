@@ -145,26 +145,20 @@ Zygote 服务进程的主要功能：
 
 system_server 进程 由 Zygote 进程 fork 而来。
 
-```
+```java
 //首先会调用 ZygoteInit.startSystemServer() 方法
 ZygoteInit.startSystemServer()  
 //fork 子进程 system_server，进入 system_server 进程。
-
 ZygoteInit.handleSystemServerProcess()  
 //设置当前进程名为“system_server”，创建 PathClassLoader 类加载器。
-
 RuntimeInit.zygoteInit()    
 //重定向 log 输出，通用的初始化（设置默认异常捕捉方法，时区等），初始化 Zygote -> nativeZygoteInit()。
-
 nativeZygoteInit()  
 //方法经过层层调用，会进入 app_main.cpp 中的 onZygoteInit() 方法。
-
 app_main::onZygoteInit()// 启动新 Binder 线程。
-
 applicationInit()   
 
 //方法经过层层调用，会抛出异常 ZygoteInit.MethodAndArgsCaller(m, argv), ZygoteInit.main() 会捕捉该异常。
-
 ZygoteInit.main()  
 
 //开启 DDMS 功能，preload() 加载资源，预加载 OpenGL，调用 SystemServer.main() 方法。
@@ -178,7 +172,7 @@ SystemServer.run()
 
 system_server 进程启动后将初始化系统上下文（设置主题），创建系统服务管理 SystemServiceManager，然后启动各种系统服务
 
-```
+```java
 startBootstrapServices(); // 启动引导服务
 //该方法主要启动服务 ActivityManagerService，PowerManagerService，LightsService，DisplayManagerService，PackageManagerService，UserManagerService。
 //设置 ActivityManagerService，启动传感器服务。
