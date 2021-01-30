@@ -304,6 +304,13 @@ sp<IBinder> ProcessState::getStrongProxyForHandle(int32_t handle)
 
 Proxy 端的用户无法直接看到 BpBinder, BpBinder 由 BpXXX 持有.用户本身不关心 BpBinder的能力,只关心 IXXX 定义的 接口。所以这里很好的进行了封装。
 
+回到前文的defaultServiceManger方法中，将返回值带入，可以得到
+
+```c++
+//注意，方法中传入的handle为0，所以BpBinder参数为0
+gDefaultServiceManager = interface_cast<IServiceManager>(new BpBinder(0));
+```
+
 ##### interface_cast
 
 ```c++
@@ -361,30 +368,31 @@ android::sp<IServiceManager> IIServiceManager::asInterface(const android::sp<and
 }  
 ```
 
-到这里为止，我们创建了一个BpIServiceManager对象，并将他的接口IIServiceManager返回给了调用者。
+到这里为止，我们创建了一个BpIServiceManager对象，并将他的接口IServiceManager返回给了调用者。
 
-##### ServiceManagerShim
-
-这里将返回的IIServiceManager对象用ServiceManagerShim进行了一层包装。
-
-```c++
-ServiceManagerShim::ServiceManagerShim(const sp<IServiceManager>& impl)
- : mTheRealServiceManager(impl)
-```
+整体的逻辑可以理解为：**new BpServiceManager(new BpBinder())**。当然了，这只是简化之后的代码，其内部复杂的逻辑现在可以暂不考虑。
 
 ### 添加Service
 
-当获取到ServiceManager服务之后，就可以使用addService方法来进行服务的注册了。在获取服务的时候，最终返回的是ServiceManagerShim对象，所以这里我们可以直接找到对应的添加服务方法
+当获取到ServiceManager服务之后，就可以使用addService方法来进行服务的注册了。在获取服务的时候，最终返回的是BpServiceManager对象，所以这里我们可以直接找到对应的添加服务方法
 
 ```c++
-status_t ServiceManagerShim::addService(const String16& name, const sp<IBinder>& service,bool allowIsolated, int dumpsysPriority)
-{
-    Status status = mTheRealServiceManager->addService(String8(name).c_str(), service, allowIsolated, dumpsysPriority);
-    return status.exceptionCode();
-}
+    virtual status_t addService(const String16& name, const sp<IBinder>& service,
+                                bool allowIsolated, int dumpsysPriority) {
+        Parcel data, reply;
+        data.writeInterfaceToken(IServiceManager::getInterfaceDescriptor());
+        data.writeString16(name);
+        data.writeStrongBinder(service);
+        data.writeInt32(allowIsolated ? 1 : 0);
+        data.writeInt32(dumpsysPriority);
+        status_t err = remote()->transact(ADD_SERVICE_TRANSACTION, data, &reply);
+        return err == NO_ERROR ? reply.readExceptionCode() : err;
+    }
 ```
 
-我们在ServiceManager服务的获取解析中知道，这里的**mTheRealServiceManager**其实是**BpServiceManager**对象。
+BpServiceManager的构造函数传入的了BpBinder对象，这里的remote()方法其实就是BpBinder对象。
+
+
 
 
 
