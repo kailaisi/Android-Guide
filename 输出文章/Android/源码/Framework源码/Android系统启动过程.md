@@ -205,7 +205,7 @@ ActivityManagerService 服务启动完成后，会进入 ActivityManagerService.
 
 启动桌面 Launcher App 需要等待 ActivityManagerService 启动完成。我们来看下 ActivityManagerService 启动过程。
 
-```
+```c++
 ActivityManagerService(Context) 
 //创建名为“ActivityManager”的前台线程，并获取mHandler。
 //通过 UiThread 类，创建名为“android.ui”的线程。
@@ -227,7 +227,12 @@ ActivityManagerService.systemReady()
 
 启动桌面 Launcher App，首先会通过 Zygote 进程 fork 一个新进程作为 App 进程，然后创建 Application，创建启动 Activity，最后用户才会看到桌面。
 
-### 完整的启动流程
+### 完整的启动流程图
 
 ![img](https://img-blog.csdn.net/20180211170703861?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvZnJlZWtpdGV5dQ==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
 
+源码解析项目地址：https://github.com/kailaisi/android-29-framwork
+
+> 同步公众号[开了肯]
+
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)
