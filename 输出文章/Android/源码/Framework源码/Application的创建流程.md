@@ -38,7 +38,7 @@ Application的创建流程
     final ApplicationThread mAppThread = new ApplicationThread();
 private void attach(boolean system, long startSeq) {
        		...
-			//获取到ATMS的Binder对象
+			//获取到AMS的Binder对象
             final IActivityManager mgr = ActivityManager.getService();
             try {
 				//AMS里面的方法，mAppThread是个IBinder对象，
@@ -172,7 +172,7 @@ private void handleBindApplication(AppBindData data) {
 
 这里主要有3个重点方法，创建Context、创建Application，赋值ContextImpl，调用生命周期函数。
 
-##### ContextImpl的创建。
+##### ContextImpl的创建
 
 ```java
 //frameworks\base\core\java\android\app\ActivityThread.java	    
