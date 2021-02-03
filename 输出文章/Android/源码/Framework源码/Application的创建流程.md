@@ -126,7 +126,6 @@ private void attach(boolean system, long startSeq) {
                     handleBindApplication(data);
                     Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
                     break;
-                case EXIT_APPLICATION:
 ```
 
 通过Handler调用了**handleBindApplication()**方法
