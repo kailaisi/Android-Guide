@@ -215,8 +215,217 @@ private final void realStartServiceLocked(ServiceRecord r,ProcessRecord app, boo
 
 ![image-20210203160418898](http://cdn.qiniu.kailaisii.com/typora/20210203160422-192015.png)
 
-### BService的绑定原理
+整体流程梳理：
+
+1. **进程A通过startService发起AMS的请求。**
+2. **如果AMS发现service所在的进程没有启动，那么会通过socket请求zygote进程来fork一个应用进程并启动**
+3. **应用进程启动之后，会调用ActivityThread中的main()方法。**
+4. **main方法向AMS发起attachApplication()请求**
+5. **AMS收到请求之后，知道了应用进程已经创建完成了，就会调用bindApplication方法去进行应用的一些处理。**
+6. **应用处理完成之后，会进行一些初始化的工作，比如：通过scheduleCreateServcie创建服务，通过scheduleServcieArgs调用service的onStartCommand方法。**
+
+### Service的绑定原理
+
+对于Service的绑定，一般通过bindService方法来使用。而该方法是在ContextImpl中来实现的。
+
+```java
+//frameworks\base\core\java\android\app\ContextImpl.java
+    public boolean bindService(Intent service, ServiceConnection conn, int flags) {
+        warnIfCallingFromSystemProcess();
+        return bindServiceCommon(service, conn, flags, null, mMainThread.getHandler(), null,
+                getUser());
+    }
+
+	private boolean bindServiceCommon(Intent service, ServiceConnection conn, int flags,
+            String instanceName, Handler handler, Executor executor, UserHandle user) {
+        //ServiceConnection对象是无法达到跨进程通讯功能的，所以这里生成了一个IServiceConnection对象sd，
+        //sd是一个IBinder对象，能够实现跨进程的通讯功能
+        IServiceConnection sd;
+        ...
+                sd = mPackageInfo.getServiceDispatcher(conn, getOuterContext(), handler, flags);
+            //ActivityManager.getService()会通过ServiceManager返回IActivityManager的Binder对象。
+            // bindIsolatedService，会调用服务端的相应接口。也就是AMS的bindIsolatedService接口
+            int res = ActivityManager.getService().bindIsolatedService(
+                mMainThread.getApplicationThread(), getActivityToken(), service,
+                service.resolveTypeIfNeeded(getContentResolver()),
+                sd, flags, instanceName, getOpPackageName(), user.getIdentifier());
+        ...
+    }
+```
+
+绑定过程主要有2个重点方法：
+
+1. 将conn进行一层封装，封装成为一个能够实现跨进程通讯的IBinder对象。
+2. 跨进程调用AMS的bindIsolatedService方法。
+
+我们先跟踪第一步骤
+
+```java
+//frameworks\base\core\java\android\app\ContextImpl.java
+	public final IServiceConnection getServiceDispatcher(ServiceConnection c,
+            Context context, Handler handler, int flags) {
+        return getServiceDispatcherCommon(c, context, handler, null, flags);
+    }
+
+    private IServiceConnection getServiceDispatcherCommon(ServiceConnection c,
+            Context context, Handler handler, Executor executor, int flags) {
+        synchronized (mServices) {
+            LoadedApk.ServiceDispatcher sd = null;
+			//获取缓存的Service的map信息
+            ArrayMap<ServiceConnection, LoadedApk.ServiceDispatcher> map = mServices.get(context);
+            if (map != null) {
+				//查找对应的ServiceConnection是否有对应的缓存的ServiceDispatcher对象
+                sd = map.get(c);
+            }
+            if (sd == null) {
+				//创建ServiceDispatcher对象
+                if (executor != null) {
+                    sd = new ServiceDispatcher(c, context, executor, flags);
+                } else {
+                    sd = new ServiceDispatcher(c, context, handler, flags);
+                }
+                //放入到缓存中
+                if (map == null) {
+                    map = new ArrayMap<>();
+                    mServices.put(context, map);
+                }
+                map.put(c, sd);
+            } else {
+                sd.validate(context, handler, executor);
+            }
+			//返回sd中的IServiceConnection对象
+            return sd.getIServiceConnection();
+        }
+    }
+```
+
+我们直接看一下ServiceDispatcher的构造函数
+
+```java
+//frameworks\base\core\java\android\app\LoadedApk.java
+		ServiceDispatcher(ServiceConnection conn,
+                Context context, Handler activityThread, int flags) {
+                //直接创建InnerConnection
+            mIServiceConnection = new InnerConnection(this);
+            ...
+        }
+
+        private static class InnerConnection extends IServiceConnection.Stub {
+        	//实现了.stub接口，能够实现跨进程传递。会将这个对象传递给AMS，然后AMS就可以调用该对象的
+        	//connected方法，从而实现对于sd方法的调用
+            @UnsupportedAppUsage
+			//弱引用。
+            final WeakReference<LoadedApk.ServiceDispatcher> mDispatcher;
+            InnerConnection(LoadedApk.ServiceDispatcher sd) {
+                mDispatcher = new WeakReference<LoadedApk.ServiceDispatcher>(sd);
+            }
+
+            public void connected(ComponentName name, IBinder service, boolean dead)
+                    throws RemoteException {
+                LoadedApk.ServiceDispatcher sd = mDispatcher.get();
+                if (sd != null) {
+					//调用connect方法，
+                    sd.connected(name, service, dead);
+                }
+            }
+        }
+```
+
+这里可以看到InnerConnection类是继承字IServiceConnection.Stub方法的，说明它能够实现跨进程的传输给AMS。那么现在我们回到主线，看一下跨进程调用AMS的bindIsolatedService方法的实际流程。
+
+这样AMS就可以调用该对象的connected()方法，从而调用到sd，也就是ServiceDispatcher的connected()方法。
+
+```java
+  public int bindIsolatedService(IApplicationThread caller,...) throws TransactionTooLargeException {
+		....
+			//重点方法   
+            return mServices.bindServiceLocked(caller, token, service,
+                    resolvedType, connection, flags, instanceName, callingPackage, userId);
+        }
+    }
+```
+
+
+
+```java
+        public void connected(ComponentName name, IBinder service, boolean dead) {
+        	//这里向主线程post了一个runnable函数，其本质也是调用doConnected方法
+            if (mActivityExecutor != null) {
+                mActivityExecutor.execute(new RunConnection(name, service, 0, dead));
+            } else if (mActivityThread != null) {
+                mActivityThread.post(new RunConnection(name, service, 0, dead));
+            } else {
+				//进行连接操作
+                doConnected(name, service, dead);
+            }
+        }
+```
+
+
+
+```
+        public void connected(ComponentName name, IBinder service, boolean dead) {
+        	//这里向主线程post了一个runnable函数
+            if (mActivityExecutor != null) {
+                mActivityExecutor.execute(new RunConnection(name, service, 0, dead));
+            } else if (mActivityThread != null) {
+                mActivityThread.post(new RunConnection(name, service, 0, dead));
+            } else {
+                doConnected(name, service, dead);
+            }
+        }
+```
+
+
+
+```
+
+    public int bindIsolatedService(IApplicationThread caller, IBinder token, Intent service,
+            String resolvedType, IServiceConnection connection, int flags, String instanceName,
+            String callingPackage, int userId) throws TransactionTooLargeException {
+        enforceNotIsolatedCaller("bindService");
+
+        // Refuse possible leaked file descriptors
+        if (service != null && service.hasFileDescriptors() == true) {
+            throw new IllegalArgumentException("File descriptors passed in Intent");
+        }
+
+        if (callingPackage == null) {
+            throw new IllegalArgumentException("callingPackage cannot be null");
+        }
+
+        // Ensure that instanceName, which is caller provided, does not contain
+        // unusual characters.
+        if (instanceName != null) {
+            for (int i = 0; i < instanceName.length(); ++i) {
+                char c = instanceName.charAt(i);
+                if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                            || (c >= '0' && c <= '9') || c == '_' || c == '.')) {
+                    throw new IllegalArgumentException("Illegal instanceName");
+                }
+            }
+        }
+
+        synchronized(this) {
+            return mServices.bindServiceLocked(caller, token, service,
+                    resolvedType, connection, flags, instanceName, callingPackage, userId);
+        }
+    }
+```
+
+
+
+
+
+
 
 大体流程
 
-![image-20210203161112732](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210203161112732.png)
+![image-20210203161112732](http://cdn.qiniu.kailaisii.com/typora/20210205093926-785645.png)
+
+总结：
+
+1. startServcie会将service放入到pending队列中，所以会执行onStartCommend方法，而bindService则没有该操作。
+2. bindService的时候，传入的conn对象的onServiceDisconnected方法一般不会被调用到。只有当service被系统主动回收了，才会调用该方法。
+3. context和ServiceConnection一起组成的IServiceConnection。所以不同的Context，哪怕ServiceConnection是一样的，最后也是不同的对象。
+4. onRebind的调用条件：service已经启动，AMS已经收到了service对应的Binder句柄对象，第一个绑定到service的应用进程，intent开启了doRebind
