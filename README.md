@@ -32,11 +32,10 @@
 ### Android进阶
 
 * **Android进阶之光**
-* **《Android开发艺术探索》**
+* **Android开发艺术探索**
 * **Android进阶解密**
 * **Android编程从程序员到架构师的高手之路-高焕堂Sundy**
 * [Android高级进阶技术180讲](https://www.cniao5.com/course/10285)
-* 深入理解安卓内核思想
 
 ### 优秀三方库（完成）
 
@@ -47,11 +46,13 @@
 * [国内Top团队大牛带你玩转Android性能分析与优化](https://coding.imooc.com/class/chapter/308.html#Anchor)
 * [极客时间之Android开发高手课 01-23]
 
-### Android源码系列
+### Android架构师必备系列
 
-* Android源码设计模式（待进行）
-
-* ### [剖析Framework面试 冲击Android高级职位](https://coding.imooc.com/class/340.html)（进行中）
+* Android源码设计模式
+* **[剖析Framework面试 冲击Android高级职位](https://coding.imooc.com/class/340.html)（进行中）**
+* 深入理解安卓内核思想
+* [带你破解Android高级面试](https://coding.imooc.com/class/chapter/317.html#Anchor)
+* [Gradle3.0自动化项目构建技术精讲+实战](https://coding.imooc.com/class/chapter/206.html#Anchor)
 
 ### 架构技能
 
