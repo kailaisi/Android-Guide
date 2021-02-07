@@ -363,7 +363,7 @@ private final void realStartServiceLocked(ServiceRecord r,ProcessRecord app, boo
 
 
 
-```
+```java
         public void connected(ComponentName name, IBinder service, boolean dead) {
         	//这里向主线程post了一个runnable函数
             if (mActivityExecutor != null) {
@@ -378,7 +378,7 @@ private final void realStartServiceLocked(ServiceRecord r,ProcessRecord app, boo
 
 
 
-```
+```java
 
     public int bindIsolatedService(IApplicationThread caller, IBinder token, Intent service,
             String resolvedType, IServiceConnection connection, int flags, String instanceName,
@@ -412,10 +412,6 @@ private final void realStartServiceLocked(ServiceRecord r,ProcessRecord app, boo
         }
     }
 ```
-
-
-
-
 
 
 
