@@ -179,8 +179,6 @@ int binder_write(struct binder_state *bs, void *data, size_t len)
 
 #### 等待并响应请求
 
-
-
 ### ServiceManager的Binder对象获取
 
 在Android中，每个进程获取系统提供的各种系统服务（AMS，PMS，WMS等）都是需要通过ServiceManager才可以。而这些系统服务进行Binder注册，也需要获取ServiceManager服务才可以。在刚才我们讲过，ServiceManager会将自己也注册成为一个Binder服务。

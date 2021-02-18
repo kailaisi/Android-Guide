@@ -81,7 +81,7 @@ ContentProvider相关原理
 
 #### acquireExistingProvider
 
-```
+```java
     public final IContentProvider acquireExistingProvider(Context c, String auth, int userId, boolean stable) {
         synchronized (mProviderMap) {
             final ProviderKey key = new ProviderKey(auth, userId);
@@ -120,7 +120,7 @@ ContentProvider相关原理
 * 如果ContentProviderRecord不存在就创建一个
 * 如果ContentProviderRecord能跑在调用者进程，就直接返回不再往下走
 * 如果provider所在的进程没有启动，就启动进程，然后等待发布，完成发布的时候返回
-* 如果binder对象还没有发布，就请求发布，然后等待，完成发布的时候返回
+* 如果binder对象还没有发布，就请求发布，然后等待，完成发布的时候返回。
 
 https://blog.csdn.net/carson_ho/article/details/76101093
 
