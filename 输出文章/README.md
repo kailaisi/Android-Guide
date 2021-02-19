@@ -11,6 +11,12 @@
   - startActivityForResult（完成）
 - 系统级别
   - Binder机制源码（待写）
+  - AMS启动流程解析（待整理）
+  - Service启动流程解析（待整理）
+  - Application启动流程（待整理）
+  - Provider源码解析（待整理）
+  - Android系统启动源码解析（待整理）
+  - 
 
 * 绘制相关系列
   * Android的inflate源码详解（完成）
@@ -21,6 +27,7 @@
 * JetPack
   * LiveData 源码解析（完成）
   * Lifecycle源码解析（完成）
+  * ViewModel源码解析（完成）
 * 常用控件解析
   * RecyclerView源码解析（完成）
   * GridLayout源码解析（待写）
