@@ -146,7 +146,7 @@ DisplayEventReceiver::DisplayEventReceiver(ISurfaceComposer::VsyncSource vsyncSo
 }
 ```
 
-DisplayEventReceiver**结构体是一个比较重要的类，其主要作用是建立与**SurfaceFlinger**的连接。我们这里将对其每一个调用的方法都来进行一个自习的分析
+DisplayEventReceiver结构体是一个比较重要的类，其**主要作用是建立与SurfaceFlinger的连接**。我们这里将对其每一个调用的方法都来进行一个自习的分析
 
 * 方法1：获取SurfaceFlinger服务
 
@@ -570,7 +570,7 @@ bool DisplayEventDispatcher::processPendingEvents(
 
 会通过**getEvents**方法获取到对应的事件类型，然后返回是否为Vsync信号。
 
-##### DisplayEventReceiver::getEvents
+###### DisplayEventReceiver::getEvents
 
 ```c++
 //	native\libs\gui\DisplayEventReceiver.cpp
@@ -614,7 +614,7 @@ ssize_t BitTube::read(void* vaddr, size_t size) {
 
 这里将接收到的数据放入到对应的缓冲区，并返回数据之后，会校验返回的具体的数据类型。
 
-
+##### requestNextVsync
 
 ```c++
 status_t DisplayEventReceiver::requestNextVsync() {
