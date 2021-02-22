@@ -120,7 +120,7 @@ public class ContextWrapper extends Context {
 
 ```
 
-先看第一步：ContextImpl的创建。
+##### 第一步：ContextImpl的创建。
 
 ```java
     static ContextImpl createAppContext(ActivityThread mainThread, LoadedApk packageInfo) {
@@ -139,7 +139,7 @@ public class ContextWrapper extends Context {
     }
 ```
 
-第二部：创建Application
+##### 第二步：创建Application
 
 ```java
     public Application newApplication(ClassLoader cl, String className, Context context)
@@ -160,7 +160,7 @@ public class ContextWrapper extends Context {
     }
 ```
 
-第三部：调用OnCteate方法
+##### 第三步：调用OnCteate方法
 
 ```java
     public void callApplicationOnCreate(Application app) {
@@ -217,7 +217,7 @@ public class ContextWrapper extends Context {
 
 这里精简了代码，有兴趣的可以看一下之前的关于Activity的启动的文章分析。
 
-第一步：   创建ContextImpl
+##### 第一步：   ContextImpl的创建
 
 ```java
     private ContextImpl createBaseContextForActivity(ActivityClientRecord r) {
@@ -256,7 +256,7 @@ public class ContextWrapper extends Context {
 
 这里通过ContextImpl的静态方法创建对应ContextImpl。跟之前的Application中的创建是很相似的。
 
-第二步：  进行绑定
+##### 第二步：  绑定
 
 ```java
 //\base\core\java\android\app\Activity.java 
@@ -274,9 +274,69 @@ public class ContextWrapper extends Context {
 
 这里我们又看到了**attachBaseContext()**方法，和我们的Application中的处理方式是一样的，都是给我mBase进行赋值。
 
+#### Service中的Context创建
+
+Service的启动流程和Activity是相似的，最后会通过AMS执行到**handleCreateService**方法。
+
+```java
+//frameworks\base\core\java\android\app\ActivityThread.java
+    @UnsupportedAppUsage
+    private void handleCreateService(CreateServiceData data) {
+        // If we are getting ready to gc after going to the background, well
+        // we are back active so skip it.
+        unscheduleGcIdler();
+
+        LoadedApk packageInfo = getPackageInfoNoCheck(
+                data.info.applicationInfo, data.compatInfo);
+        Service service = null;
+      
+            java.lang.ClassLoader cl = packageInfo.getClassLoader();
+			//1.  通过反射创建一个Service对象
+            service = packageInfo.getAppFactory()
+                    .instantiateService(cl, data.info.name, data.intent);
+        ...
+            if (localLOGV) Slog.v(TAG, "Creating service " + data.info.name);
+			//2.   创建一个ContextImpl对象
+            ContextImpl context = ContextImpl.createAppContext(this, packageInfo);
+            context.setOuterContext(service);
+			//这里如果Application没有创建的话，会进行创建，如果已经存在了，则不会再重复创建了。
+            Application app = packageInfo.makeApplication(false, mInstrumentation);
+			//3.  绑定
+            service.attach(context, this, data.info.name, data.token, app,
+                    ActivityManager.getService());
+            service.onCreate();
+            ...
+        }
+    }
+
+```
+
+这里的步骤和Activity是相似的。我们重点看一下绑定方法**attach()**
+
+```java
+//frameworks\base\core\java\android\app\Service.java
+	public final void attach(Context context,ActivityThread thread, String className, IBinder token,Application application, Object activityManager) {
+    	//调用attachBaseContext方法
+        attachBaseContext(context);
+        mThread = thread;           // NOTE:  unused - remove?
+        mClassName = className;
+        mToken = token;
+        mApplication = application;
+        mActivityManager = (IActivityManager)activityManager;
+        mStartCompatibility = getApplicationInfo().targetSdkVersion
+                < Build.VERSION_CODES.ECLAIR;
+    }
+```
+
+这里我们又看到了**attachBaseContext()**方法，和我们的Application中的处理方式是一样的，都是给我mBase进行赋值。
+
 #### 总结
 
 * 对于Context，是典型的装饰者模式。
+* Activity是有UI的，所以继承的是ContextThemeWrapper。
+* Activity中的this返回的是本身，而getBaseContext则是返回的ContextWrapper中的mBase对象。
+* getApplicationContext()方法是Context中的一个抽象方法，他的真正实现是在ContextImpl中，返回的是Applicaiton对象；getApplication()返回的是Applicaiton对象，但是该方法是Activity和Service中所特有的，只能在这两个类中才能调用
+* 应用组件的调用顺序：构造函数->attachBaseContext()->onCreate()
 * Android系统中，Context其实是一种身份的象征。在安卓系统中，程序无法像在Win系统中似的，随意的访问文件，然后进行修改等等。**任何程序的运行都需要经过系统的调用**。而想要调用系统的资源，都需要通过Context来进行，否则都属于“非法公民”。
 
 参考文章：

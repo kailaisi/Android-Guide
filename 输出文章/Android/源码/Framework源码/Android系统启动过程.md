@@ -93,7 +93,7 @@ init.rc 脚本文件配置了一些重要的服务，init 进程通过创建子�
 
 以上工作执行完，init 进程就会进入 loop 状态。
 
-### ### service_manager 进程
+###  service_manager 进程
 
 ServiceManager 是 Binder IPC 通信过程中的守护进程，本身也是一个 Binder 服务。ServiceManager 进程主要是启动 Binder，提供服务的查询和注册。
 
@@ -104,6 +104,8 @@ SurfaceFlinger 负责图像绘制，是应用 UI 的和兴，其功能是合成�
 MediaServer 进程主要是启动 AudioFlinger 音频服务，CameraService 相机服务。负责处理音频解析播放，相机相关的处理。
 
 ### Zygote 进程
+
+zygote有两个作用：启动systemService和孵化应用进程。
 
 Zygote 进程孵化了所有的 Android 应用进程，是 Android Framework 的基础，该进程的启动也标志着 Framework 框架初始化启动的开始。
 
@@ -143,26 +145,20 @@ Zygote 服务进程的主要功能：
 
 system_server 进程 由 Zygote 进程 fork 而来。
 
-```
+```java
 //首先会调用 ZygoteInit.startSystemServer() 方法
 ZygoteInit.startSystemServer()  
 //fork 子进程 system_server，进入 system_server 进程。
-
 ZygoteInit.handleSystemServerProcess()  
 //设置当前进程名为“system_server”，创建 PathClassLoader 类加载器。
-
 RuntimeInit.zygoteInit()    
 //重定向 log 输出，通用的初始化（设置默认异常捕捉方法，时区等），初始化 Zygote -> nativeZygoteInit()。
-
 nativeZygoteInit()  
 //方法经过层层调用，会进入 app_main.cpp 中的 onZygoteInit() 方法。
-
 app_main::onZygoteInit()// 启动新 Binder 线程。
-
 applicationInit()   
 
 //方法经过层层调用，会抛出异常 ZygoteInit.MethodAndArgsCaller(m, argv), ZygoteInit.main() 会捕捉该异常。
-
 ZygoteInit.main()  
 
 //开启 DDMS 功能，preload() 加载资源，预加载 OpenGL，调用 SystemServer.main() 方法。
@@ -176,7 +172,7 @@ SystemServer.run()
 
 system_server 进程启动后将初始化系统上下文（设置主题），创建系统服务管理 SystemServiceManager，然后启动各种系统服务
 
-```
+```java
 startBootstrapServices(); // 启动引导服务
 //该方法主要启动服务 ActivityManagerService，PowerManagerService，LightsService，DisplayManagerService，PackageManagerService，UserManagerService。
 //设置 ActivityManagerService，启动传感器服务。
@@ -209,7 +205,7 @@ ActivityManagerService 服务启动完成后，会进入 ActivityManagerService.
 
 启动桌面 Launcher App 需要等待 ActivityManagerService 启动完成。我们来看下 ActivityManagerService 启动过程。
 
-```
+```c++
 ActivityManagerService(Context) 
 //创建名为“ActivityManager”的前台线程，并获取mHandler。
 //通过 UiThread 类，创建名为“android.ui”的线程。
@@ -231,7 +227,12 @@ ActivityManagerService.systemReady()
 
 启动桌面 Launcher App，首先会通过 Zygote 进程 fork 一个新进程作为 App 进程，然后创建 Application，创建启动 Activity，最后用户才会看到桌面。
 
-### 完整的启动流程
+### 完整的启动流程图
 
 ![img](https://img-blog.csdn.net/20180211170703861?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvZnJlZWtpdGV5dQ==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
 
+源码解析项目地址：https://github.com/kailaisi/android-29-framwork
+
+> 同步公众号[开了肯]
+
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)

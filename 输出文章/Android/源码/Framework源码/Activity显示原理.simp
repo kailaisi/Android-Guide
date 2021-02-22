@@ -1,0 +1,318 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<sim-project version="9.05" multi-file="no">
+  <meta>
+    <name>Activity显示原理</name>
+    <authors> kailaisii</authors>
+    <description />
+  </meta>
+  <counters models="1">
+    <entity-names>
+      <counter>
+        <item-type stereotype="" type="DrawingItem" />
+        <value>12</value>
+      </counter>
+      <counter>
+        <item-type stereotype="" type="UmlPackage" />
+        <value>1</value>
+      </counter>
+      <counter>
+        <item-type stereotype="" type="TextItem" />
+        <value>11</value>
+      </counter>
+      <counter>
+        <item-type stereotype="" type="RoundedRectangleItem" />
+        <value>9</value>
+      </counter>
+    </entity-names>
+    <entity-ids>
+      <counter>
+        <item-type stereotype="" type="AbstractShapeItem" />
+        <value>14</value>
+      </counter>
+      <counter>
+        <item-type stereotype="" type="AbstractElementGroup" />
+        <value>159</value>
+      </counter>
+      <counter>
+        <item-type stereotype="" type="UmlPackage" />
+        <value>2</value>
+      </counter>
+      <counter>
+        <item-type stereotype="" type="AbstractTextItem" />
+        <value>12</value>
+      </counter>
+      <counter>
+        <item-type stereotype="" type="UmlAssociation" />
+        <value>4</value>
+      </counter>
+      <counter>
+        <item-type stereotype="" type="UmlComment" />
+        <value>4</value>
+      </counter>
+    </entity-ids>
+    <diagrams>
+      <counter>
+        <type>SoftwareIdeasModeler.Core.Diagrams.UmlDiagrams.UmlClassDiagram</type>
+        <value>1</value>
+      </counter>
+    </diagrams>
+    <fields />
+  </counters>
+  <alias-groups />
+  <management>
+    <persons>
+      <person id="P1b5608cf058845af8a5716aa857d780f">
+        <first-name />
+        <last-name />
+        <role />
+        <e-mail />
+        <phone-number />
+        <description />
+        <color>#00000000</color>
+      </person>
+    </persons>
+    <tasks />
+    <requirements />
+    <issues />
+    <to-dos />
+  </management>
+  <glossary />
+  <types>
+    <type-sets>
+      <type-set file="UmlTypes.xml" />
+    </type-sets>
+    <custom-types />
+  </types>
+  <filters />
+  <items />
+  <models>
+    <model id="p14775a60a7a94781923e3540f4703705_464498333" name="Model 1" namespace="" order-index="1">
+      <meta>
+        <authors>
+          <author> </author>
+        </authors>
+        <description />
+        <creation-date>02/02/2021 13:54:44</creation-date>
+        <change-date>01/01/0001 00:00:00</change-date>
+        <revision-count>0</revision-count>
+        <version />
+      </meta>
+      <abstract-items />
+      <sub-models />
+      <diagram type="uml-class" id="pb2324f95506b451ab2da8fc90d2a68a5_731205094" name="ClassDiagram1" order-index="1" show-id="false" show-name="true" show-parent-name="false" show-stereotypes="true" show-tagged-values="false" show-template-parameters="true" show-fields="true" show-empty-compartments="true" show-attributes="true" show-attribute-visibility="true" show-operations="true" show-operation-parameters="true" show-operation-visibility="true" show-nullability="true" show-sequence-number="false" show-extension-points="false" show-relationship-texts="true" show-description="false" show-field-description="false" auto-routed-paths="false" view-location="40,0">
+        <style>
+          <background-color index="1" color="#FFFFFFFF" />
+          <background-color index="2" color="#FFFFFFFF" />
+          <background-type type="solid" />
+        </style>
+        <meta>
+          <authors>
+            <author> </author>
+          </authors>
+          <description />
+          <creation-date>02/02/2021 13:54:44</creation-date>
+          <change-date>02/02/2021 14:07:59</change-date>
+          <revision-count>0</revision-count>
+          <version />
+        </meta>
+        <abstract-items>
+          <item id="di587872125471215188" cid="REL001" type="relationship" name="" style-class="" visibility="package" change-tracking-state="added" creator="P1b5608cf058845af8a5716aa857d780f" creation-date="02/02/2021 14:03:42">
+            <style class="default" />
+            <relation from="di154653201661658198" to="di576354476574297181">
+              <start-role id="" name="" navigability="" association-type="association" visibility="private" />
+              <end-role id="" name="" navigability="yes" association-type="association" visibility="private" />
+            </relation>
+          </item>
+          <item id="di309412227256817116" cid="REL002" type="relationship" name="" style-class="" visibility="package" change-tracking-state="added" creator="P1b5608cf058845af8a5716aa857d780f" creation-date="02/02/2021 14:04:01">
+            <style class="default" />
+            <relation from="di654474233820728145" to="di576354476574297181">
+              <start-role id="" name="" navigability="" association-type="association" visibility="private" />
+              <end-role id="" name="" navigability="yes" association-type="association" visibility="private" />
+            </relation>
+          </item>
+          <item id="di704322368497899084" cid="REL003" type="relationship" name="" style-class="" visibility="package" change-tracking-state="added" creator="P1b5608cf058845af8a5716aa857d780f" creation-date="02/02/2021 14:04:30">
+            <style class="default" />
+            <relation from="di654474233820728145" to="di977121461170857454">
+              <start-role id="" name="" navigability="" association-type="association" visibility="private" />
+              <end-role id="" name="" navigability="yes" association-type="association" visibility="private" />
+            </relation>
+          </item>
+          <item id="di304181355280958979" cid="CMT001" type="comment" name="" style-class="" visibility="package" change-tracking-state="added" creator="P1b5608cf058845af8a5716aa857d780f" creation-date="02/02/2021 14:04:52">
+            <style class="default" />
+            <comment>Activity之所以能显示出来是因为DecorView中包含一个ViewRootImpl对象，并且将绘制工作全权交给ViewRootImpl处理</comment>
+          </item>
+          <item id="di540173751308437660" cid="CMT002" type="comment" name="" style-class="" visibility="package" change-tracking-state="added" creator="P1b5608cf058845af8a5716aa857d780f" creation-date="02/02/2021 14:06:43">
+            <style class="default" />
+            <comment>ViewRootImpl会在WMS中创建一个窗口，而WMS统一管理窗口的大小，位置以及层级关系</comment>
+          </item>
+          <item id="di188787015199476814" cid="CMT003" type="comment" name="" style-class="" visibility="package" change-tracking-state="added" creator="P1b5608cf058845af8a5716aa857d780f" creation-date="02/02/2021 14:07:59">
+            <style class="default" />
+            <comment>ViewRootImpl在第一次绘制的时候，会向WMS申请一个surface,有了surface，应用端就可以进行绘制工作了，绘制完成之后，SurfaceFling就会按照WMS中提供的windows的位置和层级等来对这些surface进行合成，合成之后，就绘制到屏幕的帧缓冲区显示</comment>
+          </item>
+        </abstract-items>
+        <layer name="Default" visible="true" enabled="true" locked="false">
+          <item id="di624749277365108898" iid="62ba630aa9074e0291ca5250ea0b9d51" name="Element1" creation-date="02/02/2021 13:58:01" order-index="0" type="drawing-shape">
+            <layout ax="200" ay="280" awidth="240" aheight="420" x="200" y="280" width="240" height="420" angle="0" />
+            <drawing-shape type="Rectangle" />
+            <style class="default" />
+          </item>
+          <item id="di140180027668900048" iid="4f16cd4bdca74542a1a7e05dca22af6e" name="Element2" creation-date="02/02/2021 13:58:24" order-index="1" type="drawing-shape">
+            <layout ax="220" ay="320" awidth="192" aheight="365" x="220" y="320" width="192" height="365" angle="0" />
+            <drawing-shape type="Rectangle" />
+            <style class="default" />
+          </item>
+          <item id="di361057026111788375" iid="778a1d43ca424c9aa26aaad6996e52f4" name="Element3" creation-date="02/02/2021 13:58:30" order-index="2" type="drawing-shape">
+            <layout ax="240" ay="360" awidth="160" aheight="300" x="240" y="360" width="160" height="300" angle="0" />
+            <drawing-shape type="Rectangle" />
+            <style class="default" />
+          </item>
+          <item id="di398570950697948413" iid="657acd5554b1473f879ebf5bca03d524" name="Element4" creation-date="02/02/2021 13:58:45" order-index="3" type="drawing-text">
+            <layout ax="200" ay="280" awidth="85" aheight="40" x="200" y="280" width="85" height="40" angle="0" />
+            <drawing-text>
+              <text>Activity</text>
+            </drawing-text>
+            <style class="default" />
+          </item>
+          <item id="di650081625250740814" iid="990ad3eceb7e4d348e3be76ccce3270f" name="Element5" creation-date="02/02/2021 13:59:04" order-index="4" type="drawing-text">
+            <layout ax="210" ay="320" awidth="127" aheight="42" x="210" y="320" width="127" height="42" angle="0" />
+            <drawing-text>
+              <text>PhoneWindow</text>
+            </drawing-text>
+            <style class="default" />
+          </item>
+          <item id="di154653201661658198" iid="550b5c39b9824df7b8166ba4c65bbb50" name="Element6" creation-date="02/02/2021 13:59:19" order-index="5" type="drawing-text">
+            <layout ax="220" ay="360" awidth="129" aheight="34" x="220" y="360" width="129" height="34" angle="0" />
+            <drawing-text>
+              <text>DecorView</text>
+            </drawing-text>
+            <style class="default" />
+          </item>
+          <item id="di327608736402872197" iid="918a9288dd064b94805052516a5e509a" name="Element7" creation-date="02/02/2021 13:59:37" order-index="6" type="drawing-shape">
+            <layout ax="260" ay="400" awidth="120" aheight="240" x="260" y="400" width="120" height="240" angle="0" />
+            <drawing-shape type="Rectangle" />
+            <style class="default" />
+          </item>
+          <item id="di473979976599213944" iid="872a1039e9a346ce984e0b97158a7eab" name="Element8" creation-date="02/02/2021 13:59:47" order-index="7" type="drawing-text">
+            <layout ax="240" ay="400" awidth="140" aheight="40" x="240" y="400" width="140" height="40" angle="0" />
+            <drawing-text>
+              <text>ContentView</text>
+            </drawing-text>
+            <style class="default" />
+          </item>
+          <item id="di977121461170857454" iid="b2694e4796bc43ecaa18c49ce0f334d9" name="Element10" creation-date="02/02/2021 14:00:40" order-index="8" type="drawing-shape">
+            <layout ax="520" ay="360" awidth="140" aheight="260" x="520" y="360" width="140" height="260" angle="0" />
+            <drawing-shape type="Rectangle">
+              <text />
+            </drawing-shape>
+            <style style-name="Default" shadow-type="smooth" shadow-offset="1,1" shadow-visible="true" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+              <background type="forward-diagonal" color="#FFFFFFFF" color2="#FFFFFFFF" />
+              <border color="#FFFF8080" width="1" dash-style="Solid" />
+              <label-connector color="#80000000" width="1" dash-style="Dash" />
+              <alternate-styles>
+                <alternate-style style-name="Alternate" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+                  <background type="vertical-linear" color="#FF1E90FF" color2="#FF87CEFA" />
+                  <border color="#FF00008B" width="1" dash-style="Solid" />
+                  <label-connector color="#FF000000" width="1" dash-style="Solid" />
+                </alternate-style>
+              </alternate-styles>
+            </style>
+          </item>
+          <item id="di576354476574297181" iid="a09a24c4d3be4656a75f102b7f917c03" name="Element9" creation-date="02/02/2021 14:01:29" order-index="9" type="drawing-text">
+            <layout ax="500" ay="300" awidth="140" aheight="160" x="500" y="300" width="140" height="160" angle="0" />
+            <drawing-text>
+              <text>ViewRootImpl</text>
+            </drawing-text>
+            <style class="default" />
+          </item>
+          <item id="di654474233820728145" iid="bbd5c6698ba34f4ebd517a3cc98d0bba" name="Element11" creation-date="02/02/2021 14:02:14" order-index="10" type="drawing-text">
+            <layout ax="520" ay="440" awidth="140" aheight="40" x="520" y="440" width="140" height="40" angle="0" />
+            <drawing-text>
+              <text>IWindowSession</text>
+            </drawing-text>
+            <style style-name="Text" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;10;" text-horizontal-alignment="center" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+              <background type="solid" color="#FFFF0000" color2="#FFFF0000" />
+              <border color="#FF000000" width="0" dash-style="Solid" />
+              <label-connector color="#80000000" width="1" dash-style="Dash" />
+              <alternate-styles>
+                <alternate-style style-name="Alternate" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+                  <background type="vertical-linear" color="#FF1E90FF" color2="#FF87CEFA" />
+                  <border color="#FF00008B" width="1" dash-style="Solid" />
+                  <label-connector color="#FF000000" width="1" dash-style="Solid" />
+                </alternate-style>
+              </alternate-styles>
+            </style>
+          </item>
+          <item id="di840444156768775195" iid="5000969616634d8a9dc0831be52dd1cf" name="Element12" creation-date="02/02/2021 14:02:49" order-index="11" type="drawing-shape">
+            <layout ax="740" ay="360" awidth="147" aheight="253" x="740" y="360" width="147" height="253" angle="0" />
+            <drawing-shape type="Rectangle" />
+            <style class="default" />
+          </item>
+          <item id="di576354476574297181" iid="df9d2b6442294e23b4c590df2862427a" name="Element9" creation-date="02/02/2021 14:01:29" order-index="9" type="drawing-text">
+            <layout ax="690" ay="300" awidth="140" aheight="160" x="690" y="300" width="140" height="160" angle="0" />
+            <drawing-text>
+              <text>WMS</text>
+            </drawing-text>
+            <style class="default" />
+          </item>
+          <item id="di587872125471215188" iid="8802f88cfe104159be2b0f446b0dfe89" creation-date="02/02/2021 14:03:42" order-index="12" type="relation">
+            <layout start-role-position="25,15" end-role-position="25,-15" start-multiplicity-position="25,-15" end-multiplicity-position="25,15" line-style="oblique" lock-start-point="false" lock-end-point="true" lock-to-fields="false" auto-path="" x1="349" y1="378" x2="500" y2="380" start-border-pos="0.381638022030101" end-border-pos="0.875" name-position="10,-10">
+              <points>
+                <point x="349" y="378" />
+                <point x="494" y="380" />
+                <point x="500" y="380" />
+              </points>
+            </layout>
+            <relation from="di154653201661658198" from-iid="550b5c39b9824df7b8166ba4c65bbb50" to="di576354476574297181" to-iid="a09a24c4d3be4656a75f102b7f917c03" />
+          </item>
+          <item id="di309412227256817116" iid="225ff82f1627432fa2ae6044ec28c470" creation-date="02/02/2021 14:04:01" order-index="13" type="relation">
+            <layout start-role-position="25,15" end-role-position="25,-15" start-multiplicity-position="25,-15" end-multiplicity-position="25,15" line-style="oblique" lock-start-point="false" lock-end-point="true" lock-to-fields="false" auto-path="" x1="660" y1="460" x2="740" y2="460" start-border-pos="0.375" end-border-pos="0.660714285714286" name-position="10,-10">
+              <points>
+                <point x="660" y="460" />
+                <point x="740" y="460" />
+              </points>
+            </layout>
+            <relation from="di654474233820728145" from-iid="bbd5c6698ba34f4ebd517a3cc98d0bba" to="di576354476574297181" to-iid="df9d2b6442294e23b4c590df2862427a" />
+          </item>
+          <item id="di654474233820728145" iid="6866a2e677514da2bbf7943e165df051" name="Element11" creation-date="02/02/2021 14:02:14" order-index="10" type="drawing-text">
+            <layout ax="740" ay="520" awidth="140" aheight="40" x="740" y="520" width="140" height="40" angle="0" />
+            <drawing-text>
+              <text>IWindow</text>
+            </drawing-text>
+            <style style-name="Text" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;10;" text-horizontal-alignment="center" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+              <background type="solid" color="#FFFF0000" color2="#FFFF0000" />
+              <border color="#FF000000" width="0" dash-style="Solid" />
+              <label-connector color="#80000000" width="1" dash-style="Dash" />
+              <alternate-styles>
+                <alternate-style style-name="Alternate" shadow-type="smooth" shadow-offset="1,1" shadow-color="#32000000" gloss-effect="true" wrap-name-text="true" wrap-other-text="true" padding="1" margin="1" glow-color="#FFFFFFFF" accuracy="0.9" name-use-defaults="false" name-color="#FF000000" name-font="Verdana;10;B" name-horizontal-alignment="center" name-vertical-alignment="center" part-header-use-defaults="false" part-header-color="#FF1E1E1E" part-header-font="Verdana;9;I" part-header-horizontal-alignment="center" part-header-vertical-alignment="center" text-use-defaults="false" text-color="#FF000000" text-font="Verdana;9;" text-horizontal-alignment="left" text-vertical-alignment="center" tagged-value-use-defaults="false" tagged-value-color="#FF1E1E1E" tagged-value-font="Verdana;9;I" tagged-value-horizontal-alignment="center" tagged-value-vertical-alignment="center" stereotype-use-defaults="false" stereotype-color="#FF1E1E1E" stereotype-font="Verdana;9;I" stereotype-horizontal-alignment="center" stereotype-vertical-alignment="center">
+                  <background type="vertical-linear" color="#FF1E90FF" color2="#FF87CEFA" />
+                  <border color="#FF00008B" width="1" dash-style="Solid" />
+                  <label-connector color="#FF000000" width="1" dash-style="Solid" />
+                </alternate-style>
+              </alternate-styles>
+            </style>
+          </item>
+          <item id="di704322368497899084" iid="8fe38b795cd94604b415d6c5a861a04e" creation-date="02/02/2021 14:04:30" order-index="14" type="relation">
+            <layout start-role-position="25,15" end-role-position="25,-15" start-multiplicity-position="25,-15" end-multiplicity-position="25,15" line-style="oblique" lock-start-point="true" lock-end-point="true" lock-to-fields="false" auto-path="" x1="740" y1="541" x2="660" y2="540" start-border-pos="0.86875" end-border-pos="0.423076923076923" name-position="10,-10">
+              <points>
+                <point x="740" y="541" />
+                <point x="660" y="540" />
+              </points>
+            </layout>
+            <relation from="di654474233820728145" from-iid="6866a2e677514da2bbf7943e165df051" to="di977121461170857454" to-iid="b2694e4796bc43ecaa18c49ce0f334d9" />
+          </item>
+          <item id="di304181355280958979" iid="09851721fc3e411cb2d4bc0203912eea" creation-date="02/02/2021 14:04:52" order-index="15" type="entity">
+            <layout ax="220" ay="760" awidth="140" aheight="100" x="220" y="760" width="140" height="100" angle="0" />
+          </item>
+          <item id="di540173751308437660" iid="51a1983a98464070a1ddbca7b185a35a" creation-date="02/02/2021 14:06:43" order-index="16" type="entity">
+            <layout ax="440" ay="760" awidth="140" aheight="100" x="440" y="760" width="140" height="100" angle="0" />
+          </item>
+          <item id="di188787015199476814" iid="6562aae9ce9c44e1861228dc7eda4d87" creation-date="02/02/2021 14:07:59" order-index="17" type="entity">
+            <layout ax="660" ay="760" awidth="306" aheight="100" x="660" y="760" width="306" height="100" angle="0" />
+          </item>
+        </layer>
+      </diagram>
+    </model>
+  </models>
+  <documents />
+  <document-templates />
+</sim-project>

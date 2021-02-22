@@ -3,49 +3,8 @@
 
 ### 计算机基础
 
-**编程必备基础知识：计算机组成原理 操作系统 计算机网络**（进行中）
+* [计算机基础](计算机基础.md)
 
-**[计算机科学速成课Android基础(强烈推荐)](https://www.bilibili.com/video/BV1EW411u7th?p=36&t=154)**（已完成）
-
-极客时间2019年最新Web协议详解与抓包实战完整版
-
-HTTP权威指南。三方笔记https://github.com/woai30231/http
-
-极客时间-透视HTTP协议。[笔记](输出文章/计算机基础/透视HTTP协议.md)
-
-HTTP2详解
-
-TCPIP协议详解卷一：协议（进行中）
-
-TCPIP协议详解卷二：实现
-
-TCPIP协议详解卷三：
-
-Web性能权威指南
-
-
-
-* 第一行代码
-
-### Android进阶
-
-* **Android进阶之光**
-* **《Android开发艺术探索》**
-* **Android进阶解密**
-* **Android编程从程序员到架构师的高手之路-高焕堂Sundy**
-
-### 优秀三方库源码解析（进行中）
-
-* [优秀三方库](优秀三方库.md)
-
-### 性能优化方向（进行中）
-
-* [国内Top团队大牛带你玩转Android性能分析与优化](https://coding.imooc.com/class/chapter/308.html#Anchor)
-* [极客时间之Android开发高手课 01-23]
-
-### Android源码系列
-
-* Android源码设计模式（待进行）
 
 ### Java
 
@@ -65,14 +24,35 @@ Web性能权威指南
 ### 数据结构
 
 * 邓俊辉《数据结构》上、下
-
 * Java数据结构（进行中）[学习笔记](https://github.com/kailaisi/data-structure/tree/master/src/datalearning)
-
 * [力扣题解(进行中)](https://github.com/kailaisi/data-structure)
-
 * 《漫画算法：小灰的算法之旅》（完成）
-
 * 《数据结构与算法分析》
+
+### Android进阶
+
+* **Android进阶之光**
+* **Android开发艺术探索**
+* **Android进阶解密**
+* **Android编程从程序员到架构师的高手之路-高焕堂Sundy**
+* [Android高级进阶技术180讲](https://www.cniao5.com/course/10285)
+
+### 优秀三方库（完成）
+
+* [优秀三方库](优秀三方库.md)
+
+### 性能优化方向（进行中）
+
+* [国内Top团队大牛带你玩转Android性能分析与优化](https://coding.imooc.com/class/chapter/308.html#Anchor)
+* [极客时间之Android开发高手课 01-23]
+
+### Android架构师必备系列
+
+* Android源码设计模式
+* **[剖析Framework面试 冲击Android高级职位](https://coding.imooc.com/class/340.html)（进行中）**
+* 深入理解安卓内核思想
+* [带你破解Android高级面试](https://coding.imooc.com/class/chapter/317.html#Anchor)
+* [Gradle3.0自动化项目构建技术精讲+实战](https://coding.imooc.com/class/chapter/206.html#Anchor)
 
 ### 架构技能
 
@@ -81,7 +61,7 @@ Web性能权威指南
 * 《设计模式之禅》
 * 《Android源码设计模式》
 * 《移动架构》
-* 慕课网之 实战企业级项目 践行App重构之路（进行中）
+* 慕课网之 实战企业级项目 践行App重构之路（完成）
 
 ### [JNI、音视频、图像](NDK音视频图像.md)
 
@@ -95,13 +75,13 @@ Web性能权威指南
 
 ### 组件化、插件化
 
-优秀项目：https://github.com/winlee28/Jetpack-WanAndroid.git
+* 优秀项目：https://github.com/winlee28/Jetpack-WanAndroid.git
 
-组件化专项问题：https://www.jianshu.com/p/d0f5cf304fa4
+* 组件化专项问题：https://www.jianshu.com/p/d0f5cf304fa4
 
-组件化项目研究：https://github.com/1170762202/WanAndroid.git
+* 组件化项目研究：https://github.com/1170762202/WanAndroid.git
 
-仍物线五期组件化详解。
+* 仍物线五期组件化详解。
 
 ### 软技能(进行中)
 

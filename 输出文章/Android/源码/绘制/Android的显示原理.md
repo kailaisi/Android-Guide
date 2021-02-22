@@ -561,19 +561,16 @@ public void setView(View view, WindowManager.LayoutParams attrs, View panelParen
 
 到此为止页面的加载以及绘制，显示工作完成。
 
-
-
-
-
 ### 汇总
 
 1. 对于将xml转化为View所调用 **LayoutInflater.inflater()** 的方法，是在onCreate中调用的。而将View进行测量、布局、绘制所调用的 **requestLayout()** 方法则是在 **performResume()** 中调用的。这就是为什么我们在onCreate方法中获取控件的宽高无法获取的原因。
+2. Activity的整个绘制流程关系如下：
 
+![image-20210202141402978](http://cdn.qiniu.kailaisii.com/typora/20210202141404-806679.png)
 
+3. 对应的类图关系如下：
 
 ![img](http://cdn.qiniu.kailaisii.com/typora/202004/16/082628-812784.png)
-
-
 
 图片来源[https://www.cnblogs.com/tiger-wang-ms/p/6517048.html]
 

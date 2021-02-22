@@ -11,6 +11,7 @@
 * C++ Primer 第五版
 * [ndk-samples](https://github.com/android/ndk-samples)
   * [OpenSL ES](https://github.com/android/ndk-samples/blob/master/native-audio/)
+* 音视频技术合集：https://juejin.cn/post/6926930540608094222
 
 #### 热修复
 
