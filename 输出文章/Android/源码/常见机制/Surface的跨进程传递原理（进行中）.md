@@ -47,7 +47,7 @@ public class Surface implements Parcelable {
 
 Java层的Surface的跨进程传输基本没有任何buffer的影子，很多都是在Native来进行处理的。
 
-#### Activity的Surface传递
+### Activity的Surface传递
 
 在[View的绘制]()一文中，我们讲过，对于View的绘制工作，是在performTraversals()方法中进行绘制工作的。那么这里的Surface是如何传递到Activity层的呢？
 
@@ -56,7 +56,7 @@ Java层的Surface的跨进程传输基本没有任何buffer的影子，很多都
 
 
 ```java
-//ViewRootImpl.java
+//framework\base\core\java\android\view\ViewRootImpl.java
     private void performTraversals() {
 		//这里如果窗口个各种信息发生了变化，就需要进行测量工作
         if (mFirst || windowShouldResize || insetsChanged ||viewVisibilityChanged || params != null || mForceNextWindowRelayout) {
@@ -92,7 +92,7 @@ Java层的Surface的跨进程传输基本没有任何buffer的影子，很多都
 这里我们看一下mWindowSession对象，它是在ViewRootImpl的构造函数中进行初始化的
 
 ```java
-//ViewRootImpl.java
+//framework\base\core\java\android\view\ViewRootImpl.java
 	public ViewRootImpl(){
         mWindowSession = WindowManagerGlobal.getWindowSession();
 	}
@@ -101,7 +101,7 @@ Java层的Surface的跨进程传输基本没有任何buffer的影子，很多都
 继续跟踪
 
 ```java
- //WindowManagerGlobal.java
+ //framework\base\core\java\android\view\WindowManagerGlobal.java
     public static IWindowSession getWindowSession() {
         synchronized (WindowManagerGlobal.class) {
             if (sWindowSession == null) {
@@ -146,7 +146,7 @@ class Session extends IWindowSession.Stub implements IBinder.DeathRecipient {
 ### relayout()
 
 ```java
- //Session.java
+ //framework\base\services\core\java\com\android\server\wm\Session.java
 		public int relayout(IWindow window,...,SurfaceControl outSurfaceControl, InsetsState outInsetsState) {
         //调用了mService的relayoutWindow方法。这里的mService是WMS对象，是在构造函数中进行的赋值
         int res = mService.relayoutWindow(this, window, ..., outSurfaceControl, outInsetsState);
@@ -157,7 +157,8 @@ class Session extends IWindowSession.Stub implements IBinder.DeathRecipient {
 调用了WMS的relayoutWindow方法。
 
 ```java
-  public int relayoutWindow(Session session, IWindow client, int seq, LayoutParams attrs,
+ //framework\base\services\core\java\com\android\server\wm\WindowManagerService.java
+	public int relayoutWindow(Session session, IWindow client, int seq, LayoutParams attrs,
             int requestedWidth, int requestedHeight, int viewVisibility, int flags,
             long frameNumber, Rect outFrame, Rect outOverscanInsets, Rect outContentInsets,
             Rect outVisibleInsets, Rect outStableInsets, Rect outOutsets, Rect outBackdropFrame,
@@ -186,7 +187,8 @@ class Session extends IWindowSession.Stub implements IBinder.DeathRecipient {
 createSurfaceLocked方法会创建一个WindowSurfaceController对象。
 
 ```java
-   WindowSurfaceController createSurfaceLocked(int windowType, int ownerUid) {
+   
+	WindowSurfaceController createSurfaceLocked(int windowType, int ownerUid) {
         final WindowState w = mWin;
         if (mSurfaceController != null) {
             //如果已经存在了，则直接返回
@@ -229,8 +231,7 @@ createSurfaceLocked方法会创建一个WindowSurfaceController对象。
 ```java
 //SurfaceControl.java
         public SurfaceControl build() {
-            return new SurfaceControl(
-                    mSession, mName, mWidth, mHeight, mFormat, mFlags, mParent, mMetadata);
+            return new SurfaceControl(mSession, mName, mWidth, mHeight, mFormat, mFlags, mParent, mMetadata);
         }
         
    private SurfaceControl(SurfaceSession session, String name, SurfaceControl parent...){
@@ -283,7 +284,52 @@ sp<SurfaceComposerClient> android_view_SurfaceSession_getClient(JNIEnv* env, job
 }
 ```
 
-这里的surfaceSessionObj是Java层的SurfaceSession对象，这个对象又是何时创建的呢？
+这里的surfaceSessionObj是Java层的SurfaceSession对象，我们看一下这个SurfaceSession对象的创建。
+
+##### SurfaceSession创建
+
+在[View的绘制流程]()一文中，我们讲过，页面的东西，会通过**setView()**方法来显示出来。而SurfaceSession其实就是在这个方法里面去创建的
+
+```java
+    public void setView(View view, WindowManager.LayoutParams attrs, View panelParentView) {
+        synchronized (this) {
+            if (mView == null) {
+                //初始化一些信息
+                ...
+                //mWindowSession是Session的IBinder代理，通过IPC机制调用Session的addToDisplay方法
+                //addToDisplay方法内部通过IPC机制调用WMS的addWindow方法
+                //通过IPC机制，将AMS中的addWindow方法来在系统进程中执行相关加载Window的操作。
+                res = mWindowSession.addToDisplay(mWindow, mSeq,...,mTempInsets);
+                setFrame(mTmpFrame);
+```
+
+这里会调用Session内的addToDisplay方法。
+
+```java
+//Session.java
+	public int addToDisplay(IWindow window, int seq, WindowManager.LayoutParams attrs,
+            int viewVisibility, int displayId, Rect outFrame, Rect outContentInsets,
+            Rect outStableInsets, Rect outOutsets,
+            DisplayCutout.ParcelableWrapper outDisplayCutout, InputChannel outInputChannel,
+            InsetsState outInsetsState) {
+        //mService是WMS
+        return mService.addWindow(this, window, seq, attrs, viewVisibility, displayId, outFrame,
+                outContentInsets, outStableInsets, outOutsets, outDisplayCutout, outInputChannel,
+                outInsetsState);
+    }
+	
+//WMS.java
+    public int addWindow(Session session, IWindow client, ...) {
+            //将Session对象封装到一个WindowState对象中
+            final WindowState win = new WindowState(this, session, client, token, parentWindow,
+                    appOp[0], seq, attrs, viewVisibility, session.mUid,
+                    session.mCanAddInternalSystemWindow);
+            //重点方法  
+            win.attach();
+        }
+
+
+```
 
 
 
@@ -307,8 +353,8 @@ sp<SurfaceComposerClient> android_view_SurfaceSession_getClient(JNIEnv* env, job
 * SurfaceSession用来创建SurfaceComposerClient，并利用binder和SurfaceFlinger建立连接
 * SurfaceFling是一个独立的进程，靠Client来管理每个app的Surface。
 * 一个app只有一个Client，一个Client可以通过Binder管理多个Layer，Layer在创建时会构造一个IGraphicBufferProducer对象。
-
 * GraphicBufferProducer对象是用来申请Buffer进行绘制的
+* SurfaceSession实际上的具体实现类是WindowSurfaceSession，会被保存到WidowState类中。
 
 
 
@@ -318,3 +364,4 @@ sp<SurfaceComposerClient> android_view_SurfaceSession_getClient(JNIEnv* env, job
 
 https://blog.csdn.net/a501216475/article/details/77187119
 
+https://www.jianshu.com/p/64e5c866b4ae
