@@ -48,7 +48,7 @@
 
 ### Android架构师必备系列
 
-* Android源码设计模式
+* Android源码设计模式(进行中)
 * **[剖析Framework面试 冲击Android高级职位](https://coding.imooc.com/class/340.html)（进行中）**
 * 深入理解安卓内核思想
 * [带你破解Android高级面试](https://coding.imooc.com/class/chapter/317.html#Anchor)
