@@ -14,7 +14,7 @@ VSync来源自底层硬件驱动程序的上报，对于Android能看到的接�
 
 ![](http://cdn.qiniu.kailaisii.com/typora/20200913090942-343699.png)
 
-在我们之前的代码中，对于15-17这部分并没有进行任何的详解，那么底层是如何产生Vsync的信号，然后又是如何通知到我们的应用进行屏幕刷新呢？这不分就是我们这篇文章的关注点。
+在我们之前的代码中，对于15-17这部分并没有进行任何的详解，那么底层是如何产生Vsync的信号，然后又是如何通知到我们的应用进行屏幕刷新呢？这部分就是我们这篇文章的关注点。
 
 ### 入口
 
@@ -56,15 +56,10 @@ VSync来源自底层硬件驱动程序的上报，对于Android能看到的接�
 
 ```java
     public DisplayEventReceiver(Looper looper, int vsyncSource) {
-        if (looper == null) {
-            throw new IllegalArgumentException("looper must not be null");
-        }
-
         mMessageQueue = looper.getQueue();
 		//调用底层初始化，并将本身以及对应的mMessageQueue传入进去
         //对应frameworks\base\core\jni\android_view_DisplayEventReceiver.cpp
         mReceiverPtr = nativeInit(new WeakReference<DisplayEventReceiver>(this), mMessageQueue,vsyncSource);
-
         mCloseGuard.open("dispose");
     }
 ```
@@ -110,14 +105,12 @@ NativeDisplayEventReceiver::NativeDisplayEventReceiver(JNIEnv* env,
                 static_cast<ISurfaceComposer::VsyncSource>(vsyncSource)),
         mReceiverWeakGlobal(env->NewGlobalRef(receiverWeak)),
         mMessageQueue(messageQueue) {
-    ALOGV("receiver %p ~ Initializing display event receiver.", this);
 }
 
 //DisplayEventDispatcher构造函数
 DisplayEventDispatcher::DisplayEventDispatcher(const sp<Looper>& looper,ISurfaceComposer::VsyncSource vsyncSource) :
         //Vsync的来源传递给了mReceiver。这里相当于调用了mReceiver(DisplayEventReceiver)的构造函数
         mLooper(looper), mReceiver(vsyncSource), mWaitingForVsync(false) {
-    ALOGV("dispatcher %p ~ Initializing display event dispatcher.", this);
 }
 
 
@@ -146,7 +139,7 @@ DisplayEventReceiver::DisplayEventReceiver(ISurfaceComposer::VsyncSource vsyncSo
 }
 ```
 
-DisplayEventReceiver结构体是一个比较重要的类，其**主要作用是建立与SurfaceFlinger的连接**。我们这里将对其每一个调用的方法都来进行一个自习的分析
+DisplayEventReceiver结构体是一个比较重要的类，其**主要作用是建立与SurfaceFlinger的连接**。我们这里将对其每一个调用的方法都来进行一个仔细的分析
 
 * 方法1：获取SurfaceFlinger服务
 
