@@ -1,6 +1,6 @@
 ## ServiceManager的启动和工作原理
 
-### 启动
+### ServiceManager启动
 
 所有的系统服务都是需要在ServiceManager中进行注册的，而ServiceManager作为一个起始的服务，是通过init.rc来启动的。
 
@@ -173,13 +173,7 @@ int binder_write(struct binder_state *bs, void *data, size_t len)
 
 ```
 
-#### 启动Binder机制
-
-#### 发布自己的服务
-
-#### 等待并响应请求
-
-### ServiceManager的Binder对象获取
+### 系统服务注册
 
 在Android中，每个进程获取系统提供的各种系统服务（AMS，PMS，WMS等）都是需要通过ServiceManager才可以。而这些系统服务进行Binder注册，也需要获取ServiceManager服务才可以。在刚才我们讲过，ServiceManager会将自己也注册成为一个Binder服务。
 
@@ -203,9 +197,16 @@ int main(int, char**) {
 
 ```
 
-这里使用的是**defaultServiceManager()**来获取了ServiceManager服务的Binder对象。
+系统服务的注册过程主要有2点
 
-#### defaultServiceManager
+* 获取ServiceManager所对应的Binder对象。
+* 通过addService注册为系统服务。
+
+#### ServiceManager的Binder对象获取
+
+**defaultServiceManager()**方法就是用来获取ServiceManager服务的Binder对象。
+
+##### defaultServiceManager
 
 ```c++
 //frameworks\native\libs\binder\IServiceManager.cpp
@@ -247,10 +248,9 @@ sp<IServiceManager> defaultServiceManager()
 这里会直接调用**ProcessState::self()->getContextObject(nullptr)**来获取对应的服务。
 
 * ProcessState::self()->getContextObject(NULL): 返回的是一个 BpHwBinder。ServiceManager 的 desc 默认为0。
-* interface_cast 就是将 BpBinder 封装为 IServiceManager，
-* 创建ServiceManagerShim对象，将IServiceManager进行了一层包装
+* interface_cast 就是将 BpBinder 封装为 IServiceManager
 
-##### ProcessState::self()
+###### ProcessState::self()
 
 ```c++
 //system\libhwbinder\ProcessState.cpp
@@ -269,7 +269,7 @@ sp<ProcessState> ProcessState::self()
 
 这里会返回一个ProcessState对象。
 
-##### getContextObject
+###### getContextObject
 
 ```c++
 //system\libhwbinder\ProcessState.cpp
@@ -278,7 +278,6 @@ sp<IBinder> ProcessState::getContextObject(const sp<IBinder>& /*caller*/)
     //传入的参数是handle。0，
     return getStrongProxyForHandle(0);
 }
-
 
 sp<IBinder> ProcessState::getStrongProxyForHandle(int32_t handle)
 {
@@ -318,7 +317,7 @@ Proxy 端的用户无法直接看到 BpBinder, BpBinder 由 BpXXX 持有.用户�
 gDefaultServiceManager = interface_cast<IServiceManager>(new BpBinder(0));
 ```
 
-##### interface_cast
+###### interface_cast
 
 ```c++
 //frameworks\native\include\binder\IInterface.h
@@ -381,9 +380,9 @@ android::sp<IServiceManager> IIServiceManager::asInterface(const android::sp<and
 
 ![image-20210131171812882](http://cdn.qiniu.kailaisii.com/typora/20210131171815-726894.png)
 
-### 添加Service
+#### 添加Service
 
-#### 客户端请求
+##### 客户端请求
 
 当获取到ServiceManager服务之后，就可以使用addService方法来进行服务的注册了。在获取服务的时候，最终返回的是BpServiceManager对象，所以这里我们可以直接找到对应的添加服务方法
 
@@ -407,7 +406,6 @@ BpServiceManager的构造函数传入的了BpBinder对象，这里的remote()方
 status_t BpBinder::transact(
     uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags)
 {
-    // Once a binder has died, it will never come back to life.
     //如果binder已经died，则不会返回数据
     if (mAlive) {
         ...
@@ -427,7 +425,9 @@ status_t BpBinder::transact(
 * code：参数是ADD_SERVICE_TRANSACTION。
 * data：包含了要添加的进程相关信息：包括名称、是否单独运行等等相关信息
 
-#### ServiceManager请求处理
+##### ServiceManager处理请求
+
+当客户端发送请求之后，我们的ServiceManger就可以接收到消息，并且进行消息的处理了。在**ServiceManager的启动**中我们了解到，当ServiceManger启动之后，会调用binder_looper来不断的循环，检测是否接收到对应的数据信息。
 
 这个功能是在**binder_loop()**方法的入参中的**svcmgr_handler**来实现的。
 
@@ -518,7 +518,11 @@ int do_add_service(struct binder_state *bs, const uint16_t *s, size_t len, uint3
 
 ![image-20210131171938211](http://cdn.qiniu.kailaisii.com/typora/20210131171938-754270.png)
 
-### 获取Service服务
+我们也可以从另一个维度去看看Binder的具体
+
+
+
+### 系统服务获取
 
 对于Servie服务的获取，其实也是答题思路也是相同的。显示获取ServiceManager的Binder对象，然后服务端发送获取某项服务的请求，ServiceManager来进行处理。
 
@@ -686,6 +690,8 @@ void binder_send_reply(struct binder_state *bs,
 ### 总结
 
 ServiceManager是一个守护进程，负责管理系统中的所有服务信息。通过一个链表来保存了所有注册过的信息。而且其本身也是一个服务，在通过Binder驱动将其注册为守护进程之后，会将自己也注册为一个服务，供其他服务调用。
+
+![image-20210302135139774](/Users/jj/Library/Application Support/typora-user-images/image-20210302135139774.png)
 
 ### 参考文献
 
