@@ -6,6 +6,8 @@ Surface的跨进程传递原理
 2. 如果是，那么我们现在的屏幕分辨率那么大，针率那么高，buffer数据肯定特别大，那么跨进程传递是怎么带上这个buffer的？
 3. 如果不是，那么Surface和buffer又有什么关系呢？那surface又是如何快进程传递的呢？
 
+
+
 首先我们看一下Surface类：
 
 ```java
@@ -180,7 +182,7 @@ class Session extends IWindowSession.Stub implements IBinder.DeathRecipient {
     }
 ```
 
-##### createSurfaceLocked
+#### createSurfaceLocked
 
 createSurfaceLocked方法会创建一个WindowSurfaceController对象。
 
@@ -250,7 +252,7 @@ static jlong nativeCreate(JNIEnv* env, jclass clazz, jobject sessionObj,..., jlo
     ScopedUtfChars name(env, nameStr);
     sp<SurfaceComposerClient> client;
     if (sessionObj != NULL) {
-        //该方法的功能是，获取sessionObj中的SurfaceComposerClient对象中的mNativeClient
+        //重点方法1  该方法的功能是，获取sessionObj中的SurfaceComposerClient对象中的mNativeClient
         client = android_view_SurfaceSession_getClient(env, sessionObj);
     } else {
         client = SurfaceComposerClient::getDefault();
@@ -259,7 +261,7 @@ static jlong nativeCreate(JNIEnv* env, jclass clazz, jobject sessionObj,..., jlo
     sp<SurfaceControl> surface;
     LayerMetadata metadata;
     Parcel* parcel = parcelForJavaObject(env, metadataParcel);
-    //创建了一个nativce层的SurfaceControl对象
+    //重点方法2 创建了一个nativce层的SurfaceControl对象
     status_t err = client->createSurfaceChecked(String8(name.c_str()),..., &surface, flags, parent, std::move(metadata));
     surface->incStrong((void *)nativeCreate);
     return reinterpret_cast<jlong>(surface.get());
@@ -271,7 +273,7 @@ static jlong nativeCreate(JNIEnv* env, jclass clazz, jobject sessionObj,..., jlo
 * sp<SurfaceComposerClient>对象的获取
 *  sp<SurfaceControl>对象的获取。
 
-##### sp<SurfaceComposerClient>对象的获取
+#### SurfaceComposerClient对象的获取
 
 对于sp<SurfaceComposerClient>对象的获取，我们
 
@@ -326,10 +328,138 @@ sp<SurfaceComposerClient> android_view_SurfaceSession_getClient(JNIEnv* env, job
             win.attach();
         }
 
+//WindowState.java
+    void attach() {
+        if (localLOGV) Slog.v(TAG, "Attaching " + this + " token=" + mToken);
+        //mSession这里的mSessioin对象是ViewRootImpl里的mWindowSession。
+        mSession.windowAddedLocked(mAttrs.packageName);
+    }
+
+//Session.java
+    void windowAddedLocked(String packageName) {
+        //这里保证只有一个SurfaceSession对象。
+        if (mSurfaceSession == null) {
+            //创建SurfaceSession对象。
+            mSurfaceSession = new SurfaceSession();
+            //mService是WMS。而mSession则是WMS和APP之间创建的一个会话层。WMS会将所有的会话Session都添加到mSessions中去做统一的管理
+            mService.mSessions.add(this);
+        }
+        mNumWindow++;
+    }
+```
+
+当我们在Activity中使用setView的时候，是会创建对应的SurfaceSession的。
+
+```java
+    public SurfaceSession() {
+        //创建一个SurfaceComposerClient对象，并将其JNI对象的地址保存到mNativeClient中
+        mNativeClient = nativeCreate();
+    }
 
 ```
 
+SurfaceSession的构造函数比较简单，只是调用了Native层的**nativeCreate**方法。
 
+```c++
+
+    static jlong nativeCreate(JNIEnv* env, jclass clazz) {
+        //直接生成一个SurfaceComposerClient对象。将其地址返回到Java层。
+        //在创建SurfaceComposerClient的时候，会创建和SurfaceFling的连接
+        SurfaceComposerClient* client = new SurfaceComposerClient();
+        client->incStrong((void*)nativeCreate);
+        return reinterpret_cast<jlong>(client);
+    }
+
+//SurfaceComposerClient.cpp
+SurfaceComposerClient::SurfaceComposerClient(): mStatus(NO_INIT){
+}
+//在第一次创建的时候会调用该方法
+void SurfaceComposerClient::onFirstRef() {
+    //重点方法1   ComposerService::getComposerService()会获取SurfaceFlinger服务
+    sp<ISurfaceComposer> sf(ComposerService::getComposerService());
+    if (sf != nullptr && mStatus == NO_INIT) {
+        sp<ISurfaceComposerClient> conn;
+        //重点方法 ：创建和SurfaceFlinger服务的连接。也就是会创建一个SurfaceFlinger的client端
+        conn = sf->createConnection();
+        if (conn != nullptr) {
+            mClient = conn;
+            mStatus = NO_ERROR;
+        }
+    }
+}
+```
+
+在创建SurfaceComposerClient对象的时候，会创建和SurfaceFlinger的连接，其中有两个重点方法。**一个是获取SurfaceFling服务，一个是创建连接并返回连接的Client端**。
+
+##### ComposerService::getComposerService()
+
+```c++
+//SurfaceComposerClient.cpp
+/*static*/ sp<ISurfaceComposer> ComposerService::getComposerService() {
+    ComposerService& instance = ComposerService::getInstance();
+    Mutex::Autolock _l(instance.mLock);//加锁
+    if (instance.mComposerService == nullptr) {
+		//重点方法   获取SurfaceFling服务，并保存在ComposerService中
+        ComposerService::getInstance().createConnection();
+        assert(instance.mComposerService != nullptr);
+        ALOGD("ComposerService reconnected");
+    }
+    return instance.mComposerService;
+}
+```
+
+会调用ComposerService.getInstance单例方法，创建ComposerService
+
+###### ComposerService.getInstance
+
+```c++
+//SurfaceComposerClient.cpp
+ComposerService::ComposerService(): Singleton<ComposerService>() {
+    Mutex::Autolock _l(mLock);
+    //调用connectLocked方法
+    connectLocked();
+}
+
+void ComposerService::connectLocked() {
+	//通过getService方法获取SurfaceFlinger服务，并将获取到的服务保存到mComposerService变量中
+    //这样就将SuraceComposerClient和SurfaceFling进行了一个绑定
+    while (getService(name, &mComposerService) != NO_ERROR) {
+        usleep(250000);
+    }
+    ...
+    //将mComposerService转为一个Binder对象。
+    IInterface::asBinder(mComposerService)->linkToDeath(mDeathObserver);
+}
+```
+
+这里通过**connectLocked()**获取了SurfaceFlinger的服务所对应的Binder对象，并且将其返回。
+
+###### createConnection
+
+由于ComposerService.getInstance返回的是SurfaceFlinger对象，这个createConnection的实现是在SurfaceFlinger中的。
+
+```c++
+//SurfaceFlinger.cpp
+sp<ISurfaceComposerClient> SurfaceFlinger::createConnection() {
+    return initClient(new Client(this));
+}
+
+static sp<ISurfaceComposerClient> initClient(const sp<Client>& client) {
+    status_t err = client->initCheck();
+    if (err == NO_ERROR) {
+        return client;
+    }
+    return nullptr;
+}
+```
+
+这里创建了一个client对象，这个client就是专门用来和SurfaceFlinger进行交互的。因为android系统可能存在多个App来请求SurfaceFlinger的业务，而且一个App可能存在多个Surface，所以这里构建了一个Client类来负责与SurfaceFlinger的交互过程，并完成自身Surface对象的管理。 
+
+
+
+
+
+在创建
 
 * 在native层中创建SurfaceSession，在其中创建了SurfaceComposerClient对象。在SurfaceComposerClient的构造函数中他连接了native层中的SurfaceFlinger。
 
