@@ -248,11 +248,13 @@ private static void prepare(boolean quitAllowed) {
 
 我们知道，在将消息保存到消息队列的时候，是有一个消息的投递时间参数的，也就是如果消息还没有到处理的时间，那么是不会进行**dispatchMessage**的分发的
 
+#### 消息循环
+
 那么**queue.next()** 里面是如何来进行消息什么时候执行操作的呢？
 
 ```java
    Message next() {
-        //用于确定下一个消息的执行时间
+        //用于确定下一个消息的执行时间，先设置为0，是为了直接检查当前有没有需要执行的msg，如果没有，那么这个nextPoll就会置为-1或者一个正数值
         int nextPollTimeoutMillis = 0;
         for (;;) {
             //如果遍历有一个消息的下一个执行时间不是当前时间的话，会进入等待，然后等待一段时间后唤醒，再继续执行
@@ -305,6 +307,37 @@ private static void prepare(boolean quitAllowed) {
 
 这里有一个机制就是唤醒和等待，**nextPollTimeoutMillis**会使当前程序进入“等待”，如果参数是-1，就只能等**nativeWake**来进行“唤醒”，否则的话，会在等待对应的**nextPollTimeoutMillis**时间后恢复，然后执行相关的**message**消息。
 
+这里我们跟踪native层的nativePollOnece方法
+
+#### 消息分发
+
+当通过消息循环获取到消息以后，需要将消息进行分发处理。也就是**msg.target.dispatchMessage(msg)**方法。这里的target是Handler对象
+
+```java
+   /**
+     * Handle system messages here.
+     */
+    public void dispatchMessage(@NonNull Message msg) {
+        if (msg.callback != null) {
+            //如果是通过CallBack创建的，则直接调用它的run方法。比如说view.postDelay()方法创建的    
+            handleCallback(msg);
+        } else {
+            if (mCallback != null) {
+                //handler有没有全局callback
+                if (mCallback.handleMessage(msg)) {
+                    //如果全局callback返回了true，那么就不再调用下一步处理了。
+                    //这里可以hook方法，然后返回false，这样不会影响标准业务，但是可以在里面修改 msg消息
+                    return;
+                }
+            }
+            //调用handler复写的handleMessage方法
+            handleMessage(msg);
+        }
+    }
+```
+
+
+
 这就是我们Handler的整个执行机制。如果感觉难以理解的话，我觉得开头的那个比喻就比较形象了。
 
 好了，到此为止~~
@@ -316,3 +349,12 @@ private static void prepare(boolean quitAllowed) {
 1. 对于message的获取，最好使用obtainMessage方法，这种方式会从池中获取可以使用的消息，而不需要每次都new对象出来。
 2. Handler的消息，是放在其发送的线程的。只有需要执行的时候，通过target。调用到handler所在的线程。
 3. Handler，是进行线程间通讯。主要有4个列，Message消息，内部含有消息类的具体的执行的对象，也就是target:Handler,下一个消息。MessageQueue：消息队列，是以一个以链表形式存在的，每一个消息都指向了下一个要执行的消息。Looper：循环，能够不断地从queue中获取对应的消息来执行。需要通过prepare()来启动执行，而主线程是在ActivityThread中启动了。循环并不会阻塞，当没有到时间的时候，会休眠，时间到了以后通过epoll机制重新启动。消息队列有一个Idle队列，可以存放并不是特别紧急的消息，当CPU空闲以后再执行的操作。对于停止则可以使用quit和quitSafe两种方式。对于Looper是通过ThreadLocal来保证线程安全的.
+4. 可以给Looper设置observer，然后监听所有的分发事件的回调消息。
+5. 我们可以给handler设置全局callback变量，来hook方法，半路修改数据。
+6. `nativePollOnce` 和 `nativeWake` 的核心魔术发生在 native 代码中. native `MessageQueue` 利用名为 `epoll` 的 Linux 系统调用, 该系统调用可以监视文件描述符中的 IO 事件. `nativePollOnce` 在某个文件描述符上调用 `epoll_wait`, 而 `nativeWake` 写入一个 IO 操作到描述符。
+
+
+
+![image-20210304153950548](/Users/jj/Library/Application Support/typora-user-images/image-20210304153950548.png)
+
+https://www.cnblogs.com/jiy-for-you/archive/2019/10/20/11707356.htmlhttps://www.cnblogs.com/jiy-for-you/archive/2019/10/20/11707356.html
