@@ -35,7 +35,7 @@
 
 那么是如何通过简单的方式就实现了跨线程的数据通信了呢？
 
-#### Handler大揭秘
+#### Handler创建
 
 ```java
     public Handler() {
@@ -107,7 +107,7 @@ private static void prepare(boolean quitAllowed) {
 
 现在 **Handler** 对象创建完了，那么下一步就是进行消息的创建和发送了
 
-### 消息的发送
+#### 消息的发送
 
 进行消息的发送，有很多种方式。
 
@@ -215,25 +215,48 @@ private static void prepare(boolean quitAllowed) {
     }
 ```
 
-到现在为止，我们**Message**（邮件）已经进入到了消息队列**MessageQueue**（邮箱）中了，那么程序是什么时候从 **MessageQueue** 中读取数据的呢？  主要就是靠我们的**Looper**（邮差）。Looper会通过 **loop()**函数一直遍历循环。
+MessageQueue中的Message是通过单链表方式进行保存的，里面有next字段来指向下一个要执行的Message消息。
+
+到现在为止，我们**Message**（邮件）已经进入到了消息队列**MessageQueue**（邮箱）中了，并且调用了**nativeWake**方法。
+
+这里的nativeWake方法是一个native方法，具体的实现是通过
+
+```c
+//frameworks\base\core\jni\android_os_MessageQueue.cpp
+static void android_os_MessageQueue_nativeWake(JNIEnv* env, jclass clazz, jlong ptr) {
+    NativeMessageQueue* nativeMessageQueue = reinterpret_cast<NativeMessageQueue*>(ptr);
+    nativeMessageQueue->wake();
+}
+
+void NativeMessageQueue::wake() {
+    //调用了Looper的wake()方法
+    mLooper->wake();
+}
+```
+
+最终调用了Looper的wake方法
+
+```c
+void Looper::wake() {
+    uint64_t inc = 1;
+	//write方法，往mWakeEventFd中写入了一个数字
+   write(mWakeEventFd.get(), &inc, sizeof(uint64_t);
+}
+```
+这里**往fd文件中写入了一个数字**，通过这种方式，监听fd文件的地方就能够收到通知消息了。那么具体的我们在后面消息再讲解，现在先跳过。
+
+当我们往消息队列中写入消息以后，肯定是有地方来处理我们的信息的。就是靠我们的**Looper**（邮差）。Looper会通过 **loop()**函数一直遍历循环，拿到消息，然后处理消息。
 
 ```java
     //消息循环，即从消息队列中获取消息、分发消息到Handler
     public static void loop() {
         final Looper me = myLooper();
-        if (me == null) {
-            throw new RuntimeException("No Looper; Looper.prepare() wasn't called on this thread.");
-        }
         //获取当前Looper的消息队列
         final MessageQueue queue = me.mQueue;
         //循环遍历消息
         for (;;) {
             //获取到下一个消息
             Message msg = queue.next();
-            if (msg == null) {
-                // No message indicates that the message queue is quitting.
-                return;
-            }
             //派发消息到对应的Handler
             msg.target.dispatchMessage(msg);
             ...
@@ -246,7 +269,7 @@ private static void prepare(boolean quitAllowed) {
 
 可以看到，**loop()** 函数会一直循环从队列中拿出消息来进行处理。
 
-我们知道，在将消息保存到消息队列的时候，是有一个消息的投递时间参数的，也就是如果消息还没有到处理的时间，那么是不会进行**dispatchMessage**的分发的
+我们知道，在将消息保存到消息队列的时候，是有一个消息的投递时间参数的，也就是如果消息还没有到处理的时间，那么是不会进行**dispatchMessage**的分发的。
 
 #### 消息循环
 
@@ -309,6 +332,72 @@ private static void prepare(boolean quitAllowed) {
 
 这里我们跟踪native层的nativePollOnece方法
 
+```c++
+//frameworks\base\core\jni\android_os_MessageQueue.cpp
+static void android_os_MessageQueue_nativePollOnce(JNIEnv* env, jobject obj,
+        jlong ptr, jint timeoutMillis) {
+    NativeMessageQueue* nativeMessageQueue = reinterpret_cast<NativeMessageQueue*>(ptr);
+    //转发给NativeMessageQueue的pollOnce方法
+    nativeMessageQueue->pollOnce(env, obj, timeoutMillis);
+}
+
+void NativeMessageQueue::pollOnce(JNIEnv* env, jobject pollObj, int timeoutMillis) {
+    mPollEnv = env;
+    mPollObj = pollObj;
+    //丢给了Looper，并且带着超时时间
+    mLooper->pollOnce(timeoutMillis);
+    mPollObj = NULL;
+    mPollEnv = NULL;
+    if (mExceptionObj) {
+        env->Throw(mExceptionObj);
+        env->DeleteLocalRef(mExceptionObj);
+        mExceptionObj = NULL;
+    }
+}
+
+```
+
+最终会调用到Looper的pollOnce方法
+
+```c
+//system\core\libutils\Looper.cpp
+int Looper::pollOnce(int timeoutMillis, int* outFd, int* outEvents, void** outData) {
+    int result = 0;
+    for (;;) {
+        if (result != 0) {
+            return result;
+        }
+		//重点方法  
+        result = pollInner(timeoutMillis);
+    }
+}
+
+//整个消息循环的核心
+int Looper::pollInner(int timeoutMillis) {
+	//epoll_wait会阻塞等待，只有以下情况会返回：1.出错，返回-1，2：超时返回0，  3：接收到了消息
+    int eventCount = epoll_wait(mEpollFd.get(), eventItems, EPOLL_MAX_EVENTS, timeoutMillis);
+	//遍历找到我们要关注的消息
+    for (int i = 0; i < eventCount; i++) {
+        int fd = eventItems[i].data.fd;
+        uint32_t epollEvents = eventItems[i].events;
+        if (fd == mWakeEventFd.get()) {//消息是我们所关注的唤醒消息
+            if (epollEvents & EPOLLIN) {//当前是读事件
+            	//去处理这个事件
+                awoken();
+            }
+    }
+    return result;
+}
+```
+
+所以，Java层的*nativePollOnce*方法，实际是通过Nativce层的*epoll_wait*方法，来进行下一个消息的获取的。主要有以下情况会返回
+
+1. 超时了。
+2. 接收到了消息。也就是别的线程往当前线程丢消息。
+3. 出错。
+
+**在消息的发送的最后部分我们提到过，会往fd文件中写入一个数字，而这里，则是我们的fd文件的监听了。当我们往消息队列中放入消息并调用wake方法之后，在MessageQueue的阻塞方法会被唤醒，并进行消息的执行。**
+
 #### 消息分发
 
 当通过消息循环获取到消息以后，需要将消息进行分发处理。也就是**msg.target.dispatchMessage(msg)**方法。这里的target是Handler对象
@@ -336,8 +425,6 @@ private static void prepare(boolean quitAllowed) {
     }
 ```
 
-
-
 这就是我们Handler的整个执行机制。如果感觉难以理解的话，我觉得开头的那个比喻就比较形象了。
 
 好了，到此为止~~
@@ -348,13 +435,21 @@ private static void prepare(boolean quitAllowed) {
 
 1. 对于message的获取，最好使用obtainMessage方法，这种方式会从池中获取可以使用的消息，而不需要每次都new对象出来。
 2. Handler的消息，是放在其发送的线程的。只有需要执行的时候，通过target。调用到handler所在的线程。
-3. Handler，是进行线程间通讯。主要有4个列，Message消息，内部含有消息类的具体的执行的对象，也就是target:Handler,下一个消息。MessageQueue：消息队列，是以一个以链表形式存在的，每一个消息都指向了下一个要执行的消息。Looper：循环，能够不断地从queue中获取对应的消息来执行。需要通过prepare()来启动执行，而主线程是在ActivityThread中启动了。循环并不会阻塞，当没有到时间的时候，会休眠，时间到了以后通过epoll机制重新启动。消息队列有一个Idle队列，可以存放并不是特别紧急的消息，当CPU空闲以后再执行的操作。对于停止则可以使用quit和quitSafe两种方式。对于Looper是通过ThreadLocal来保证线程安全的.
-4. 可以给Looper设置observer，然后监听所有的分发事件的回调消息。
-5. 我们可以给handler设置全局callback变量，来hook方法，半路修改数据。
-6. `nativePollOnce` 和 `nativeWake` 的核心魔术发生在 native 代码中. native `MessageQueue` 利用名为 `epoll` 的 Linux 系统调用, 该系统调用可以监视文件描述符中的 IO 事件. `nativePollOnce` 在某个文件描述符上调用 `epoll_wait`, 而 `nativeWake` 写入一个 IO 操作到描述符。
+3. Handler，是用于进行线程间通讯。主要有4个类，
+   * Message消息，内部含有消息类的具体的执行的对象，也就是target:
+   * Handler,下一个消息。
+   * MessageQueue：消息队列，是以一个以**链表**形式存在的，每一个消息都指向了下一个要执行的消息。
+   * Looper：循环，能够不断地从queue中获取对应的消息来执行。需要通过prepare()来启动执行，而主线程是在ActivityThread中启动了。循环并不会阻塞，当没有到时间的时候，会休眠，时间到了以后通过epoll机制重新启动。
+4. 消息队列有一个Idle队列，可以存放并不是特别紧急的消息，当CPU空闲以后再执行的操作。
+5. 停止则可以使用quit和quitSafe两种方式。
+6. Looper是通过ThreadLocal来保证线程安全的.
+7. 可以给Looper设置observer，然后监听所有的分发事件的回调消息。
+8. 我们可以给handler设置全局callback变量，来hook方法，半路修改message数据。
+9. `nativePollOnce` 和 `nativeWake` 的核心魔术发生在 native 代码中。native `MessageQueue` 利用名为 `epoll` 的 Linux 系统调用, 该系统调用可以监视文件描述符中的 IO 事件. `nativePollOnce` 在某个文件描述符上调用 `epoll_wait`, 而 `nativeWake` 写入一个 IO 操作到描述符。
+10. Handler的Native层对应关系![image-20210305224013268](http://cdn.qiniu.kailaisii.com/typora/20210305224014-386657.png)
 
+### 参考
 
+* 剖析Framework面试 冲击Android高级职位
 
-![image-20210304153950548](/Users/jj/Library/Application Support/typora-user-images/image-20210304153950548.png)
-
-https://www.cnblogs.com/jiy-for-you/archive/2019/10/20/11707356.htmlhttps://www.cnblogs.com/jiy-for-you/archive/2019/10/20/11707356.html
+* [ Android 中 MessageQueue 的 nativePollOnce](https://www.cnblogs.com/jiy-for-you/p/11707356.html)
