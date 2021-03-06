@@ -68,10 +68,10 @@ Looper.myQueue().addIdleHandler(new IdleHandler() {
                     return null;
                 }
                 if (pendingIdleHandlerCount < 0&& (mMessages == null || now < mMessages.when)) {
+                    //获取当前的IdlerHandler的数量
                     pendingIdleHandlerCount = mIdleHandlers.size();
                 }
-                if (pendingIdleHandlerCount <= 0) {
-                    // No idle handlers to run.  Loop and wait some more.
+                if (pendingIdleHandlerCount <= 0) {e.
                     mBlocked = true;
                     continue;
                 }
@@ -119,9 +119,69 @@ Looper.myQueue().addIdleHandler(new IdleHandler() {
 **队列为空**
 
 1. 第一次for循环，获取到的msg为空。将nextPollTimeoutMillis=-1。这时候相当于是空闲状态。pendingIdleHandlerCount=-1，所以会执行一次空闲队列。空闲队列执行完之后pendingIdleHandlerCount=0。保证以后的循环都不会再执行空闲队列了。
-2. 第二次执行for循环，nextPollTimeoutMillis为-1，就会一直睡眠，知道有新消息的唤醒，然后获取到消息，并返回。
+2. 第二次执行for循环，nextPollTimeoutMillis为-1，就会一直睡眠，直到有新消息的唤醒，然后获取到消息，并返回。
 
 所以哪怕我们这个IdleHandler不移除，也并不会说每次循环都执行的。只有处理完一次Message消息以后，才有可能会再次执行。
+
+### FrameWork源码
+
+IdleHandler作为一种常见的空闲处理机制，在Framework层是有大量的使用的。
+
+源码1：
+
+```java
+//frameworks\base\core\java\android\app\ActivityThread.java
+	final GcIdler mGcIdler = new GcIdler();
+	void scheduleGcIdler() {
+        if (!mGcIdlerScheduled) {
+            mGcIdlerScheduled = true;
+			//往主线程增加了一个IdleHandler
+            Looper.myQueue().addIdleHandler(mGcIdler);
+        }
+        mH.removeMessages(H.GC_WHEN_IDLE);
+    }
+	
+    final class GcIdler implements MessageQueue.IdleHandler {
+        @Override
+        public final boolean queueIdle() {
+        	//执行一次GC
+            doGcIfNeeded();
+            purgePendingResources();
+			//返回了false，证明是一次性的操作
+            return false;
+        }
+    }
+```
+
+源码2：
+
+```java
+//frameworks\base\core\java\android\app\Instrumentation.java
+    public void waitForIdle(Runnable recipient) {
+    	//往MessageQueue中增加了个idler消息
+        mMessageQueue.addIdleHandler(new Idler(recipient));
+		//如果当前没有消息，Handler处于Idler状态，那么添加IdleHandler是不会进行触发的，只有等下一次Idle状态才会触发
+		//这里增加一个空的消息，就能保证上面的idler会执行
+        mThread.getHandler().post(new EmptyRunnable());
+    }
+
+
+    private static final class Idler implements MessageQueue.IdleHandler {
+        private final Runnable mCallback;
+        public final boolean queueIdle() {
+            if (mCallback != null) {
+				//回调执行
+                mCallback.run();
+            }
+            //返回false，表示只会执行一次
+            return false;
+        }
+    }
+```
+
+这里其实是增加了一个消息空闲的回调方法，当我们的Handler处于Idle状态时，会执行对应的recipient方法，从而让用户知道Handler是处于没有消息处理的一种状态。
+
+### 使用场景
 
 IdleHandler作为一种空闲时执行的操作，我们可以利用它的这种优势做什么呢？
 
@@ -133,5 +193,5 @@ IdleHandler作为一种空闲时执行的操作，我们可以利用它的这种
 
 ### 总结
 
-* **mIdleHanders** 不会空时，并不会进入死循环，就是因为将pendingIdlehanderCount 置为了0。只有为-1的时候，才会执行。所以就不会再次执行从而造成死循环了。
+* **mIdleHanders** 不为空时，并不会进入死循环，就是因为将pendingIdlehanderCount 置为了0。只有为-1的时候，才会执行。所以就不会再次执行从而造成死循环了。
 
