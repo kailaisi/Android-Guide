@@ -62,12 +62,10 @@ public class TheadLocalDemo {
 
 ```java
     static class ThreadLocalMap {
-
         //用于保存数据
         static class Entry extends WeakReference<ThreadLocal<?>> {
             /** The value associated with this ThreadLocal. */
             Object value;
-
             Entry(ThreadLocal<?> k, Object v) {
                 super(k);
                 value = v;
@@ -84,7 +82,6 @@ public class TheadLocalDemo {
 
 ```java
         private void set(ThreadLocal<?> key, Object value) {
-
             Entry[] tab = table;
             int len = tab.length;
 			//通过哈希值获取key对应的保存的数组位置
@@ -196,7 +193,7 @@ public class TheadLocalDemo {
         }
 ```
 
-在进行获取的时候，需要处理hash冲突的问题。需要依次去下一个节点去获取数据。
+在进行获取的时候，需要处理hash之后位置冲突的问题。可能需要依次去下一个节点去获取数据。
 
 #### 扩容
 
@@ -205,11 +202,13 @@ public class TheadLocalDemo {
 ### 总结
 
 * ThreadLocal是通过弱引用来保存数据的。所以在ThreadLocalMap中的key值可以被回收。这样对应的value值其实不会再被使用到。但是如果Thead一直存在着，那么ThreadLocalMap就不会销毁。从而导致value一直存在而无法被回收，导致内存泄漏。可以通过remove方法移除掉（其实在set的时候，也会将key为空，value不为空的情况进行优化，保存新的数据）。
-
-* 在进行数据保存的时候并不一定存在对应的hash节点上。
-
 * **每个线程，是一个Thread实例，其内部拥有一个名为threadLocals的实例成员，其类型是ThreadLocal.ThreadLocalMap**
-
 * **通过实例化ThreadLocal实例，我们可以对当前运行的线程设置一些线程私有的变量，通过调用ThreadLocal的set和get方法存取**
-
 * **ThreadLocal本身并不是一个容器，我们存取的value实际上存储在ThreadLocalMap中，ThreadLocal只是作为TheadLocalMap的key**
+* ThreadLocal的key和value，会组装为Entry对象的。而ThreadLocalMap中保存的是Entry的数组。
+* Entry在数组的位置，是和ThreadLocal中的threadLocalHashCode相关的，而threadLocalHashCode则是根据ThreadLocals中的静态变量nextHashCode来生成的。
+* 如果保存的位置发生了冲突，则顺位向下一个位置保存。但是获取的时候，也就不能直接获取了，而是需要获取之后判断Entry是否是我们的ThreadLocal对象。
+
+### 参考
+
+https://www.jianshu.com/p/dde92ec37bd1

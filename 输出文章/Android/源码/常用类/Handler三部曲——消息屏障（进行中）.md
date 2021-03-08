@@ -1,4 +1,4 @@
-Handler三部曲——消息屏障（进行中）
+Handler三部曲——消息屏障（待整理）
 
 为了能够更从前入深的理解消息屏障，我们从屏障消息的插入和移除开始入手，然后再通过next()方法来深入理解消息屏障的具体实现原理。
 
@@ -44,8 +44,6 @@ Handler三部曲——消息屏障（进行中）
 ```
 
 屏障消息，**其实是一个target为null的Message消息**。而且该消息会正常的添加到消息队列中。
-
-为了能够实现
 
 ### 消息屏障移除
 
@@ -124,9 +122,142 @@ Handler三部曲——消息屏障（进行中）
 ```
 
 * 如果是屏障消息，那么会查找后面的异步消息
-* 如果没有异步消息，则等待，等到下一个消息的唤醒
+* 如果没有异步消息，则等待，等到消息唤醒
 * 如果有异步消息，但是还未到执行时间，则等待一定的时间之后执行。
 
-所以屏障消息的作用，其实就是为了执行异步消息，本身是不会执行的，所以没变要设置target。但是其实这种以某个字段是否为空来判断来区分类型的方式个人感觉如果后期扩展可能会有问题。
+所以屏障消息的作用，其实就是为了执行异步消息，屏障消息本身是不会执行的，所以没变要设置target。但是其实这种以某个字段是否为空来判断来区分类型的方式个人感觉如果后期扩展可能会有问题。
 
-https://www.cnblogs.com/renhui/p/12875589.html
+那么既然是需要处理的是异步消息，那么我们当插入异步消息的时候是如何处理，并唤醒的。
+
+```java
+//frameworks\base\core\java\android\os\MessageQueue.java
+	boolean enqueueMessage(Message msg, long when) {
+        synchronized (this) {
+            msg.markInUse();
+            msg.when = when;
+            Message p = mMessages;
+            boolean needWake;
+            if (p == null || when == 0 || when < p.when) {
+                //当前消息插入到队列头。
+                //如果当前队列没有要处理的消息，或者新入队的消息需要立即处理或者如对消息的发送时间比当前要处理的消息发送时间早
+                //那么将消息放入到队列头，并唤醒消息
+                msg.next = p;
+                mMessages = msg;
+                needWake = mBlocked;
+            } else {
+                //消息没有插入到队列头。
+                //当前，而且当前线程是休眠的，而且队列头是消息屏障，而且当前消息是异步消息，那么就先按照需要唤醒处理
+                needWake = mBlocked && p.target == null && msg.isAsynchronous();
+                Message prev;
+                for (;;) {
+                    prev = p;
+                    p = p.next;
+                    if (p == null || when < p.when) {
+                        break;
+                    }
+                    if (needWake && p.isAsynchronous()) {
+						//如果插入的消息前面还有异步消息，说明当前消息肯定是没必要直接唤醒的，所以设置为不需要唤醒
+                        needWake = false;
+                    }
+                }
+                msg.next = p; // invariant: p == prev.next
+                prev.next = msg;
+            }
+            if (needWake) {
+				//如果需要唤醒队列对消息的处理，通过nativeWake可以唤醒 nativePollOnce （这个会在queue.next()中调用，使对于消息的处理进行休眠操作）的沉睡
+                nativeWake(mPtr);
+            }
+        }
+        return true;
+    }
+```
+
+在消息进行入队操作时，会根据实际情况进行线程的唤醒。而在两种情况下会进行唤醒：
+
+* 如果消息插入到队列头，如果当前线程是休眠的，则唤醒
+* 如果没有插入到队列头，如果当前线程是休眠的，并且队列头是屏障消息，而且当前消息是最早的一条异步消息，则唤醒线程
+
+其他的情况，只需要正常插入到队列中即可。
+
+### 屏障消息的使用
+
+Framework层对于消息屏障的使用并不多。其中对于View的绘制工作就是其中一处使用到消息屏障的地方。
+
+```java
+//frameworks\base\core\java\android\view\ViewRootImpl.java
+    void scheduleTraversals() {
+        if (!mTraversalScheduled) {
+			///表示在排好这次绘制请求前，不再排其它的绘制请求
+            mTraversalScheduled = true;
+			//Handler 的同步屏障,拦截 Looper 对同步消息的获取和分发,只能处理异步消息
+			//也就是说，对View的绘制渲染操作优先处理
+            mTraversalBarrier = mHandler.getLooper().getQueue().postSyncBarrier();
+			//mChoreographer能够接收系统的时间脉冲，统一动画、输入和绘制时机,实现了按帧进行绘制的机制
+			//这里增加了一个事件回调的类型。在绘制时，会调用mTraversalRunnable方法
+            //postCallback的时候，顺便请求vsync垂直同步信号scheduleVsyncLocked
+            //mTraversalRunnable这个线程会进行onMeasure，onLayout,onDraw的处理操作
+            mChoreographer.postCallback(Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
+            ....
+        }
+    }
+```
+
+这里插入了一个消息屏障，然后执行了**postCallback**方法。
+
+```java
+//frameworks\base\core\java\android\view\Choreographer.java
+	public void postCallback(int callbackType, Runnable action, Object token) {
+        postCallbackDelayed(callbackType, action, token, 0);
+    }
+
+    public void postCallbackDelayed(int callbackType,Runnable action,..) {
+        postCallbackDelayedInternal(callbackType, action, token, delayMillis);
+    }
+
+	private void postCallbackDelayedInternal(int callbackType,Object action,..) {
+        synchronized (mLock) {
+            final long now = SystemClock.uptimeMillis();
+            final long dueTime = now + delayMillis;
+            //将callback放入到对应的队列中
+            mCallbackQueues[callbackType].addCallbackLocked(dueTime, action, token);
+            if (dueTime <= now) {
+				//需要立即进行绘制
+                scheduleFrameLocked(now);
+            } else {
+            	//延期绘制的消息，通过handler来进行处理
+                Message msg = mHandler.obtainMessage(MSG_DO_SCHEDULE_CALLBACK, action);
+                msg.arg1 = callbackType;
+                //设置为异步消息，如果这里设置了同步屏障，则会优先于其他的消息执行。
+                msg.setAsynchronous(true);
+                mHandler.sendMessageAtTime(msg, dueTime);
+            }
+        }
+    }
+```
+
+这个方法其实就是插入了一个异步消息，该异步消息会请求Vsync信号，当收到Vsync信号之后，会执行mTraversalRunnable。
+
+```java
+//frameworks\base\core\java\android\view\ViewRootImpl.java 
+	final TraversalRunnable mTraversalRunnable = new TraversalRunnable();
+	final class TraversalRunnable implements Runnable {
+        @Override
+        public void run() {
+            doTraversal();
+        }
+    }
+
+    void doTraversal() {
+        if (mTraversalScheduled) {
+            mTraversalScheduled = false;
+			//移除同步屏障
+            mHandler.getLooper().getQueue().removeSyncBarrier(mTraversalBarrier);
+			//重点方法   执行绘制工作
+            performTraversals();
+        }
+    }
+```
+
+### 总结
+
+* 消息屏障其实是给异步消息开绿色通道，优先执行。

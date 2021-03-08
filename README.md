@@ -53,6 +53,7 @@
 * 深入理解安卓内核思想
 * [带你破解Android高级面试](https://coding.imooc.com/class/chapter/317.html#Anchor)
 * [Gradle3.0自动化项目构建技术精讲+实战](https://coding.imooc.com/class/chapter/206.html#Anchor)
+* [Gradle系列之从零搭建Maven私服库](https://juejin.cn/post/6844903939658219527)
 
 ### 架构技能
 
@@ -62,6 +63,12 @@
 * 《Android源码设计模式》
 * 《移动架构》
 * 慕课网之 实战企业级项目 践行App重构之路（完成）
+
+### UI体系
+
+### 实战篇
+
+[企业级Android应用架构设计与开发](https://coding.imooc.com/class/chapter/364.html#Anchor)
 
 ### [JNI、音视频、图像](NDK音视频图像.md)
 

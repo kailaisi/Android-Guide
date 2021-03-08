@@ -16,7 +16,6 @@
   - Application启动流程（待整理）
   - Provider源码解析（待整理）
   - Android系统启动源码解析（待整理）
-  - 
 
 * 绘制相关系列
   * Android的inflate源码详解（完成）
@@ -55,7 +54,7 @@
   * PriorityQueue 排队序列（待研究）
 * SharedPreferences源码解析（完成）
 * DataBinding源码解析（待整理）
-* 通知栏Notification（待写）
+* 通知栏Notification（完成）
 * 通讯(待写)
   * 
 * 杂项
@@ -63,7 +62,7 @@
   * Handler 源码机制(完成)
   * IdleHandler源码解析（完成）
   * io复用和copyonwrite技术延伸
-  * 同步屏障
+  * 同步屏障（待整理）
 * 插桩技术(待研究)
   * APT技术实现对代码的抖动处理
   * ASM技术
