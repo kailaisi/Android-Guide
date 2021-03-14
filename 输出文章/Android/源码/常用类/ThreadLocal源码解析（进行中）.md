@@ -443,7 +443,44 @@ public class TheadLocalDemo {
 
 为了尽量保证不发生冲突，我们肯定是希望ThreadLocal所生成的hashCode能够均匀的在2的N次方的数组中。那么通过0x61c88647能够达到这种效果呢？
 
+我们先来写个测试代码
+
+```java
+public class MagicNumTest {
+    private static int Magic_Num=0x61c88647;
+
+    public static void main(String[] args) {
+        hash(16);
+        hash(32);
+        hash(64);
+    }
+
+    public static void hash(int len) {
+        int hashCode=0;
+        for (int i = 0; i < len; i++) {
+            hashCode=i*Magic_Num+Magic_Num;
+            System.out.print(hashCode&(len-1));
+            System.out.print(" ");
+        }
+        System.out.println();
+    }
+}
+
+```
+
+对应的输出结果：
+
+```java
+长度为16:7 14 5 12 3 10 1 8 15 6 13 4 11 2 9 0 
+长度为32:7 14 21 28 3 10 17 24 31 6 13 20 27 2 9 16 23 30 5 12 19 26 1 8 15 22 29 4 11 18 25 0 
+长度为64:7 14 21 28 35 42 49 56 63 6 13 20 27 34 41 48 55 62 5 12 19 26 33 40 47 54 61 4 11 18 25 32 39 46 53 60 3 10 17 24 31 38 45 52 59 2 9 16 23 30 37 44 51 58 1 8 15 22 29 36 43 50 57 0 
+```
+
+
+
 #### 内存泄漏
+
+
 
 #### 使用场景
 
@@ -470,3 +507,7 @@ https://www.jianshu.com/p/dde92ec37bd1
 https://www.cnblogs.com/ilellen/p/4135266.html
 
 https://www.jianshu.com/p/30ee77732843
+
+https://zhuanlan.zhihu.com/p/40515974
+
+https://www.pianshen.com/article/45011037234/

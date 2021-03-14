@@ -66,9 +66,19 @@
 
 ### UI体系
 
+[爱哥自定义View系列](https://blog.csdn.net/aigestudio)
+
+[高级UI专题](https://www.cniao5.com/course/10289#tab_3)
+
 ### 实战篇
 
 [企业级Android应用架构设计与开发](https://coding.imooc.com/class/chapter/364.html#Anchor)
+
+[kotlin+Jetpack实战【从0开发菜鸟窝在线教育APP】]()
+
+[kotlin开发AI语音助手APP]()
+
+[手写框架开发内涵段子]()
 
 ### [JNI、音视频、图像](NDK音视频图像.md)
 
