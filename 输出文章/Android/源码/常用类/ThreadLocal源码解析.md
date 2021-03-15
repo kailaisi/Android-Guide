@@ -1,4 +1,4 @@
-ThreadLocal源码解析
+## ThreadLocal源码解析
 
 之前在Handler的源码解析中，我们提过一句ThreadLocal。知道它是一种线程安全的操作方式。那么它的内部原理是什么呢？这次就一探究竟吧。
 
@@ -27,7 +27,7 @@ public class TheadLocalDemo {
 }
 ```
 
-这里通过ThreadLocal，只需要进行set，get即可。线程安全的处理直接由内部来进行处理。
+这里的测试案例通过ThreadLocal，只需要进行set，get即可。线程安全的处理直接由内部来进行处理。
 
 ### 源码解析
 
@@ -290,9 +290,9 @@ public class TheadLocalDemo {
             int i = key.threadLocalHashCode & (len-1);
             for (Entry e = tab[i];e != null;e = tab[i = nextIndex(i, len)]) {
                 if (e.get() == key) {
-					//将entry的key置为null
+										//将entry的key置为null
                     e.clear();
-					//将entry的value也置为null
+										//将entry的value也置为null，然后进行一次内存泄漏的处理
                     expungeStaleEntry(i);
                     return;
                 }
@@ -476,11 +476,170 @@ public class MagicNumTest {
 长度为64:7 14 21 28 35 42 49 56 63 6 13 20 27 34 41 48 55 62 5 12 19 26 33 40 47 54 61 4 11 18 25 32 39 46 53 60 3 10 17 24 31 38 45 52 59 2 9 16 23 30 37 44 51 58 1 8 15 22 29 36 43 50 57 0 
 ```
 
-
+通过0x61c88647散列出来的结果分布是比较均匀的。其主要是利用了斐波那契散列法，而且**0x61c88647 = 2^32 * 黄金分割比**，这里面的具体算法，大家感兴趣的可以看看[从 ThreadLocal 的实现看散列算法](https://zhuanlan.zhihu.com/p/40515974)。
 
 #### 内存泄漏
 
+对于ThreadLocal，其具体的内容是保存的Entry中的。
 
+```java
+        static class Entry extends WeakReference<ThreadLocal<?>> {
+            Object value;
+            Entry(ThreadLocal<?> k, Object v) {
+                super(k);
+                value = v;
+            }
+        }
+```
+
+我们看一下这里的具体引用示意图
+
+![](https://upload-images.jianshu.io/upload_images/2615789-9107eeb7ad610325.jpg)
+
+当外部的TheadLocal的外部强引用被置为空的时候，threadLocal实例就没有了强引用的链路，当下一次系统进行GC的时候，就会被回收，所以Entry的Key就变为了null。这时候就无法通过Entry的key值来访问到其Value了。但是现在Entry存在于Thread中的map的数组中，**对于Value就存在一条引用链：Thread->ThreadLocalMap->Entry->Value，从而导致Value无法回收，但是实际上，因为Key被回收，Value永远也不会被访问到，这就造成了内存泄漏**。
+
+虽然说当Thread销毁的时候，这些都会进行销毁，但是对于通过线程池创建的线程，为了复用，线程是不会被回收的，这就导致了内存泄漏的持续存在。
+
+对于这种内存泄漏的情况，ThreadLocal将其称之为“脏数据”，并且本身已经对其进行了了一定的处理。
+
+比如说在set数据的时候
+
+```java
+        private void set(ThreadLocal<?> key, Object value) {
+          ...
+                if (k == null) {//key为空，但是这个时候e存在。说明这时候，key被回收了。
+										//将i位置的值替换为对应的数据
+                    replaceStaleEntry(key, value, i);
+                    return;
+                }
+            }
+						...
+            if (!cleanSomeSlots(i, sz) && sz >= threshold)
+							//如果达到了阈值，则进行扩容
+                rehash();
+        }
+```
+
+在这个方法中，对于脏数据就进行了处理
+
+* 在发生了哈希冲突之后，向后环形查找的时候，如果发现了Entry的key为null，则调用**replaceStaleEntry()**方法进行处理
+* 将数据保存到数组之后，调用**cleanSomeSlots()**方法来检测并清理脏数据
+
+##### replaceStaleEntry
+
+```java
+       //替换旧数据。该方法还有一个额外的作用，就是能够删除staleSlot所在的节点所在序列（指两个空节点之间的队列）中的脏数据
+        private void replaceStaleEntry(ThreadLocal<?> key, Object value,int staleSlot) {
+            Entry[] tab = table;
+            int len = tab.length;
+            Entry e;
+            //找到序列所在的第一个脏entry
+            int slotToExpunge = staleSlot;
+            for (int i = prevIndex(staleSlot, len);(e = tab[i]) != null;i = prevIndex(i, len))
+                if (e.get() == null)
+                    slotToExpunge = i;
+            for (int i = nextIndex(staleSlot, len);(e = tab[i]) != null;i = nextIndex(i, len)) {
+                ThreadLocal<?> k = e.get();
+                if (k == key) {
+					//在向后环形查找过程中发现key相同的entry就覆盖，并且和脏entry进行交换。
+                    e.value = value;
+
+                    tab[i] = tab[staleSlot];
+                    tab[staleSlot] = e;
+                    if (slotToExpunge == staleSlot)
+                        slotToExpunge = i;
+                    cleanSomeSlots(expungeStaleEntry(slotToExpunge), len);
+                    return;
+                }
+                if (k == null && slotToExpunge == staleSlot)
+                    slotToExpunge = i;
+            }
+            //如果在查找过程中，没有找到可以覆盖的entry，则将新的entry插入到staleSlot位置
+            tab[staleSlot].value = null;
+            tab[staleSlot] = new Entry(key, value);
+            if (slotToExpunge != staleSlot)
+                cleanSomeSlots(expungeStaleEntry(slotToExpunge), len);
+        }
+
+```
+
+这里当遇到脏数据的时候，不仅仅会覆盖当前位置的数据，而且能够删除staleSlot所在的节点所在序列（指两个空节点之间的队列）中的脏数据，从而尽量处理内存泄漏的问题。
+
+##### cleanSomeSlots
+
+```java
+        //清除一些key为null的脏数据
+        private boolean cleanSomeSlots(int i, int n) {
+            boolean removed = false;
+            Entry[] tab = table;
+            int len = tab.length;
+            do {
+								//获取下一个节点
+                i = nextIndex(i, len);
+                Entry e = tab[i];
+                if (e != null && e.get() == null) {
+										//遇到了脏数据，将标志位置为true，然后将n设置为数据的长度，从而扩大搜索的次数
+                    n = len;
+                    removed = true;
+                    i = expungeStaleEntry(i);
+                }
+            } while ( (n >>>= 1) != 0);
+							//循环条件是n>>>1，也就是如果对于入参n，会搜索log2(n)次，
+	            //如果中间发现了脏数据了，那么就将n置为table的大小,扩大搜索次数
+            return removed;
+        }
+```
+
+cleanSomeSlots会从i节点开始，向后查找节点。
+
+1. 如果发现了脏数据，就调用**expungeStaleEntry**方法清理数据，然后会将n设置为数组的长度。
+2. 每次循环，n >>>= 1，都会进行n/2。
+
+当发现了脏数据的时候，会认为在脏数据的附近还可能会存在脏数据，所以通过修改n来继续扩大搜索的次数。
+
+###### **expungeStaleEntry**
+
+```java
+    	//清理脏数据（也就是key为空的数据，以为key是使用弱引用的，所以存在被回收的情况）
+        private int expungeStaleEntry(int staleSlot) {
+          	//对应的value置为null
+            tab[staleSlot].value = null;
+            tab[staleSlot] = null;
+            size--;
+            Entry e;
+            int i;
+          	//从staleSlot位置开始，环形向后查找，直到遇到了table[i]=null结束
+            for (i = nextIndex(staleSlot, len); (e = tab[i]) != null;i = nextIndex(i, len)) {
+                ThreadLocal<?> k = e.get();
+              	//如果向后搜索过程中发现了脏数据，将其清理掉
+                if (k == null) {
+                    e.value = null;
+                    tab[i] = null;
+                    size--;
+                } else {
+                    //进行rehash操作，
+                    //因为存在哈希冲突，所以当初Entry保存的位置好可能并不是理想应该保存的地方。而现在因为清理了脏数据，那么可能当前保存的位置和理想保存位置之间有某个pos为空了，这时候需要进行移动处理
+                    int h = k.threadLocalHashCode & (len - 1);
+                    //h！=i，表明当前保存的pos并不是理想位置，说明当初保存到的时候，应该保存的h，但是现在保存在了i位置。
+                    if (h != i) {
+                        tab[i] = null;
+
+                        // Unlike Knuth 6.4 Algorithm R, we must scan until
+                        // null because multiple entries could have been stale.
+                        //从h位置开始，往后找空的位置，然后将e保存到位置中。
+                        while (tab[h] != null)
+                            h = nextIndex(h, len);
+                        tab[h] = e;
+                    }
+                }
+            }
+            return i;
+        }
+```
+
+expungeStaleEntry函数的功能，不仅仅是清理staleSlot位置的脏数据，它还会从该位置开始，环形向后进行遍历，向后搜索的过程中如果发现了脏数据也会清理掉。
+
+ThreadLocal这种在每次调用某个函数之后，再进行无用节点的处理方式，跟Android中的SparseArray的处理方式很相似。大家感兴趣的可以去看看对应的源码。
 
 #### 使用场景
 
@@ -490,15 +649,13 @@ Handler
 
 ### 总结
 
-* ThreadLocal是通过弱引用来保存数据的。所以在ThreadLocalMap中的key值可以被回收。这样对应的value值其实不会再被使用到。但是如果Thead一直存在着，那么ThreadLocalMap就不会销毁。从而导致value一直存在而无法被回收，导致内存泄漏。可以通过remove方法移除掉（其实在set的时候，也会将key为空，value不为空的情况进行优化，保存新的数据）。
 * **每个线程，是一个Thread实例，其内部拥有一个名为threadLocals的实例成员，其类型是ThreadLocal.ThreadLocalMap**
 * **通过实例化ThreadLocal实例，我们可以对当前运行的线程设置一些线程私有的变量，通过调用ThreadLocal的set和get方法存取**
 * **ThreadLocal本身并不是一个容器，我们存取的value实际上存储在ThreadLocalMap中，ThreadLocal只是作为TheadLocalMap的key**
 * ThreadLocal的key和value，会组装为Entry对象的。而ThreadLocalMap中保存的是Entry的数组。
 * Entry在数组的位置，是和ThreadLocal中的threadLocalHashCode相关的，而threadLocalHashCode则是根据ThreadLocals中的静态变量nextHashCode来生成的。
-* 如果保存的位置发生了冲突，则顺位向下一个位置保存。但是获取的时候，也就不能直接获取了，而是需要获取之后判断Entry是否是我们的ThreadLocal对象。
-
-
+* 如果保存的位置发生了冲突，则顺位向下一个位置保存。但是获取的时候，也就不能直接获取了，而是需要获取之后判断Entry的key是否是我们的ThreadLocal对象。
+* ThreadLocal是通过弱引用来保存数据的。所以在ThreadLocalMap中的key值可以被回收。这样对应的value值其实不会再被使用到。但是如果Thead一直存在着，那么ThreadLocalMap就不会销毁。从而导致value一直存在而无法被回收，导致内存泄漏。可以通过remove方法移除掉（其实在set的时候，也会将key为空，value不为空的情况进行优化，保存新的数据）。
 
 ### 参考
 
@@ -511,3 +668,11 @@ https://www.jianshu.com/p/30ee77732843
 https://zhuanlan.zhihu.com/p/40515974
 
 https://www.pianshen.com/article/45011037234/
+
+
+
+> 本文由 [开了肯](http://www.kailaisii.com/) 发布！ 
+>
+> 同步公众号[开了肯]
+
+![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)
