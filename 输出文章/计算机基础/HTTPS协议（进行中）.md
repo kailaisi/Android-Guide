@@ -60,8 +60,6 @@ SSL/TLS的本质，是**通过一套非对称加密协议来协商出一套对�
 
 这里并不是每次数据通讯都采用非对称加密协议，是因为非对称加密协议的算法比较复杂，会有一定的性能消耗。
 
-TLS
-
 #### 通讯连接过程
 
 ##### Client Hello
@@ -82,12 +80,45 @@ TLS
 
 ##### 服务器证书
 
-当服务端和客户端协商好所使用的加密套件之后，服务端会将自己的服务器证书（**关键是服务器公钥**和服务器公钥的签名）发送给客户端。**客户端会验证证书是否合法**。
+当服务端和客户端协商好所使用的加密套件之后，服务端会将自己的服务器证书（**关键是服务器公钥和服务器主机名**）发送给客户端。**客户端会验证证书是否合法**。
 
 ![image-20210316215211726](http://cdn.qiniu.kailaisii.com/typora/20210316215212-825148.png)
 
-##### Pre-master secret
+##### **client_key_exchange+change_cipher_spec+encrypted_handshake_message**
 
-客户端会生成一个随机数，然后使用服务端发送过来的服务端公钥进行加密。
+先看下wireshark抓到的数据，然后再进行对应的说明
 
-最后，pre-master secret +服务器随机数+客户端随机数，组成一个对称加密公钥：Master secret。之后的信息就完全使用对称加密的密钥来进行通讯了。
+![image-20210317222809295](http://cdn.qiniu.kailaisii.com/typora/20210317222809-331732.png)
+
+* client_key_exchange：当验证完证书合法性之后，客户端会生成一个随机数Pre-master secret，然后使用服务端发送过来的服务端公钥进行加密。并将加密后的数据发送给服务器端。
+* 客户端根据：pre-master secret +服务器随机数+客户端随机数，计算得到协商之后的密钥（对称加密密钥，之后的通讯都使用该密钥）
+* change_cipher_spec：客户端通知服务器后续的通信都采用协商的密钥和加密算法进行通信。
+* encrypted_handshake_message：结合之前所有通讯参数的hash值和其他信息，生成一段数据。然后采用对称加密算法对其加密，发送给服务器用于数据和握手验证。
+
+##### change_cipher_spec+encrypted_handshake_message
+
+先看下wireshark抓到的数据
+
+![image-20210317222909164](http://cdn.qiniu.kailaisii.com/typora/20210317222909-266447.png)
+
+* 服务器用私钥解密得到Pre-master secret，然后pre-master secret +服务器随机数+客户端随机数，计算得到协商之后的密钥（对称加密密钥，之后的通讯都使用该密钥）
+* 计算之前所有接收到的信息的hash值，解密客户端发送来的encrypted_handshake_message数据，验证其数据和密钥的合法性
+* change_cipher_spec：验证通过后，同样的服务器发送change_cipher_spec告知客户端后续的通信都采用协商的密钥和加密算法进行通信。
+* encrypted_handshake_message,：服务器也结合所有当前的通信参数信息的hash值和其他信息生成一段数据并采用协商密钥与算法加密并发送到客户端
+
+##### 结束握手
+
+当客户端计算所接收到的hash，并采用解密密钥进行解密，验证服务器发送的数据和密钥是否正确，如果验证通过，则握手完成
+
+##### 加密通讯
+
+当验证通过，握手完成之后，客户端和服务端就可以通过协商好的加密密钥对传输的数据进行加密工作了。
+
+我们看看具体的数据
+
+![image-20210317223039186](http://cdn.qiniu.kailaisii.com/typora/20210317223039-945381.png)
+
+https://blog.csdn.net/hherima/article/details/52469674
+
+仍物线第五期
+
