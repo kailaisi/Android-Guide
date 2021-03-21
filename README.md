@@ -20,6 +20,8 @@
 
 * Kotlin 实战（已完成，待记录）
 * **[慕课网之Kotlin从入门到精通](https://coding.imooc.com/class/chapter/398.html#Anchor)**（进行中）
+* [kotlin+Jetpack实战【从0开发菜鸟窝在线教育APP】]()
+* [kotlin开发AI语音助手APP]()
 
 ### 数据结构
 
@@ -49,7 +51,7 @@
 ### Android架构师必备系列
 
 * Android源码设计模式(进行中)
-* **[剖析Framework面试 冲击Android高级职位](https://coding.imooc.com/class/340.html)（进行中）**
+* **[剖析Framework面试 冲击Android高级职位](https://coding.imooc.com/class/340.html)（待整理）**
 * 深入理解安卓内核思想
 * [带你破解Android高级面试](https://coding.imooc.com/class/chapter/317.html#Anchor)
 * [Gradle3.0自动化项目构建技术精讲+实战](https://coding.imooc.com/class/chapter/206.html#Anchor)
@@ -63,6 +65,8 @@
 * 《Android源码设计模式》
 * 《移动架构》
 * 慕课网之 实战企业级项目 践行App重构之路（完成）
+* 慕课网架构师课程
+* [企业级Android应用架构设计与开发](https://coding.imooc.com/class/chapter/364.html#Anchor)
 
 ### UI体系
 
@@ -71,12 +75,6 @@
 [高级UI专题](https://www.cniao5.com/course/10289#tab_3)
 
 ### 实战篇
-
-[企业级Android应用架构设计与开发](https://coding.imooc.com/class/chapter/364.html#Anchor)
-
-[kotlin+Jetpack实战【从0开发菜鸟窝在线教育APP】]()
-
-[kotlin开发AI语音助手APP]()
 
 [手写框架开发内涵段子]()
 
@@ -89,6 +87,9 @@
 * [闲鱼Flutter系列](https://www.yuque.com/xytech/flutter)
 * [Dart Flutter入门实战视频教程](https://www.bilibili.com/video/BV1S4411E7LY?p=31&t=1842)
 * https://github.com/CarGuo/gsy_flutter_book
+* Flutter移动电商实战(已完成)
+* [实战携程网App](https://coding.imooc.com/class/321.html)
+* BiliBili实战
 
 ### 组件化、插件化
 
