@@ -243,3 +243,13 @@ private okhttp3.Call createRawCall() throws IOException {
     return call;
   }
 ```
+
+
+
+#### 总结
+
+* retrofit使用的是动态代理方式来实现接口的处理
+* 创建ServiceMethod对象（实际是CallAdapted）
+* CallAdapterFactory，用于创建CallAdapter实例。
+* CallAdapter，用于将返回的数据类型转化为对应的类型T
+* Converter用于将返回的responsebody转化为对应的T对象
