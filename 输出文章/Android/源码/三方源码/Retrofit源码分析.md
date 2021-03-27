@@ -253,3 +253,6 @@ private okhttp3.Call createRawCall() throws IOException {
 * CallAdapterFactory，用于创建CallAdapter实例。
 * CallAdapter，用于将返回的数据类型转化为对应的类型T
 * Converter用于将返回的responsebody转化为对应的T对象
+
+![image-20210327105244762](http://cdn.qiniu.kailaisii.com/typora/20210327105258-559921.png)
+
