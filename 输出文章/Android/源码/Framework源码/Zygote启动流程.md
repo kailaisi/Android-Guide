@@ -158,5 +158,3 @@ https://blog.csdn.net/chz429/article/details/87514718
 源码解析项目地址：https://github.com/kailaisi/android-29-framwork
 
 > 同步公众号[开了肯]
-
-![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)

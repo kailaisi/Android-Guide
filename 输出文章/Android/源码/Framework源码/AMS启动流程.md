@@ -2,7 +2,7 @@
 
 ### 启动
 
-在[Android系统启动流程中]()中我们提到过，AMS是在system_service中启动的，其中
+在[Android系统启动流程中]()中我们提到过，AMS是在system_service中启动的，
 
 ```java
   //frameworks/base/services/java/corri/android/server/SystemServer.java
@@ -28,7 +28,7 @@ startCoreServices();      // 启动核心服务
 startOtherServices();     // 启动其他服务
 ```
 
-其中在启动核心服务功能中，会进行AMS的启动。
+在启动核心服务功能中，会进行AMS的启动。
 
 ```java
    //frameworks/base/services/java/corri/android/server/SystemServer.java
@@ -36,13 +36,13 @@ startOtherServices();     // 启动其他服务
       	...
         //这里会将ATMS注册到ServiceManager中，然后调用ATMS的start方法。
         ActivityTaskManagerService atm = mSystemServiceManager.startService(ActivityTaskManagerService.Lifecycle.class).getService();
-        //注册AMS服务，并返回对应的对象信息
+        //重点方法1。      注册AMS服务，并返回对应的对象信息
         mActivityManagerService = ActivityManagerService.Lifecycle.startService(mSystemServiceManager, atm);
         mActivityManagerService.setSystemServiceManager(mSystemServiceManager);
         //设置app安装器
         mActivityManagerService.setInstaller(installer);
         ...
-        //2]向ServiceManager中注册Binder服务
+        //重点方法2。   向ServiceManager中注册Binder服务
         mActivityManagerService.setSystemProcess();
     }
 ```
@@ -51,11 +51,13 @@ startOtherServices();     // 启动其他服务
 
 这里会通过startService方法来进行AMS的注册和启动过程。我们看一下具体的ActivityManagerService中的startService方法
 
+#### startService
+
 ```java
 //    
 	public static ActivityManagerService startService(SystemServiceManager ssm, ActivityTaskManagerService atm) {
             sAtm = atm;
-            //启动AMS
+            //调用SM的startService方法。创建AMS实例，并启动AMS
             return ssm.startService(ActivityManagerService.Lifecycle.class).getService();
         }
 ```
@@ -93,12 +95,12 @@ startOtherServices();     // 启动其他服务
         // Register it.
         //注册到ServiceManager列表中
         mServices.add(service);
-        //启动服务
+        //调用服务对应的onStart方法
         service.onStart();
     }
 ```
 
-在启动AMS的时候传入的参数是：**ActivityManagerService.Lifecycle.class**
+在启动AMS的时候传入的参数是：**ActivityManagerService.Lifecycle.class**。所以这里实际上会调用**ActivityManagerService.Lifecycle** 的构造方法，然后调用它的onStart方法
 
 ```java
    public static final class Lifecycle extends SystemService {
@@ -110,7 +112,7 @@ startOtherServices();     // 启动其他服务
         }
         @Override
         public void onStart() {
-            //调用ATMS的start方法
+            //调用AMS的start方法
             mService.start();
         }
 
@@ -123,7 +125,7 @@ startOtherServices();     // 启动其他服务
 
 在Lifecycle对象的创建过程中，会创建AMS对象，然后通过start()方法进行了启动。
 
-#### AMS的创建
+##### AMS的创建
 
 对于AMS对象的创建是通过构造函数来创建的。
 
@@ -174,7 +176,7 @@ startOtherServices();     // 启动其他服务
 
 在AMS的构造函数中进行了一些初始化的东西：比如说**启动CPU监控、启动进程统计服务、启动低内存监控、初始化Service和ContentProvider对应的保存类**等等。
 
-#### start()
+##### start()
 
 当AMS类创建完成之后，会调用start()方法。
 
@@ -368,17 +370,28 @@ startOtherServices();     // 启动其他服务
 
 该功能主要是进行桌面程序的启动，和AMS的启动流程关联不大，在这里不再详细进行解析。
 
-### 知识点：
+### 总结：
 
 * AMS是在SystemServer进程中进行创建并启动的
-* 在AMS的服务启动过程中，通过构造函数进行了一些对象的创建和初始化工作（初Activity外其他3大组件的挂你和调度对象的创建；内存、电池、权限、CPU等的监控等等相关对象的创建），并且通过start()方法启动服务（移除进程组、启动CPU线程、全县注册、电池服务等等）。
+* 在AMS的服务启动过程中，通过构造函数进行了一些对象的创建和初始化工作（初Activity外其他3大组件的列表和调度对象的创建；内存、电池、权限、CPU等的监控等等相关对象的创建），并且通过start()方法启动服务（移除进程组、启动CPU线程、权限注册、电池服务等等）。
 * AMS创建并将对应服务启动之后，会通过setSystemProcess方法，将framework-res.apk的信息加入到SystemServer进程的LoadedApk中，并创建了SystemServer进程的ProcessRecord，加入到了mPidsSelfLocked，交给AMS来统一管理
 * AMS启动之后的后续工作，主要调用systemReady()和传入的goingCallBack来执行。主要是各种服务或者进程，等AMS启动完成后需要进一步完成的工作以及系统相关的初始化。
 * 桌面应用是在systemReady()方法中启动，systemUI是在goingCallback中完成。
 * 当桌面应用启动完成以后，发送开机广播ACTION_BOOT_COMPLETED。
 
-
+### 参考
 
 https://blog.csdn.net/weixin_34037173/article/details/88003374
 
 https://www.cnblogs.com/fanglongxiang/p/13594986.html
+
+
+
+
+
+源码解析项目地址：https://github.com/kailaisi/android-29-framwork
+
+
+
+> 同步公众号[开了肯]
+
