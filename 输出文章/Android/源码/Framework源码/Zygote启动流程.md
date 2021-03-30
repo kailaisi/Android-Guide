@@ -1,5 +1,3 @@
-系统服务相关知识
-
 ### 对zygote的理解
 
 在Android系统中，zygote是一个native进程，是所有应用进程的父进程。而zygote则是Linux系统用户空间的第一个进程——init进程，通过fork的方式创建并启动的。
@@ -160,5 +158,3 @@ https://blog.csdn.net/chz429/article/details/87514718
 源码解析项目地址：https://github.com/kailaisi/android-29-framwork
 
 > 同步公众号[开了肯]
-
-![image-20200404120045271](http://cdn.qiniu.kailaisii.com/typora/20200404120045-194693.png)

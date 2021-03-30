@@ -477,16 +477,12 @@ static sp<ISurfaceComposerClient> initClient(const sp<Client>& client) {
 
 类功能总结：
 
-* SurfaceControl用来存储Surface对象，关联Java层和Native曾
+* SurfaceControl用来存储Surface对象，关联Java层和Native层
 * SurfaceSession用来创建SurfaceComposerClient，并利用binder和SurfaceFlinger建立连接
 * SurfaceFling是一个独立的进程，靠Client来管理每个app的Surface。
 * 一个app只有一个Client，一个Client可以通过Binder管理多个Layer，Layer在创建时会构造一个IGraphicBufferProducer对象。
 * GraphicBufferProducer对象是用来申请Buffer进行绘制的
 * SurfaceSession实际上的具体实现类是WindowSurfaceSession，会被保存到WidowState类中。
-
-
-
-
 
 
 
