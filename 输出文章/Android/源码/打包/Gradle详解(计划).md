@@ -109,7 +109,9 @@ Project中的API比较多，我们将其分为6类来讲解，分别为：
 * file相关api：操作当前project下的文件的能力
 * 其他api：
 
-project相关api：
+**project相关api：**
+
+获取所有project：
 
 ```groovy
 //获取所有的project
@@ -131,7 +133,45 @@ def getProjects(){
 }
 ```
 
+配置固定project：
 
+```groovy
+//在父工程中找到名字为app的子工程，然后对其进行配置
+project("app"){p->
+    println p.name
+    apply plugin:'com.android.application'
+    group 'com.kailaisi'
+    version '1.0.0-release'
+    dependencies {
+        //增加依赖
+    }
+    android{
+        //android的一些配置
+    }
+}
+
+```
+
+配置所有的project：
+
+```groovy
+//配置当前节点工程和其所有的subproject的所有project
+allprojects{
+    apply plugin:'com.android.application'
+    group 'com.kailaisi'
+}
+
+//不包括当前节点工程，只包括它的subproject
+subprojects {Project project->
+    //只有lib才上传maven
+    if (project.plugins.hasPlugin('com.android.library')) {
+        apply from: '../publishToMaven.gradle'
+    }
+}
+
+```
+
+**属性API**
 
 * Project类核心作用
 * 核心API讲解
