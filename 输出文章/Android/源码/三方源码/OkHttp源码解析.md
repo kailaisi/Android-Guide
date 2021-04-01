@@ -323,3 +323,7 @@ public Response proceed(Request request, StreamAllocation streamAllocation, Http
 ![image-20201230115306957](http://cdn.qiniu.kailaisii.com/typora/202012/30/115307-637101.png)
 
 到此，我们的Okhttp的源码解析结束了。。
+
+简体版本执行过程：
+
+![image-20210327152553415](http://cdn.qiniu.kailaisii.com/typora/20210327152554-891583.png)
