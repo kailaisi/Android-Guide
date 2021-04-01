@@ -171,11 +171,16 @@ subprojects {Project project->
 
 ```
 
-**属性API**
+#### **属性API**
 
-在Gradle中，我们可以通过在每个build中去定义属性，或者扩展属性来使用
+对于自定义属性，有多种方案：
+
+##### gradle文件新增
+
+* 在Gradle中，我们可以通过在每个build中去定义属性，或者扩展属性来使用。
 
 ```groovy
+//在子工程中定义
 def compileVersion=25
 def androidAppcompatVersion='androidx.appcompat:appcompat:1.1.0'
 //可以自定义扩展属性
@@ -188,6 +193,97 @@ android {
     buildToolsVersion this.buildVersion
 ...
 ```
+
+如果每个工程都定义版本号的话，会很麻烦，所以可以通过project相关的api来实现。
+
+* 在根工程中，通过subproject来实现。
+
+```groovy
+subprojects{
+    ext{
+        compileVersion=29
+    }
+}
+```
+
+上述方式，其实从本质上，是为每个project都增加了一个变量。
+
+* 只在根工程中，只定义一遍自定义属性
+
+```groovy
+ext {
+    compileVersion=29
+}
+```
+
+* 最佳方案：
+
+如果在根工程中有特别多自定义属性的话，可能会看起来比较繁琐，我们可以通过引入gradle文件的方式，将所有的配置属性，都在自定义的gradle一种来实现。
+
+```groovy
+//common.gradle文件
+ext {
+    android=[
+            minSdkVersion :16,
+            targetSdkVersion : 19,
+            compileSdkVersion : 27  
+    ]
+}
+//根工程中配置
+apply from: this.file('common.gradle')
+
+```
+
+##### gradle.properties新增
+
+对于自定义属性，我们可以在properties中进行定义
+
+```properties
+isLoadTest=false
+```
+
+这样，我们就可以配置是否加载对应的工程了。
+
+```groovy
+//setting.gradle
+include ':app'
+if (hasProperty('isLoadTest')?isLoadTest.toBoolean():false){
+    include ':myapplication'
+}
+```
+
+这种方式在模块化开发中会用到，来将我们的对应module配置为主工程或者library。
+
+#### 文件api
+
+重点是如何在project下如何对文件进行操纵
+
+##### 路径获取
+
+对于文件的路径获取，一般是获取当前工程的路径，主要包括如下3个方法
+
+```groovy
+
+//获取根工程路径
+println  getRootDir().absolutePath
+//获取build file路径
+println getBuildDir().absolutePath
+//获取当前工程的路径
+println getProjectDir().absolutePath
+
+```
+
+
+
+##### 文件操作
+
+* 文件定位
+* 文件拷贝
+* 文件树遍历
+
+
+
+
 
 
 
