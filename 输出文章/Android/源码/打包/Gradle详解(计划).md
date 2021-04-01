@@ -173,6 +173,24 @@ subprojects {Project project->
 
 **属性API**
 
+在Gradle中，我们可以通过在每个build中去定义属性，或者扩展属性来使用
+
+```groovy
+def compileVersion=25
+def androidAppcompatVersion='androidx.appcompat:appcompat:1.1.0'
+//可以自定义扩展属性
+ext{
+    buildVersion="29.0.3"
+}
+android {
+    compileSdkVersion compileVersion
+    //自定义属性，使用this来引用
+    buildToolsVersion this.buildVersion
+...
+```
+
+
+
 * Project类核心作用
 * 核心API讲解
 * Gradle生命周期流程
