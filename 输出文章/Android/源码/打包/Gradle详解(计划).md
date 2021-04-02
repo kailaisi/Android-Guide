@@ -273,17 +273,166 @@ println getProjectDir().absolutePath
 
 ```
 
-
-
 ##### 文件操作
 
+在gradle中，我们经常需要进行文件的操作，比如打包后**移动文件的位置**等等，
+
 * 文件定位
+
+一个最常见的文件定位就是file方法
+
+```groovy
+println getContent("local.properties")
+def getContent(String path) {
+    try {
+        //file会相对于当前project来查找文件，还有一个相似的files方法，能够批量查询文件
+        def file = file(path)
+        return "打印文件${path}数据：${file.text}"
+    } catch (GradleException e) {
+        println "file not find"
+    }
+    return null
+}
+```
+
 * 文件拷贝
+
+gradle对于文件的拷贝，有更加简便的拷贝方式
+
+```groovy
+copy{
+    from file('build/outputs/apk')
+    into getRootProject().getBuildDir().absolutePath+"/apk"
+    exclude{}//排除不拷贝的数据
+    rename{}//进行重命名
+}
+```
+
 * 文件树遍历
 
+```groovy
+//对文件树进行遍历
+fileTree("build/outputs/apk"){FileTree files->//将文件夹映射为一个文件树
+    files.visit {FileTreeElement element->
+        println "the file name is ${element.name}"
+        copy{
+            from element.file
+            into getRootProject().getBuildDir().path+'/test/'
+        }
+    }
+}
+```
+
+**注意：gradle中提供文件的定位、拷贝等操作，都只能在本根工程目录下操作，如果操作的范围超过了这个的话，就只能通过groovy的文件操作方式来进行处理了**。
+
+#### 其他api
+
+主要包括2个部分
+
+##### 依赖相关api
+
+是和依赖相关的api，即我们的project是如何管理工程中的依赖的。
+
+工程的相关配置信息，我们可以在**project.java**类中查看，类中所有的非get方法都是用来进行配置的，可以看到，主要是有两个
+
+```java
+//Project.java
+	/**
+     *配置依赖关系
+     */
+    void dependencies(Closure configureClosure);
+
+	/**
+     * 为工程配置编译脚本，闭包的入参是ScriptHandler
+     */
+    void buildscript(Closure configureClosure);
+```
+
+首先看看buildscript方法。
+
+```groovy
+//ScriptHandler.java
+    /**
+     * 配置仓库，闭包参数是RepositoryHandler
+     */
+    void repositories(Closure configureClosure);
 
 
+    /**
+     * 为script位置依赖，闭包入参是DependencyHandler
+     */
+    void dependencies(Closure configureClosure);
+```
 
+我们看下对于buildscript的配置
+
+```groovy
+buildscript { ScriptHandler scriptHandler->
+    ext.kotlin_version = "1.3.72"
+    //配置工程的仓库地址
+    scriptHandler.repositories {
+    }
+    //配置工程的插件依赖地址
+    scriptHandler.dependencies {
+        classpath "com.android.tools.build:gradle:4.0.0"
+    }
+}
+```
+
+首先我们看看repositories这个闭包，闭包参数是RepositoryHandler类
+
+可配置的信息。
+
+![image-20210402103536607](http://cdn.qiniu.kailaisii.com/typora/202104/02/103540-289166.png)
+
+所以一般配置如下：
+
+```groovy
+    //配置工程的仓库地址
+    scriptHandler.repositories {RepositoryHandler handler->
+        handler.maven {
+            name 'personal'//设置名称
+            url "http://localhost:8081/nexus/repository"//对应的地址
+            credentials{//配置使用的帐号密码（如果有的话）
+                username='admin'
+                password='123456'
+            }
+        }
+        handler.mavenCentral()
+        handler.mavenLocal()
+    }
+```
+
+我们再看一下dependencies这个，这个类主要配置的是**gradle本身的对于第三方的依赖**
+
+```groovy
+    //配置工程的插件依赖地址
+    scriptHandler.dependencies {
+        classpath "com.android.tools.build:gradle:4.0.0"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+```
+
+在我们的子项目中，也是有dependencise的，这个代表的是project对于**三方类库的依赖**
+
+```groovy
+dependencies {
+    //AndroidX 版本
+    implementation('com.king.zxing:zxing-lite:2.0.2') {
+        exclude group: 'com.google.zxing', module: 'core' //排除以来
+        transitive false   //禁止依赖传递
+    }
+    implementation 'com.tencent:mmkv-static:1.2.4' {
+        changing true//每次都从服务端获取
+    }
+}
+```
+
+##### 外部命令执行
+
+一些其他的外部命令，比如说Linux中的相关命令，在gradle中如何去执行。
+
+我们那之前的依赖api只能对于当前工程中进行操作，如果需要跟系统或者外部的工具进行交流时用的时候，就需要用到外部命令来处理。
 
 
 
