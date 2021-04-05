@@ -434,16 +434,131 @@ dependencies {
 
 我们那之前的依赖api只能对于当前工程中进行操作，如果需要跟系统或者外部的工具进行交流时用的时候，就需要用到外部命令来处理。
 
-
-
-* Project类核心作用
-* 核心API讲解
-* Gradle生命周期流程
-
 #### Gradle核心Task详解及实战
 
-* Task定义和使用，Task执行流程
-* 依赖关系和输入输出，Task继承和实现
+##### Task定义和配置
+
+对于task的定义的方式主要有两种方式
+
+```groovy
+//直接通过task函数去创建
+task helloTask{
+    println "this is helloTask"
+}
+//通过容器TaskContainer的方式去创建
+this.tasks.create("helloTask2"){
+    println "this is helloTask2"
+}
+
+```
+
+而如果我们想要将task的group和描述信息进行配置，主要方式也是两种
+
+```groovy
+//直接通过task函数去创建，在构造函数中进行配置
+task helloTask(group: 'kai',description: 'task study'){
+    println "this is helloTask"
+}
+//通过容器TaskContainer的方式去创建
+this.tasks.create("helloTask2"){
+    //通过设置属性来配置group分组和描述信息
+    setGroup('kai')
+    setDescription('task study')
+    println "this is helloTask2"
+}
+
+```
+
+其中，当设置同一个group的时候，gradle会将task配置到同一个组下面，而description则表示任务的描述信息。如上图的配置代码，在gradle中生成的任务信息如下：
+
+![image-20210405221745637](http://cdn.qiniu.kailaisii.com/typora/20210405221745-808181.png)
+
+##### Task执行详解
+
+对于上面的代码，我们会发现不管我们执行哪个指令，我们helloTask和helloTask2中的打印代码都会执行，这是因为gradle的整过过程分为：初始化、配置和执行三个阶段。而Task的代码段是在配置阶段都会运行的。如果我们想要在执行阶段才去打印输出，则需要通过**doFirst**或者**doLast**来配置。
+
+```groovy
+//直接通过task函数去创建
+task helloTask(group: 'kai',description: 'task study'){
+    println "this is helloTask"
+    doFirst {//在task内部设置
+        println "the task group is :$group"
+    }
+}
+helloTask.doFirst {//在task外部进行配置，该配置会优先于内部设置执行
+    println "the task description is :$description"
+}
+```
+
+我们可以看一下任务输出：
+
+![image-20210405223030146](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210405223030146.png)
+
+**doFirst会在默认的gradle的默认的Task之前执行，可以用来为默认Task进行一些准备工作。而doLast则会在默认的Task之后执行，可以用来执行一些收尾的工作。**
+
+我们这里增加一个小的实战，用于统计build的整个执行时间:
+
+![image-20210405224311748](http://cdn.qiniu.kailaisii.com/typora/20210405224313-130989.png)
+
+当我们执行任何一个task的时候，通过这个地方可以看到，preBuild是配置完成之后，执行的第一个task方法。
+
+```groovy
+//计算build执行时长
+def startBuildTime,endBuildTime
+this.afterEvaluate {//配置阶段执行之后，执行阶段执行之前
+    //保证要找的task已经配置完毕
+    def preBuildTask=tasks.findByName('preBuild')
+    preBuildTask.doFirst {
+        startBuildTime=System.currentTimeMillis()
+        println "start time is :${startBuildTime}"
+    }
+
+    def buildTask=tasks.findByName("build")
+    buildTask.doLast {
+        endBuildTime=System.currentTimeMillis()
+        println "the build  time is ${endBuildTime-startBuildTime}"
+    }
+}
+```
+
+对于gradle的整个build时间还是比较长的，中间各个任务也特别多。我们可以通过可视化的方式来查看整个执行流程的各个任务。
+
+具体的方式可以参考[Android项目中的Gradle Task流程可视化](https://blog.csdn.net/weixin_34235105/article/details/90619141)
+
+##### Task执行顺序
+
+我们可以通过一定的方式来调整Task的执行顺序，主要方式有如下三种：
+
+* dependsOn强依赖方式
+* 通过Task输入输出执行
+* 通过API执行执行顺序
+
+最简单的一种方式就是通过dependsOn方式来添加依赖了
+
+```groovy
+//依赖关系
+task taskX{
+    doLast {
+        println 'taskX'
+    }
+}
+task taskY{
+    doLast {
+        println 'taskY'
+    }
+}
+task taskZ(dependsOn:[taskX,taskY]){
+    doLast {
+        println 'taskZ'
+    }
+}
+
+```
+
+在该测试代码中，**taskZ是依赖于taskX和taskY的，所以当我们执行taskZ的时候，会先执行taskX和taskY任务，然后才会执行taskZ任务**。
+
+* 依赖关系和执行顺序
+* Task类型
 * Task修改默认构建流程，Task源码解读
 * 实战：自动化生成版本说明xml文档
 * 实战：自动化实现工程插件更新功能
