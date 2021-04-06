@@ -557,6 +557,93 @@ task taskZ(dependsOn:[taskX,taskY]){
 
 在该测试代码中，**taskZ是依赖于taskX和taskY的，所以当我们执行taskZ的时候，会先执行taskX和taskY任务，然后才会执行taskZ任务**。
 
+但是有时候我们我们定义Task的时候，并不知道要依赖的具体的任务是什么，只知道其满足一定的条件。那么这时候就需要通过其他方式来定义依赖关系了：
+
+```groovy
+task lib1 << {
+    println 'lib1'
+}
+task lib2 << {
+    println 'lib2'
+}
+
+task noLib<<{
+    println 'nolib'
+}
+
+task taskZ(){
+    //需要根据配置信息，依赖于所有以lib开头的task任务
+    dependsOn this.tasks.findAll {
+        return this.name.startsWith('lib')
+    }
+}
+
+```
+
+##### Task输入输出
+
+Task任务可以有对应的输入以及输出。有时候，我们需要通过输入输出来将两个任务关联起来。
+
+![image-20210406135528517](/Users/jj/Library/Application Support/typora-user-images/image-20210406135528517.png)
+
+对于Task的输入，可以是多种类型；而输出只能是File类型。我们可以在Task中通过指定某个为输入，或者输出。那么这时候，以该文件为输入的任务会优先于以该文件为输出的任务执行。
+
+```groovy
+
+ext {
+    desFile = file('release.xml')
+    if (desFile == null || !desFile.exists()) {
+        desFile.createNewFile()
+    }
+}
+
+task writeTask {
+    //desFile作为Task的输出
+    outputs.file this.desFile
+    doLast {
+        def data = inputs.getProperties()
+      	...
+    }
+}
+
+task readTask{
+    //将desFile作为输入文件
+    inputs.file desFile
+    doLast{
+        def file=inputs.files.singleFile
+        println file.text
+    }
+}
+```
+
+如上的两个任务：**desFile是writeTask的输出，是readTask的输入。那么这时候，writeTask会先执行，readTask会后执行。**
+
+##### 执行指定顺序
+
+除了依赖、输入输出方式来制定执行顺序之外，我们还可以通过**mustRunAfter**来指定某个task必须在另一个task执行完之后再执行。
+
+```groovy
+task taskX{
+    doLast{
+        println "taskX"
+    }
+}
+task taskY{
+    mustRunAfter taskX
+    doLast{
+        println "taskY"
+    }
+}
+task taskZ{
+    mustRunAfter taskY
+    doLast{
+        println "taskZ"
+    }
+}
+```
+
+
+
 * 依赖关系和执行顺序
 * Task类型
 * Task修改默认构建流程，Task源码解读
@@ -585,5 +672,5 @@ task taskZ(dependsOn:[taskX,taskY]){
 
 
 
-
+官方文档：https://docs.gradle.org/current/dsl/
 
