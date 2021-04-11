@@ -16,13 +16,6 @@
 
 #### 高并发
 
-### Kotlin系列
-
-* Kotlin 实战（已完成，待记录）
-* **[慕课网之Kotlin从入门到精通](https://coding.imooc.com/class/chapter/398.html#Anchor)**（进行中）
-* [kotlin+Jetpack实战【从0开发菜鸟窝在线教育APP】]()
-* [kotlin开发AI语音助手APP]()
-
 ### 数据结构
 
 * 邓俊辉《数据结构》上、下
@@ -92,6 +85,13 @@
 * Flutter移动电商实战(已完成)
 * [实战携程网App](https://coding.imooc.com/class/321.html)
 * BiliBili实战
+
+### Kotlin系列
+
+* Kotlin 实战（已完成，待记录）
+* **[慕课网之Kotlin从入门到精通](https://coding.imooc.com/class/chapter/398.html#Anchor)**（进行中）
+* [kotlin+Jetpack实战【从0开发菜鸟窝在线教育APP】]()
+* [kotlin开发AI语音助手APP]()
 
 ### 组件化、插件化
 
