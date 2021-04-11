@@ -37,7 +37,7 @@
 * **Android开发艺术探索**
 * **Android进阶解密**
 * **Android编程从程序员到架构师的高手之路-高焕堂Sundy**
-* [Android高级进阶技术180讲](https://www.cniao5.com/course/10285)
+* **[Android高级进阶技术180讲，强烈推荐](https://www.cniao5.com/course/10285)**
 
 ### 优秀三方库（完成）
 
@@ -54,8 +54,10 @@
 * **[剖析Framework面试 冲击Android高级职位](https://coding.imooc.com/class/340.html)（待整理）**
 * 深入理解安卓内核思想
 * [带你破解Android高级面试](https://coding.imooc.com/class/chapter/317.html#Anchor)
-* [Gradle3.0自动化项目构建技术精讲+实战](https://coding.imooc.com/class/chapter/206.html#Anchor)
-* [Gradle系列之从零搭建Maven私服库](https://juejin.cn/post/6844903939658219527)
+* 构建体系
+  * [Gradle3.0自动化项目构建技术精讲+实战](https://coding.imooc.com/class/chapter/206.html#Anchor)（已完成，待整理）
+  * [Gradle系列之从零搭建Maven私服库](https://juejin.cn/post/6844903939658219527)
+  * Android 应用程序构建实战+原理精讲
 
 ### 架构技能
 
@@ -72,7 +74,7 @@
 
 [爱哥自定义View系列](https://blog.csdn.net/aigestudio)
 
-[高级UI专题](https://www.cniao5.com/course/10289#tab_3)
+[菜鸟窝：高级UI专题](https://www.cniao5.com/course/10289#tab_3)
 
 ### 实战篇
 
