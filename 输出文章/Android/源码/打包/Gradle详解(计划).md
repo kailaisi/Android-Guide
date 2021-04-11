@@ -557,13 +557,132 @@ task taskZ(dependsOn:[taskX,taskY]){
 
 在该测试代码中，**taskZ是依赖于taskX和taskY的，所以当我们执行taskZ的时候，会先执行taskX和taskY任务，然后才会执行taskZ任务**。
 
-* 依赖关系和执行顺序
-* Task类型
-* Task修改默认构建流程，Task源码解读
-* 实战：自动化生成版本说明xml文档
-* 实战：自动化实现工程插件更新功能
+但是有时候我们我们定义Task的时候，并不知道要依赖的具体的任务是什么，只知道其满足一定的条件。那么这时候就需要通过其他方式来定义依赖关系了：
+
+```groovy
+task lib1 << {
+    println 'lib1'
+}
+task lib2 << {
+    println 'lib2'
+}
+
+task noLib<<{
+    println 'nolib'
+}
+
+task taskZ(){
+    //需要根据配置信息，依赖于所有以lib开头的task任务
+    dependsOn this.tasks.findAll {
+        return this.name.startsWith('lib')
+    }
+}
+
+```
+
+##### Task输入输出
+
+Task任务可以有对应的输入以及输出。有时候，我们需要通过输入输出来将两个任务关联起来。
+
+![image-20210406135528517](/Users/jj/Library/Application Support/typora-user-images/image-20210406135528517.png)
+
+对于Task的输入，可以是多种类型；而输出只能是File类型。我们可以在Task中通过指定某个为输入，或者输出。那么这时候，以该文件为输入的任务会优先于以该文件为输出的任务执行。
+
+```groovy
+
+ext {
+    desFile = file('release.xml')
+    if (desFile == null || !desFile.exists()) {
+        desFile.createNewFile()
+    }
+}
+
+task writeTask {
+    //desFile作为Task的输出
+    outputs.file this.desFile
+    doLast {
+        def data = inputs.getProperties()
+      	...
+    }
+}
+
+task readTask{
+    //将desFile作为输入文件
+    inputs.file desFile
+    doLast{
+        def file=inputs.files.singleFile
+        println file.text
+    }
+}
+```
+
+如上的两个任务：**desFile是writeTask的输出，是readTask的输入。那么这时候，writeTask会先执行，readTask会后执行。**
+
+##### 执行指定顺序
+
+除了依赖、输入输出方式来制定执行顺序之外，我们还可以通过**mustRunAfter**来指定某个task必须在另一个task执行完之后再执行。
+
+```groovy
+task taskX{
+    doLast{
+        println "taskX"
+    }
+}
+task taskY{
+    mustRunAfter taskX
+    doLast{
+        println "taskY"
+    }
+}
+task taskZ{
+    mustRunAfter taskY
+    doLast{
+        println "taskZ"
+    }
+}
+```
+
+
 
 #### Gradle核心之其他模块详解及实战
+
+##### Settings类
+
+Settings类的核心作用是告诉gradle哪些工程是需要进行处理的。而Settings这个类，是通过工程中的setting.gradle来进行初始化的。而且项目的初始化阶段，就是创建并执行settinigs类
+
+##### SourceSet类
+
+为什么gradle知道要从我们的java文件夹中去获取我们的类，并且知道从res文件夹获取对应的资源文件？其实主要靠的就是SourceSet类。
+
+**SourceSet类管理我们的资源和类的存放位置。**
+
+###### 案例
+
+1. 比如说，我们在AS中，默认的so库所对应的位置应该是jniLibs文件夹下，如果想将so文件放在libs文件夹下，那么就需要修改默认的位置信息。配置如下：
+
+```groovy
+    //配置对应的资源文件位置
+    sourceSets {
+        //配置main下面的jni所对应的文件夹
+        main {
+            //配置对应jniLib对应的目录为libs文件夹
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+```
+
+2. 另一个，我们的Java类在工程中，是可以放在多个文件夹下面的，但是对于资源文件则只能在res文件夹下，如果我们也想要按照功能来区分资源文件，那么就需要修改默认的资源文件配置信息。配置如下：
+
+```groovy
+    sourceSets{
+        main{
+            //设置多个res资源文件
+            res.srcDirs=['src/main/res','src/main/res-player']
+        }
+    }
+```
+
+设置完成之后，则res-player也会成为我们的资源文件夹	
 
 * 第三方依赖管理及gradle如何去处理依赖原理讲解
 * 工程初始化核心类Setting类作用及自定义
@@ -571,6 +690,50 @@ task taskZ(dependsOn:[taskX,taskY]){
 
 #### Gradle核心之自定义Plugin实战
 
+plugin的功能是将在gradle中的Task，抽取成为一个插件，所有使用插件的project，都可以调用对应的Task
+
+自定义包括如下几个：
+
+* buildSrc的工程：该工程名会被当作一个plugin工程。
+* 自定义实体：用于将project中的信息传到plugin中
+* 自定义plugin类：该类用于进行插件的处理
+* properties文件：定义对应的插件名称，第三方project引入插件时需要用到。
+
+具体的我们可以看下具体的截图
+
+![image-20210408152913780](/Users/jj/Library/Application Support/typora-user-images/image-20210408152913780.png)
+
+对应的文件如下：
+
+```groovy
+/**
+ * 定义的实体类
+ */
+class ReleaseInoExtension{
+    String releaseName
+    String releaseVersion
+    String releaseInfo
+}
+
+
+class ReleaseNotePlugin  implements Plugin<Project> {
+
+    @Override
+    void apply(Project project) {
+        //通过这句话，就可以将外部的releaseInfo这个闭包转化为ReleaseInfoExtension实体
+        project.extensions.create("releaseInfo",ReleaseInfoExtension )
+    }
+}
+```
+
+
+
+
+
+
+
+* 
+* 
 * 插件类Plugin的定义及如何使用第三方插件
 * Gradle如何管理插件的依赖
 * 插件类Plugin源码解读
@@ -585,5 +748,5 @@ task taskZ(dependsOn:[taskX,taskY]){
 
 
 
-
+官方文档：https://docs.gradle.org/current/dsl/
 
