@@ -50,3 +50,34 @@ IDE推荐：VSCode
 #### 工程运行
 
 * 通过命令：flutter run
+
+#### 常用的控件
+
+`**Flutter**`中拥有30多种预定义的布局`widget`，常用的有**`Container`**、**`Padding`**、**`Center`**、**`Flex`**、**`Row`**、**`Colum`**、**`ListView`**、**`GridView`**。按照《**Flutter技术入门与实战**》上面来说的话，大概分为四类
+
+- **基础布局组件**：**Container**(容器布局)，**Center**(居中布局)，**Padding**(填充布局)，**Align**(对齐布局)，**Colum**（垂直布局），**Row**（水平布局），**Expanded**（配合Colum，Row使用），**FittedBox**（缩放布局），**Stack**（堆叠布局），**overflowBox**(溢出父视图容器)。
+- **宽高尺寸处理**：**SizedBox**（设置具体尺寸），**ConstrainedBox**（限定最大最小宽高布局），**LimitedBox**（限定最大宽高布局），**AspectRatio**（调整宽高比），**FractionallySizedBox**（百分比布局）
+- **列表和表格处理**：**ListView**（列表），**GridView**（网格），**Table**（表格）
+- **其它布局处理**：Transform（矩阵转换），Baseline（基准线布局），Offstage（控制是否显示组件），Wrap（按宽高自动换行布局）
+
+三方：https://pub.dev/packages
+
+
+
+#### 参考：
+
+[贾鹏辉技术博客](https://www.devio.org/tags/#Flutter)
+
+[Flutter中文网](https://flutterchina.club/tutorials/layout/#approach)
+
+[Flutter开发者文档](https://flutter.cn/docs/get-started/install/windows)
+
+[Flutter实战](https://book.flutterchina.club/chapter2/first_flutter_app.html)
+
+[闲鱼Flutter系列](https://www.yuque.com/xytech/flutter)
+
+[Dart Flutter入门实战视频教程](https://www.bilibili.com/video/BV1S4411E7LY?p=31&t=1842)
+
+https://github.com/CarGuo/gsy_flutter_book
+
+[实战携程网App](https://coding.imooc.com/class/321.html)
