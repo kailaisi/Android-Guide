@@ -16,13 +16,6 @@
 
 #### 高并发
 
-### Kotlin系列
-
-* Kotlin 实战（已完成，待记录）
-* **[慕课网之Kotlin从入门到精通](https://coding.imooc.com/class/chapter/398.html#Anchor)**（进行中）
-* [kotlin+Jetpack实战【从0开发菜鸟窝在线教育APP】]()
-* [kotlin开发AI语音助手APP]()
-
 ### 数据结构
 
 * 邓俊辉《数据结构》上、下
@@ -37,7 +30,7 @@
 * **Android开发艺术探索**
 * **Android进阶解密**
 * **Android编程从程序员到架构师的高手之路-高焕堂Sundy**
-* [Android高级进阶技术180讲](https://www.cniao5.com/course/10285)
+* **[Android高级进阶技术180讲，强烈推荐](https://www.cniao5.com/course/10285)**
 
 ### 优秀三方库（完成）
 
@@ -54,8 +47,10 @@
 * **[剖析Framework面试 冲击Android高级职位](https://coding.imooc.com/class/340.html)（待整理）**
 * 深入理解安卓内核思想
 * [带你破解Android高级面试](https://coding.imooc.com/class/chapter/317.html#Anchor)
-* [Gradle3.0自动化项目构建技术精讲+实战](https://coding.imooc.com/class/chapter/206.html#Anchor)
-* [Gradle系列之从零搭建Maven私服库](https://juejin.cn/post/6844903939658219527)
+* 构建体系
+  * [Gradle3.0自动化项目构建技术精讲+实战](https://coding.imooc.com/class/chapter/206.html#Anchor)（已完成，待整理）
+  * [Gradle系列之从零搭建Maven私服库](https://juejin.cn/post/6844903939658219527)
+  * Android 应用程序构建实战+原理精讲
 
 ### 架构技能
 
@@ -72,7 +67,7 @@
 
 [爱哥自定义View系列](https://blog.csdn.net/aigestudio)
 
-[高级UI专题](https://www.cniao5.com/course/10289#tab_3)
+[菜鸟窝：高级UI专题](https://www.cniao5.com/course/10289#tab_3)
 
 ### 实战篇
 
@@ -90,6 +85,13 @@
 * Flutter移动电商实战(已完成)
 * [实战携程网App](https://coding.imooc.com/class/321.html)
 * BiliBili实战
+
+### Kotlin系列
+
+* Kotlin 实战（已完成，待记录）
+* **[慕课网之Kotlin从入门到精通](https://coding.imooc.com/class/chapter/398.html#Anchor)**（进行中）
+* [kotlin+Jetpack实战【从0开发菜鸟窝在线教育APP】]()
+* [kotlin开发AI语音助手APP]()
 
 ### 组件化、插件化
 
