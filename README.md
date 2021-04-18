@@ -60,7 +60,7 @@
 * 《Android源码设计模式》
 * 《移动架构》
 * 慕课网之 实战企业级项目 践行App重构之路（完成）
-* 慕课网架构师课程
+* [慕课网架构师课程]()
 * [企业级Android应用架构设计与开发](https://coding.imooc.com/class/chapter/364.html#Anchor)
 
 ### UI体系
