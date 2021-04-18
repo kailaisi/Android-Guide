@@ -14,8 +14,8 @@
   * （升级）[FFmpeg音视频核心技术全面精讲](https://coding.imooc.com/class/279.html)
   * （实战）**[WebRTC实时互动直播技术入门与实战](https://coding.imooc.com/class/329.html)**
   * （架构）[百万级高并发WebRTC流媒体服务器设计与开发](https://coding.imooc.com/class/387.html)
-  * Android音视频开发详解
-  * 从0打造
+  * [Android音视频开发详解]()
+  * [从0打造音视频直播系统]()
 * OpenSL ES
   * [Android音视频开发详解（2、8、9、10章节）]()
   * [计算机图形学OPENGL入门](https://www.bilibili.com/video/BV1px41197A5)
@@ -38,11 +38,7 @@
 
 [FFmpeg音视频核心技术全面精讲](https://coding.imooc.com/class/279.html)
 
-从0打造音视频直播系统
-
-Androidy\
-
-建仓
+#### 建仓
 
 对应自己需要学习的知识体系和所需要阅读的文章、学习的方向总是没有一个重点。所以打算建仓来记录自己的学习历程。
 
