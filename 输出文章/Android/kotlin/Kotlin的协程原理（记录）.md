@@ -35,3 +35,5 @@ suspend fun getUser(name:String)=suspendCoroutine<User>{ continuation->
 * 创建通常需要一个函数：suspend fun 
 * 创建需要API：startCoroutine和createCoroutine
 * 
+
+![kotlin协程进阶](http://cdn.qiniu.kailaisii.com/typora/20210411153704-853332.png)

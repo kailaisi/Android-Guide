@@ -39,7 +39,7 @@
 ### 性能优化方向（进行中）
 
 * [国内Top团队大牛带你玩转Android性能分析与优化](https://coding.imooc.com/class/chapter/308.html#Anchor)
-* [极客时间之Android开发高手课 01-23]
+* [极客时间之Android开发高手课 01-23]()
 
 ### Android架构师必备系列
 
@@ -59,15 +59,17 @@
 * 《设计模式之禅》
 * 《Android源码设计模式》
 * 《移动架构》
-* 慕课网之 实战企业级项目 践行App重构之路（完成）
+* 慕课网之 实战企业级项目 践行App重构之路（已完成）
 * [慕课网架构师课程]()
 * [企业级Android应用架构设计与开发](https://coding.imooc.com/class/chapter/364.html#Anchor)
 
 ### UI体系
 
-[爱哥自定义View系列](https://blog.csdn.net/aigestudio)
+[爱哥自定义View系列](https://blog.csdn.net/aigestudio/category_9263410.html?spm=1001.2014.3001.5482)
 
 [菜鸟窝：高级UI专题](https://www.cniao5.com/course/10289#tab_3)
+
+[【仍物线第五期】11-26章]()
 
 ### 实战篇
 
@@ -84,7 +86,7 @@
 * https://github.com/CarGuo/gsy_flutter_book
 * Flutter移动电商实战(已完成)
 * [实战携程网App](https://coding.imooc.com/class/321.html)
-* BiliBili实战
+* [BiliBili实战]()
 
 ### Kotlin系列
 
