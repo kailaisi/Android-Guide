@@ -176,7 +176,46 @@ public class Hello{
 
 ![image-20210426222834555](http://cdn.qiniu.kailaisii.com/typora/20210426222836-886102.png)
 
-可以看到，在生成的字节码中，是**持有一个其所在的类的变量**，
+可以看到，在生成的字节码中，是**持有一个其所在的类的变量**。
+
+#### JVM运行时区域
+
+![image-20210428214448795](http://cdn.qiniu.kailaisii.com/typora/20210428214449-919067.png)
+
+对于运行时区域，我们一段代码为例进行分析
+
+```java
+public class Hello{
+	public static void main(String[] args){
+		Hello hello=new Hello();
+		hello.say();
+		System.out.println("Hello JVM");
+	}
+
+	public void say(){
+	}
+}
+```
+
+通过反编译之后，看一下main方法的执行：
+
+![image-20210428215738086](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210428215738086.png)
+
+#### 对象结构
+
+对象由三部分组成：**对象头（markword），具体数据，对齐填充**
+
+对象头(Object Header)包括两部分信息，第一部分用于存储对象自身的运行时数据， 如哈希码（HashCode）、GC分代年龄、锁状态标志、线程持有的锁、偏向线程ID、偏向时间戳等等，这部分数据的长度在32位和64位的虚拟机（暂 不考虑开启压缩指针的场景）中分别为32个和64个Bits，官方称它为“Mark Word”。
+
+![image-20210428223204268](http://cdn.qiniu.kailaisii.com/typora/20210428223205-470195.png)
+
+**锁的状态是记录在对象头中的，所以synchronize锁的是对象**
+
+#### 堆分配
+
+![image-20210428224558048](http://cdn.qiniu.kailaisii.com/typora/20210428224600-812561.png)
+
+不同区域不同的回收算法：标记清除（效率低），标记回收，标记整理（老年代），复制算法（新生代）。
 
 #### 参考：
 
