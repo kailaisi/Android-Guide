@@ -152,8 +152,8 @@ private void performTraversals() {
  
 	if (!mStopped) {
 		// ……省略一些代码
- 
-		int childWidthMeasureSpec = getRootMeasureSpec(mWidth, lp.width);
+ 				//限制最大的宽高是我们的屏幕大小。
+				int childWidthMeasureSpec = getRootMeasureSpec(mWidth, lp.width);
         int childHeightMeasureSpec = getRootMeasureSpec(mHeight, lp.height);
  
         // ……省省省
@@ -166,7 +166,7 @@ private void performTraversals() {
 
 ```
 
-在进行绘制之前，会进行root的测量，然后将其传给我们的顶层DectorView来进行处理
+在进行绘制之前，会进行root的测量，然后将其传给我们的顶层DectorView来进行处理。这里的
 
 参考：
 
