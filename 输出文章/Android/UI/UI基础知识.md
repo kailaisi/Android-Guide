@@ -166,7 +166,11 @@ private void performTraversals() {
 
 ```
 
-在进行绘制之前，会进行root的测量，然后将其传给我们的顶层DectorView来进行处理。这里的
+在进行绘制之前，会进行root的测量，然后将其传给我们的顶层DectorView来进行处理。
+
+##### onLayout
+
+onLayout确定子控件的具体的布局。在进行布局的时候，padding数据可以直接在ViewGroup中获取，而对于子控件的margin数据，则需要通过子控件来获取。通过获取对应的layoutparam来进行获取。然后在onLayout的时候，要考虑子控件的margin信息。
 
 参考：
 
