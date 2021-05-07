@@ -172,6 +172,19 @@ private void performTraversals() {
 
 onLayout确定子控件的具体的布局。在进行布局的时候，padding数据可以直接在ViewGroup中获取，而对于子控件的margin数据，则需要通过子控件来获取。通过获取对应的layoutparam来进行获取。然后在onLayout的时候，要考虑子控件的margin信息。
 
+当布局发生变化的时候，如果大小发生变化，则需要**requestLayout()**方法，请求进行重新测量绘制。如果只是字体颜色变化，只需要**invalidate()**即可。
+
+### 自定义篇
+
+##### 继承View
+
+##### 继承ViewGroup
+
+##### 组合控件
+
+* 编写xml文件，将对应的效果进行组合，然后通过Java文件，绘制xml文件并设置相关的信息。
+* 直接通过new来创建子元素，并设置其相关属性（相对于第一种的xml，因为反射比较耗时，所以性能更好，但是不太适合逻辑比较复杂的布局）。
+
 参考：
 
 https://blog.csdn.net/iispring/article/details/50472485
