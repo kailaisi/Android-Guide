@@ -81,6 +81,7 @@
 
 * [Flutter开发者文档](https://flutter.cn/docs/get-started/install/windows)
 * [Flutter实战](https://book.flutterchina.club/chapter2/first_flutter_app.html)
+* [[Flutter核心技术与实战](https://time.geekbang.org/column/intro/200)](https://www.kancloud.cn/alex_wsc/flutter_demo/1570992)
 * [闲鱼Flutter系列](https://www.yuque.com/xytech/flutter)
 * [Dart Flutter入门实战视频教程](https://www.bilibili.com/video/BV1S4411E7LY?p=31&t=1842)
 * https://github.com/CarGuo/gsy_flutter_book
