@@ -25,6 +25,7 @@
   * [learnopengl网站](https://learnopengl-cn.github.io/)
 * JNI-NDK
   * **菜鸟窝  [NDK零基础到项目实战](https://www.cniao5.com/course/10296#tab_2) **
+* https://juejin.cn/post/6959187780329013278
 
 #### 热修复
 
