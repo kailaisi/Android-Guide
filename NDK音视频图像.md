@@ -21,7 +21,7 @@
   * [计算机图形学OPENGL入门](https://www.bilibili.com/video/BV1px41197A5)
   * [OpenGL编程指南]()
   * [大学计算机必修课新讲--编译原理+操作系统+图形学](大学计算机必修课新讲--编译原理+操作系统+图形学)（13-17章节）
-  * [计算机图形学基础（OpenGL版）](https://coding.imooc.com/class/chapter/432.html#Anchor)
+  * [计算机图形学基础（OpenGL版）]()
   * https://juejin.cn/post/6926930540608094222#heading-9
   * [learnopengl网站](https://learnopengl-cn.github.io/)
 * JNI-NDK
