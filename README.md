@@ -65,7 +65,7 @@
 
 ### UI体系
 
-[爱哥自定义View系列](https://blog.csdn.net/aigestudio/category_9263410.html?spm=1001.2014.3001.5482)
+[爱哥自定义View系列](https://blog.csdn.net/aigestudio/category_9263410.html?spm=1001.2014.3001.5482)（已完成）
 
 [菜鸟窝：高级UI专题](https://www.cniao5.com/course/10289#tab_3)
 
