@@ -65,7 +65,7 @@
 
 ### UI体系
 
-[爱哥自定义View系列](https://blog.csdn.net/aigestudio/category_9263410.html?spm=1001.2014.3001.5482)
+[爱哥自定义View系列](https://blog.csdn.net/aigestudio/category_9263410.html?spm=1001.2014.3001.5482)（已完成）
 
 [菜鸟窝：高级UI专题](https://www.cniao5.com/course/10289#tab_3)
 
@@ -81,7 +81,7 @@
 
 * [Flutter开发者文档](https://flutter.cn/docs/get-started/install/windows)
 * [Flutter实战](https://book.flutterchina.club/chapter2/first_flutter_app.html)
-* [Flutter核心技术与实战](https://www.kancloud.cn/alex_wsc/flutter_demo/1570992)
+* [Flutter核心技术与实战](https://www.kancloud.cn/alex_wsc/flutter_demo/1570992)（进行中）
 * [闲鱼Flutter系列](https://www.yuque.com/xytech/flutter)
 * [Dart Flutter入门实战视频教程](https://www.bilibili.com/video/BV1S4411E7LY?p=31&t=1842)
 * https://github.com/CarGuo/gsy_flutter_book
