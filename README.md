@@ -31,6 +31,7 @@
 * **Android进阶解密**
 * **Android编程从程序员到架构师的高手之路-高焕堂Sundy**
 * **[Android高级进阶技术180讲，强烈推荐](https://www.cniao5.com/course/10285)**
+* [谷歌官网](https://developer.android.google.cn/topic/libraries/architecture/paging/v3-paged-data?hl=zh-cn)
 
 ### 优秀三方库（完成）
 
@@ -49,7 +50,7 @@
 * [带你破解Android高级面试](https://coding.imooc.com/class/chapter/317.html#Anchor)
 * 构建体系
   * [Gradle3.0自动化项目构建技术精讲+实战](https://coding.imooc.com/class/chapter/206.html#Anchor)（已完成，待整理）
-  * [Gradle系列之从零搭建Maven私服库](https://juejin.cn/post/6844903939658219527)
+  * [Gradle系列之从零搭建Maven私服库](https://juejin.cn/post/6844903939658219527)（已完成）
   * Android 应用程序构建实战+原理精讲
 
 ### 架构技能
@@ -60,7 +61,7 @@
 * 《Android源码设计模式》
 * 《移动架构》
 * 慕课网之 实战企业级项目 践行App重构之路（已完成）
-* [慕课网架构师课程]()
+* [慕课网架构师课程](进行中)
 * [企业级Android应用架构设计与开发](https://coding.imooc.com/class/chapter/364.html#Anchor)
 
 ### UI体系
@@ -81,7 +82,7 @@
 
 * [Flutter开发者文档](https://flutter.cn/docs/get-started/install/windows)
 * [Flutter实战](https://book.flutterchina.club/chapter2/first_flutter_app.html)
-* [Flutter核心技术与实战](https://www.kancloud.cn/alex_wsc/flutter_demo/1570992)（进行中）
+* [Flutter核心技术与实战](https://www.kancloud.cn/alex_wsc/flutter_demo/1570992)（已完成）
 * [闲鱼Flutter系列](https://www.yuque.com/xytech/flutter)
 * [Dart Flutter入门实战视频教程](https://www.bilibili.com/video/BV1S4411E7LY?p=31&t=1842)
 * https://github.com/CarGuo/gsy_flutter_book
@@ -99,12 +100,18 @@
 ### 组件化、插件化
 
 * 优秀项目：https://github.com/winlee28/Jetpack-WanAndroid.git
-
 * 组件化专项问题：https://www.jianshu.com/p/d0f5cf304fa4
-
 * 组件化项目研究：https://github.com/1170762202/WanAndroid.git
-
 * 仍物线五期组件化详解。
+
+### Compose
+
+* [谷歌官网-中文](https://developer.android.google.cn/jetpack/compose/tutorial?hl=zh_cn)
+* 仍物线介绍：(https://www.sohu.com/a/433487805_611601>https://ke.qq.com/course/3102992?taid=10361930727250192)
+* [官网demo](https://github.com/android/compose-samples)
+* [官网简介]
+  * https://zhuanlan.zhihu.com/p/267250784
+  * https://www.jianshu.com/p/ffc2745c5e71
 
 ### 软技能(进行中)
 
