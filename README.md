@@ -61,7 +61,7 @@
 * 《Android源码设计模式》
 * 《移动架构》
 * 慕课网之 实战企业级项目 践行App重构之路（已完成）
-* [慕课网架构师课程](进行中)
+* [慕课网架构师课程]()(进行中)
 * [企业级Android应用架构设计与开发](https://coding.imooc.com/class/chapter/364.html#Anchor)
 
 ### UI体系
@@ -93,7 +93,7 @@
 ### Kotlin系列
 
 * Kotlin 实战（已完成，待记录）
-* **[慕课网之Kotlin从入门到精通](https://coding.imooc.com/class/chapter/398.html#Anchor)**（进行中）
+* **[慕课网之Kotlin从入门到精通：强烈推荐](https://coding.imooc.com/class/chapter/398.html#Anchor)**（不断）
 * [kotlin+Jetpack实战【从0开发菜鸟窝在线教育APP】]()
 * [kotlin开发AI语音助手APP]()
 
@@ -107,11 +107,15 @@
 ### Compose
 
 * [谷歌官网-中文](https://developer.android.google.cn/jetpack/compose/tutorial?hl=zh_cn)
-* 仍物线介绍：(https://www.sohu.com/a/433487805_611601>https://ke.qq.com/course/3102992?taid=10361930727250192)
+* [仍物线介绍](https://www.sohu.com/a/433487805_611601>https://ke.qq.com/course/3102992?taid=10361930727250192)(已完成)
 * [官网demo](https://github.com/android/compose-samples)
 * [官网简介]
   * https://zhuanlan.zhihu.com/p/267250784
   * https://www.jianshu.com/p/ffc2745c5e71
+
+#### 大前端
+
+
 
 ### 软技能(进行中)
 
