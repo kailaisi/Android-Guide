@@ -66,7 +66,7 @@
 
 ### UI体系
 
-[爱哥自定义View系列](https://blog.csdn.net/aigestudio/category_9263410.html?spm=1001.2014.3001.5482)（已完成）
+[爱哥自定义View系列](https://blog.csdn.net/aigestudio/category_9263410.html?spm=1001.2014.3001.5482)（已完成，[记录](输出文章\Android\UI)）
 
 [菜鸟窝：高级UI专题](https://www.cniao5.com/course/10289#tab_3)
 
@@ -78,22 +78,14 @@
 
 ### [JNI、音视频、图像](NDK音视频图像.md)
 
-### Flutter
+### [Flutter](Flutter学习路线图.md)
 
-* [Flutter开发者文档](https://flutter.cn/docs/get-started/install/windows)
-* [Flutter实战](https://book.flutterchina.club/chapter2/first_flutter_app.html)
-* [Flutter核心技术与实战](https://www.kancloud.cn/alex_wsc/flutter_demo/1570992)（已完成）
-* [闲鱼Flutter系列](https://www.yuque.com/xytech/flutter)
-* [Dart Flutter入门实战视频教程](https://www.bilibili.com/video/BV1S4411E7LY?p=31&t=1842)
-* https://github.com/CarGuo/gsy_flutter_book
-* Flutter移动电商实战(已完成)
-* [实战携程网App](https://coding.imooc.com/class/321.html)
-* [BiliBili实战]()
+### [大前端](大前端学习路线图.md)
 
 ### Kotlin系列
 
 * Kotlin 实战（已完成，待记录）
-* **[慕课网之Kotlin从入门到精通：强烈推荐](https://coding.imooc.com/class/chapter/398.html#Anchor)**（不断）
+* **[慕课网之Kotlin从入门到精通：强烈推荐](https://coding.imooc.com/class/chapter/398.html#Anchor)**）
 * [kotlin+Jetpack实战【从0开发菜鸟窝在线教育APP】]()
 * [kotlin开发AI语音助手APP]()
 
@@ -109,13 +101,9 @@
 * [谷歌官网-中文](https://developer.android.google.cn/jetpack/compose/tutorial?hl=zh_cn)
 * [仍物线介绍](https://www.sohu.com/a/433487805_611601>https://ke.qq.com/course/3102992?taid=10361930727250192)(已完成)
 * [官网demo](https://github.com/android/compose-samples)
-* [官网简介]
+* [官网简介]（已完成）
   * https://zhuanlan.zhihu.com/p/267250784
   * https://www.jianshu.com/p/ffc2745c5e71
-
-#### 大前端
-
-
 
 ### 软技能(进行中)
 
