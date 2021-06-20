@@ -63,6 +63,7 @@
 * 慕课网之 实战企业级项目 践行App重构之路（已完成）
 * [慕课网架构师课程]()(进行中)
 * [企业级Android应用架构设计与开发](https://coding.imooc.com/class/chapter/364.html#Anchor)
+* [谷歌官网](https://developer.android.google.cn/guide/topics/ui/look-and-feel/downloadable-fonts?hl=zh_cn)
 
 ### UI体系
 
@@ -71,10 +72,6 @@
 [菜鸟窝：高级UI专题](https://www.cniao5.com/course/10289#tab_3)
 
 [【仍物线第五期】11-26章]()
-
-### 实战篇
-
-[手写框架开发内涵段子]()
 
 ### [JNI、音视频、图像](NDK音视频图像.md)
 
@@ -98,12 +95,17 @@
 
 ### Compose
 
-* [谷歌官网-中文](https://developer.android.google.cn/jetpack/compose/tutorial?hl=zh_cn)
-* [仍物线介绍](https://www.sohu.com/a/433487805_611601>https://ke.qq.com/course/3102992?taid=10361930727250192)(已完成)
-* [官网demo](https://github.com/android/compose-samples)
-* [官网简介]（已完成）
-  * https://zhuanlan.zhihu.com/p/267250784
-  * https://www.jianshu.com/p/ffc2745c5e71
+* 学习篇
+  * [谷歌官网-中文](https://developer.android.google.cn/jetpack/compose/tutorial?hl=zh_cn)（已完成）
+  * [仍物线介绍](https://www.sohu.com/a/433487805_611601>https://ke.qq.com/course/3102992?taid=10361930727250192)(已完成)
+  * [官网demo](https://github.com/android/compose-samples)
+  * [官网简介]（已完成）
+    * https://zhuanlan.zhihu.com/p/267250784
+    * https://www.jianshu.com/p/ffc2745c5e71
+* 实战篇：
+  * [Compose挑战](https://developer.android.com/dev-challenge)
+    * https://mp.weixin.qq.com/s?__biz=MzAwODY4OTk2Mg==&mid=2652077913&idx=1&sn=0c292249ce6930519fb0185e8a3ff88a&scene=21#wechat_redirect
+    * 
 
 ### 软技能(进行中)
 
