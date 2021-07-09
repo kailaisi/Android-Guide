@@ -529,11 +529,13 @@ this.afterEvaluate {//配置阶段执行之后，执行阶段执行之前
 
 我们可以通过一定的方式来调整Task的执行顺序，主要方式有如下三种：
 
-* dependsOn强依赖方式
+* dependsOn，finalizedBy强依赖方式
 * 通过Task输入输出执行
 * 通过API执行执行顺序
 
 最简单的一种方式就是通过dependsOn方式来添加依赖了
+
+###### dependsOn
 
 ```groovy
 //依赖关系
@@ -580,11 +582,13 @@ task taskZ(){
 
 ```
 
-##### Task输入输出
+finalizedBy和dependencOn的意思相反，A finalizedBy B是指A执行完之后，执行B。
+
+###### Task输入输出
 
 Task任务可以有对应的输入以及输出。有时候，我们需要通过输入输出来将两个任务关联起来。
 
-![image-20210406135528517](/Users/jj/Library/Application Support/typora-user-images/image-20210406135528517.png)
+![image-20210708223251331](http://cdn.qiniu.kailaisii.com/typora/20210708223252-211278.png)
 
 对于Task的输入，可以是多种类型；而输出只能是File类型。我们可以在Task中通过指定某个为输入，或者输出。那么这时候，以该文件为输入的任务会优先于以该文件为输出的任务执行。
 
@@ -618,7 +622,7 @@ task readTask{
 
 如上的两个任务：**desFile是writeTask的输出，是readTask的输入。那么这时候，writeTask会先执行，readTask会后执行。**
 
-##### 执行指定顺序
+###### 执行指定顺序
 
 除了依赖、输入输出方式来制定执行顺序之外，我们还可以通过**mustRunAfter**来指定某个task必须在另一个task执行完之后再执行。
 
@@ -642,7 +646,7 @@ task taskZ{
 }
 ```
 
-
+B mustRunAfter  A  ：如果AB任务都执行，则B在A之后执行，如果只执行B，则不会执行任务A
 
 #### Gradle核心之其他模块详解及实战
 
@@ -701,7 +705,7 @@ plugin的功能是将在gradle中的Task，抽取成为一个插件，所有使�
 
 具体的我们可以看下具体的截图
 
-![image-20210408152913780](/Users/jj/Library/Application Support/typora-user-images/image-20210408152913780.png)
+![image-20210708223320290](http://cdn.qiniu.kailaisii.com/typora/20210708223320-284875.png)
 
 对应的文件如下：
 
@@ -728,12 +732,6 @@ class ReleaseNotePlugin  implements Plugin<Project> {
 
 
 
-
-
-
-
-* 
-* 
 * 插件类Plugin的定义及如何使用第三方插件
 * Gradle如何管理插件的依赖
 * 插件类Plugin源码解读

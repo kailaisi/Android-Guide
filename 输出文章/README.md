@@ -11,18 +11,18 @@
   - startActivityForResult（完成）
 - 系统级别
   - Binder机制源码（待写）
-  - AMS启动流程解析（待整理）
-  - Service启动流程解析（待整理）
-  - Application启动流程（待整理）
-  - Provider源码解析（待整理）
-  - Android系统启动源码解析（待整理）
+  - AMS启动流程解析（完成）
+  - Service启动流程解析（完成）
+  - Application启动流程（完成）
+  - Provider源码解析（完成）
+  - Android系统启动源码解析（完成）
 
 * 绘制相关系列
   * Android的inflate源码详解（完成）
   * Android的View绘制机制（完成）
   * Android触摸事件源码解析（完成）
   * Android屏幕刷新机制（完成）
-  * **Context研究（进行中）**
+  * **Context研究（完成）**
 * JetPack
   * LiveData 源码解析（完成）
   * Lifecycle源码解析（完成）
@@ -58,14 +58,12 @@
 * 通讯(待写)
   * 
 * 杂项
-  * Andoird的编译和打包流程分析(完成)
   * Handler 源码机制(完成)
   * IdleHandler源码解析（完成）
   * io复用和copyonwrite技术延伸
   * 同步屏障（待整理）
 * 插桩技术(待研究)
   * APT技术实现对代码的抖动处理
-  * ASM技术
   * Android中Resources.arsc详解
   * shell apm打包
   * Android Studio自定义Gradle插件，
@@ -77,3 +75,9 @@
   * Mmap（待写）
   * 透视HTTP协议（已完成）
   * protoful、buffer、dom解析
+* 打包
+  * Andoird的编译和打包流程分析(完成)
+  * APT详解（待进行）
+  * ASM插桩
+  * Gradle详解（待整理）
+  * Transform详解（待进行）
