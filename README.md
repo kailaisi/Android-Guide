@@ -52,6 +52,7 @@
   * [Gradle3.0自动化项目构建技术精讲+实战](https://coding.imooc.com/class/chapter/206.html#Anchor)（已完成，待整理）
   * [Gradle系列之从零搭建Maven私服库](https://juejin.cn/post/6844903939658219527)（已完成）
   * Android 应用程序构建实战+原理精讲
+  * [多渠道打包](https://www.jianshu.com/p/5baea0e1cd1e?utm_campaign=maleskine&utm_content=note&utm_medium=seo_notes&utm_source=recommendation)
 
 ### 架构技能
 
