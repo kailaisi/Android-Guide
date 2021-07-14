@@ -43,6 +43,7 @@
 
 * [国内Top团队大牛带你玩转Android性能分析与优化](https://coding.imooc.com/class/chapter/308.html#Anchor)
 * [极客时间之Android开发高手课 01-23]()
+* [慕课网架构师课程]()(阶段5)
 
 ### Android架构师必备系列
 
