@@ -65,6 +65,7 @@
 * 《Android源码设计模式》
 * 《移动架构》
 * 慕课网之 实战企业级项目 践行App重构之路（已完成）
+* [Android设计模式精讲](https://www.cniao5.com/course/10286#tab_3)
 * [慕课网架构师课程]()(进行中)
 * [企业级Android应用架构设计与开发](https://coding.imooc.com/class/chapter/364.html#Anchor)
 * [谷歌官网](https://developer.android.google.cn/guide/topics/ui/look-and-feel/downloadable-fonts?hl=zh_cn)
@@ -73,7 +74,7 @@
 
 [爱哥自定义View系列](https://blog.csdn.net/aigestudio/category_9263410.html?spm=1001.2014.3001.5482)（已完成，[记录](输出文章\Android\UI)）
 
-[菜鸟窝：高级UI专题](https://www.cniao5.com/course/10289#tab_3)（下一步学习计划）
+[菜鸟窝：高级UI专题](https://www.cniao5.com/course/10289#tab_3)（进行中）
 
 [【仍物线第五期】11-26章]()
 
