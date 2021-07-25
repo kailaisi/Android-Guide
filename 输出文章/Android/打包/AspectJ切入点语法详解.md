@@ -171,3 +171,11 @@ bean(*Service || *ServiceImpl)
 // 匹配名字以Service结尾，并且在包com.xys.service中的Bean
 bean(*Service) && within(com.xys.service.*)
 ```
+
+
+
+
+
+参考：
+
+AspectJ程序设计指南
