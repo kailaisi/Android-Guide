@@ -86,7 +86,7 @@
 
 ### Kotlin系列
 
-* Kotlin 实战（已完成，待记录）
+* Kotlin 实战（已完成）
 * **[慕课网之Kotlin从入门到精通：强烈推荐](https://coding.imooc.com/class/chapter/398.html#Anchor)**）
 * [kotlin+Jetpack实战【从0开发菜鸟窝在线教育APP】]()
 * [kotlin开发AI语音助手APP]()
