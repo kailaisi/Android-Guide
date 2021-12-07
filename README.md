@@ -65,6 +65,7 @@
 * 《设计模式之禅》
 * 《Android源码设计模式》
 * 《移动架构》
+* [《图解设计模式》](https://design-patterns.readthedocs.io/zh_CN/latest/read_uml.html#id1)
 * 慕课网之 实战企业级项目 践行App重构之路（已完成）
 * [Android设计模式精讲](https://www.cniao5.com/course/10286#tab_3)
 * [慕课网架构师课程]()(进行中)
