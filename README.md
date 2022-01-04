@@ -97,7 +97,7 @@
 * 优秀项目：https://github.com/winlee28/Jetpack-WanAndroid.git
 * 组件化专项问题：https://www.jianshu.com/p/d0f5cf304fa4
 * 组件化项目研究：https://github.com/1170762202/WanAndroid.git
-* 仍物线五期组件化详解。
+* 仍物线五期组件化详解（已完成）。
 
 ### Compose
 
