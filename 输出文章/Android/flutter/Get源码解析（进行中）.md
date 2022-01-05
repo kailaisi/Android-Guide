@@ -453,13 +453,69 @@ class GetPageRoute<T> extends PageRoute<T>{
 
 
 
-#### Obx原理
+#### Obx刷新机制
+
+##### 基础
+
+观察者模式，是一种行为型模式，定义的是一种一对多的关系，让多个观察者对象能够同时监听某一主题对象。当主题对象的状态发生变化时，会通知所有的观察者，使他们能够自动更新自己。
+
+![img](https://img-blog.csdn.net/20161111191040882)
+
+##### 源码解析
+
+###### Rx类变量
+
+此处以 **RxInt** 为例，来看下其内部实现。
+
+1. 当使用整型扩展obs，其实是一个扩展类，**0.obs**等同于**RxInt(0)**
+
+```dart
+extension IntExtension on int {
+  /// Returns a `RxInt` with [this] `int` as initial value.
+  RxInt get obs => RxInt(this);
+}
+```
+
+2. RxInt类。这里面直接使用了value，并且修改了value的数值。
+
+```dart
+class RxInt extends Rx<int> {
+  RxInt(int initial) : super(initial);
+
+  /// Addition operator.
+  RxInt operator +(int other) {
+    value = value + other;
+    return this;
+  }
+
+  /// Subtraction operator.
+  RxInt operator -(int other) {
+    value = value - other;
+    return this;
+  }
+}
+
+class Rx<T> extends _RxImpl<T> {
+  Rx(T initial) : super(initial);
+
+  @override
+  dynamic toJson() {
+    try {
+      return (value as dynamic)?.toJson();
+    } on Exception catch (_) {
+      throw '$T has not method [toJson]';
+    }
+  }
+}
+```
+
+这里出现了最重要的Rx的类，**_RxImpl**
 
 
 
+![Rx变量](https://img-blog.csdnimg.cn/img_convert/c8d3e7a1a2758d3ccfa8dccc529084b4.png)
 
-
-
+###### 
 
 参考：
 
