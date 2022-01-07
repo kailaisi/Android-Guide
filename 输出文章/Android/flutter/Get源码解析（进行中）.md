@@ -375,6 +375,9 @@ Get.put<S>(
     // 相当于lazyPut+find
     return find<S>(tag: tag);
   }
+
+Get.create()...
+Get.putAsync()...  
 ```
 
 
@@ -438,8 +441,6 @@ class GetPageRoute<T> extends PageRoute<T>{
 
 
 
-
-
 #### 缺陷
 
 循环依赖
@@ -463,7 +464,7 @@ class GetPageRoute<T> extends PageRoute<T>{
 
 观察者模式，是一种**行为型模式**，定义的是一种**一对多**的关系，让多个观察者对象能够同时监听某一主题对象。当主题对象的状态发生变化时，会通知所有的观察者，使他们能够自动更新自己。
 
-![img](https://img-blog.csdn.net/20161111191040882)
+![img](https://design-patterns.readthedocs.io/zh_CN/latest/_images/Obeserver.jpg)
 
 ##### 源码解析
 
@@ -471,7 +472,7 @@ class GetPageRoute<T> extends PageRoute<T>{
 
 此处以 **RxInt** 为例，来看下其内部实现。
 
-1. 当使用整型扩展obs，其实是一个扩展类，**0.obs**等同于**RxInt(0)**
+1. 使用整型扩展 .obs，其实是一个扩展方法，**0.obs**等同于**RxInt(0)**
 
 ```dart
 extension IntExtension on int {
@@ -501,15 +502,7 @@ class RxInt extends Rx<int> {
 
 class Rx<T> extends _RxImpl<T> {
   Rx(T initial) : super(initial);
-
-  @override
-  dynamic toJson() {
-    try {
-      return (value as dynamic)?.toJson();
-    } on Exception catch (_) {
-      throw '$T has not method [toJson]';
-    }
-  }
+  
 }
 ```
 
@@ -537,7 +530,7 @@ abstract class _RxImpl<T> extends RxNotifier<T> with RxObjectMixin<T> {
 
   /// Returns the current [value]
   T get value {
-    // 获取value值的时候，会将其加入到监听者队列
+    // ***获取value值的时候，会将其加入到监听者队列？详情后面分析****
     RxInterface.proxy?.addListener(subject);
     return _value;
   }
@@ -586,7 +579,7 @@ class _ObxState extends State<ObxWidget> {
   @override
   void initState() {
     super.initState();
-    // 重点方法
+    // 重点方法1 将_updateTree加入到通知队列，当_observer调用刷新方法的时候，会调用_updateTree，也就执行了页面刷新操作
     subs = _observer.listen(_updateTree, cancelOnError: false);
   }
 
@@ -600,7 +593,7 @@ class _ObxState extends State<ObxWidget> {
 
   @override
   Widget build(BuildContext context) =>
-      RxInterface.notifyChildren(_observer, widget.build);//将_observer暴露出去，并调用widget的build方法
+      RxInterface.notifyChildren(_observer, widget.build);//重点方法2。将_observer暴露出去，并调用widget的build方法
 }
 ```
 
@@ -623,7 +616,6 @@ class _ObxState extends State<ObxWidget> {
  
   // 所有订阅当前流的观察者，当数据发送变化的时候，会遍历调用该对象的方法进行通知刷新
   List<LightSubscription<T>>? _onData = <LightSubscription<T>>[];
-  
   
     LightSubscription<T> listen(void Function(T event) onData,
         {Function? onError, void Function()? onDone, bool? cancelOnError}) {
@@ -649,11 +641,13 @@ class _ObxState extends State<ObxWidget> {
   }
 ```
 
+![Obx监听添加](https://img-blog.csdnimg.cn/img_convert/1e5635dfdea8de7fcadba10f0c84c2a7.png)
 
+**重点方法2**
 
-**在_ObxState类中做了一个很重要，监听对象转移的操作**
-
-**_observer中的对象已经拿到了Obx控件内部的setState方法，现在需要将它转移出去啦！**
+> **在_ObxState类中做了一个很重要的操作，监听对象转移：**
+>
+> **_observer中的对象已经拿到了Obx控件内部的setState方法，现在需要将它转移出去，供外部使用！**
 
 对于状态转移，其实就是将_observer暴露出去，供外部使用。其功能是在**RxInterface.notifyChildren**中实现的
 
@@ -663,7 +657,7 @@ class _ObxState extends State<ObxWidget> {
   static T notifyChildren<T>(RxNotifier observer, ValueGetter<T> builder) {
     // 将原有proxy变量保存
     final _observer = RxInterface.proxy;
-    // 将observer设置为一个
+    // observer是Obx中的RxNotifier实例
     RxInterface.proxy = observer;
     // 调用builder方法，构建对应的widget。
     final result = builder();
@@ -686,32 +680,34 @@ class _ObxState extends State<ObxWidget> {
 
   * final result = widget.build()：这个赋值相当重要了！调用我们在外部传进的Widget
 
-  * 如果这个Widget中有响应式变量，那么一定会调用该变量中获取 get value。
+  * 如果这个Widget中有响应式变量，那么一定会调用该变量中获取 getValue。
 
     ```dart
     mixin RxObjectMixin<T> on NotifyManager<T> {  
     	T get value {
         // 获取value值的时候，会将其加入到监听者队列。
-        // proxy是Obx中的_observer对象，subject是Rx的subject对象。
+        // proxy是Obx中的_observer对象，subject是Rx的GetStream实例。
         RxInterface.proxy?.addListener(subject);
         return _value;
       }
     }
     ```
 
-  * 这里将变量中的GetSteam实例，添加到了Obx中的RxNotifier()实例中的subject中。Rx数据类型的变化则会触发subject变化，最终刷新Obx。
+  * 这里将Rx变量中的GetSteam实例，添加到了Obx中的RxNotifier()实例的subject中。Rx数据类型的变化则会触发subject变化，最终刷新Obx。
 
     ```dart
     // 通知管理器
     mixin NotifyManager<T> {
-      // 被观察者，主题
+      // 被观察者
       GetStream<T> subject = GetStream<T>();
     
       // 所有的观察者
       final _subscriptions = <GetStream, List<StreamSubscription>>{}; 
       void addListener(GetStream<T> rxGetx) {
         if (!_subscriptions.containsKey(rxGetx)) {
+          // listen方法，会将函数的调用放入到rx变化时的通知队列中。当Rx数据变化时，会调用该方法
           final subs = rxGetx.listen((data) {
+            // add方法会调用通知功能，通知Obx中的subject对象中的所有监听者，其中就包含了页面的刷新功能
             if (!subject.isClosed) subject.add(data);
           });
           final listSubscriptions =
@@ -721,11 +717,21 @@ class _ObxState extends State<ObxWidget> {
       }
     ```
 
-    
+* RxInterface.proxy = _observer：执行完build操作之后，所有的监听关系建立完毕了，将proxy恢复原来的值。
 
-    
+![Obx监听整体流程](https://s2.loli.net/2022/01/07/nVroYBFhJWyNUIQ.png)
 
-###### 
+
+
+##### 总结：
+
+* Rx变量的改变，会自动刷新包裹其变量的Obx控件，所以Obx最好只包含需要刷新的Widget。
+
+* 缺陷：Obx的自动刷新要求变量自带监听触发机制；所以除了封装的基础类型，自定义的实体、列表等都需要手动进行封装。
+
+  
+
+
 
 参考：
 
