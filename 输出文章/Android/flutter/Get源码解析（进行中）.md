@@ -1,3 +1,7 @@
+
+
+
+
 Get源码解析 第一弹 依赖注入
 
 #### 基础
@@ -12,7 +16,7 @@ Get源码解析 第一弹 依赖注入
 
 在平时的java应用开发中，我们要实现某一个功能或者说是完成某个业务逻辑时至少需要两个或以上的对象来协作完成，在没有使用Spring的时候，每个对象在需要使用他的合作对象时，自己均要使用像new object() 这样的语法来将合作对象创建出来，这个合作对象是由自己主动创建出来的，创建合作对象的主动权在自己手上，自己需要哪个合作对象，就主动去创建，创建合作对象的主动权和创建时机是由自己把控的，而这样就会使得对象间的耦合度高了，A对象需要使用合作对象B来共同完成一件事，A要使用B，那么A就对B产生了依赖，也就是A和B之间存在一种耦合关系，并且是紧密耦合在一起，而使用了Spring之后就不一样了，创建合作对象B的工作是由Spring来做的，Spring创建好B对象，然后存储到一个容器里面，当A对象需要使用B对象时，Spring就从存放对象的那个容器里面取出A要使用的那个B对象，然后交给A对象使用，至于Spring是如何创建那个对象，以及什么时候创建好对象的，A对象不需要关心这些细节问题(你是什么时候生的，怎么生出来的我可不关心，能帮我干活就行)，A得到Spring给我们的对象之后，两个人一起协作完成要完成的工作即可。
 
-**控制反转IoC(Inversion of Control)是说创建对象的控制权进行转移，以前创建对象的主动权和创建时机是由自己把控的，而现在这种权力转移到第三方**
+**控制反转IoC(Inversion of Control)是说创建对象的控制权进行转移，以前创建对象的主动权和创建时机是由自己把控的，而现在这种权力转移到第三方**。
 
 Android 上有 [Dagger](https://links.jianshu.com/go?to=https%3A%2F%2Fdeveloper.android.com%2Ftraining%2Fdependency-injection%2Fdagger-basics%3Fhl%3Dzh-cn) 和[Hilt](https://links.jianshu.com/go?to=https%3A%2F%2Fdeveloper.android.com%2Ftraining%2Fdependency-injection%2Fhilt-android%3Fhl%3Dzh-cn) ，后台有Spring，都能够实现自动注入， 而GetX 也为我们提供了相应的功能。
 
@@ -338,7 +342,7 @@ class GetModalBottomSheetRoute<T> extends PopupRoute<T> {
 
 对于对象的注入，除了lazyPut，还有很多种方法。
 
-```
+```dart
 Get.put<S>(
   // 必备：要注入的类。
   // 注：" S "意味着它可以是任何类型的类。
@@ -436,7 +440,7 @@ class GetPageRoute<T> extends PageRoute<T>{
 
 
 
-#### 问题点
+#### 缺陷
 
 循环依赖
 
@@ -457,7 +461,7 @@ class GetPageRoute<T> extends PageRoute<T>{
 
 ##### 基础
 
-观察者模式，是一种行为型模式，定义的是一种一对多的关系，让多个观察者对象能够同时监听某一主题对象。当主题对象的状态发生变化时，会通知所有的观察者，使他们能够自动更新自己。
+观察者模式，是一种**行为型模式**，定义的是一种**一对多**的关系，让多个观察者对象能够同时监听某一主题对象。当主题对象的状态发生变化时，会通知所有的观察者，使他们能够自动更新自己。
 
 ![img](https://img-blog.csdn.net/20161111191040882)
 
@@ -511,9 +515,215 @@ class Rx<T> extends _RxImpl<T> {
 
 这里出现了最重要的Rx的类，**_RxImpl**
 
+###### _RxImpl
 
+```dart
+/// Rx的实现类，管理任何类型的流逻辑。
+abstract class _RxImpl<T> extends RxNotifier<T> with RxObjectMixin<T> {
+```
+
+获取value
+
+```dart
+  set value(T val) {
+    if (subject.isClosed) return;
+    // 如果数据没有变化，这里不会发送通知
+    if (_value == val && !firstRebuild) return;
+    firstRebuild = false;
+    _value = val;
+    // 这里内部会执行notify，通知所有监听者，更新监听组件。
+    subject.add(_value);
+  }
+
+  /// Returns the current [value]
+  T get value {
+    // 获取value值的时候，会将其加入到监听者队列
+    RxInterface.proxy?.addListener(subject);
+    return _value;
+  }
+```
+
+
+
+- **RxInt的value变量改变的时候（set value），会触发subject.add(_value)，内部逻辑是自动刷新操作**
+- **获取RxInt的value变量的时候（get value），会有一个添加监听的操作，这个灰常重要！**
 
 ![Rx变量](https://img-blog.csdnimg.cn/img_convert/c8d3e7a1a2758d3ccfa8dccc529084b4.png)
+
+
+
+
+
+###### Obx
+
+> Obx最大的特殊之处，是使用它的时候，不需要能够在内部Rx数据类型变化的时候，自动刷新，那内部是如何实现的呢？
+
+
+
+```dart
+class Obx extends ObxWidget {
+  final WidgetCallback builder;
+
+  const Obx(this.builder);
+
+  @override
+  Widget build() => builder();
+}
+
+abstract class ObxWidget extends StatefulWidget {
+  const ObxWidget({Key? key}) : super(key: key);
+  @override
+  _ObxState createState() => _ObxState();
+  @protected
+  Widget build();
+}
+
+class _ObxState extends State<ObxWidget> {
+  final _observer = RxNotifier();
+  // 监听者
+  late StreamSubscription subs;
+
+  @override
+  void initState() {
+    super.initState();
+    // 重点方法
+    subs = _observer.listen(_updateTree, cancelOnError: false);
+  }
+
+  // 对外暴露的页面刷新函数
+  void _updateTree(_) {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+
+  @override
+  Widget build(BuildContext context) =>
+      RxInterface.notifyChildren(_observer, widget.build);//将_observer暴露出去，并调用widget的build方法
+}
+```
+
+* RxNotifier这个类，内部持有一个GetStream()对象：**subject**，
+* _updateTree方法，通过listen，将其封装为了subs（LightSubscription实例）中的onData属性。**并将sub加入subject的监听队列**
+
+**重点方法1:**
+
+```dart
+  StreamSubscription<T> listen(
+    void Function(T) onData,
+    ..
+  }) =>
+      subject.listen(
+        onData,
+        ..
+      );
+
+ //GetStream
+ 
+  // 所有订阅当前流的观察者，当数据发送变化的时候，会遍历调用该对象的方法进行通知刷新
+  List<LightSubscription<T>>? _onData = <LightSubscription<T>>[];
+  
+  
+    LightSubscription<T> listen(void Function(T event) onData,
+        {Function? onError, void Function()? onDone, bool? cancelOnError}) {
+      // 创建LightSubscription实例
+      final subs = LightSubscription<T>(
+        removeSubscription,
+        ..
+      )
+        ..onData(onData)
+      // 将实例加入到监听者队列
+      addSubscription(subs);
+      // 调用onListener方法。
+      onListen?.call();
+      // 返回生成的监听者实例
+      return subs;
+    }
+  
+  	// 刷新方法
+   void _notifyData(T data) {
+    for (final item in _onData!) {
+        item._data?.call(data);
+    }
+  }
+```
+
+
+
+**在_ObxState类中做了一个很重要，监听对象转移的操作**
+
+**_observer中的对象已经拿到了Obx控件内部的setState方法，现在需要将它转移出去啦！**
+
+对于状态转移，其实就是将_observer暴露出去，供外部使用。其功能是在**RxInterface.notifyChildren**中实现的
+
+```dart
+  // 
+  static RxInterface? proxy;
+  static T notifyChildren<T>(RxNotifier observer, ValueGetter<T> builder) {
+    // 将原有proxy变量保存
+    final _observer = RxInterface.proxy;
+    // 将observer设置为一个
+    RxInterface.proxy = observer;
+    // 调用builder方法，构建对应的widget。
+    final result = builder();
+    if (!observer.canUpdate) {
+      ...
+    }
+    // 恢复原有的proxy对象
+    RxInterface.proxy = _observer;
+    return result;
+  }
+```
+
+解读：
+
+* final observer = RxInterface.proxy：RxInterface.proxy正常情况为空，但是，可能作为中间变量暂存对象的情况，现在暂时将他的对象取出来，存在observer变量中
+
+* RxInterface.proxy = _observer：将我们在 _ObxState类中实例化的 RxNotifier() 对象的地址，赋值给了RxInterface.proxy
+
+  * 注意：这里，RxInterface.proxy中 RxNotifier() 实例，有当前Obx控件的setState() 方法
+
+  * final result = widget.build()：这个赋值相当重要了！调用我们在外部传进的Widget
+
+  * 如果这个Widget中有响应式变量，那么一定会调用该变量中获取 get value。
+
+    ```dart
+    mixin RxObjectMixin<T> on NotifyManager<T> {  
+    	T get value {
+        // 获取value值的时候，会将其加入到监听者队列。
+        // proxy是Obx中的_observer对象，subject是Rx的subject对象。
+        RxInterface.proxy?.addListener(subject);
+        return _value;
+      }
+    }
+    ```
+
+  * 这里将变量中的GetSteam实例，添加到了Obx中的RxNotifier()实例中的subject中。Rx数据类型的变化则会触发subject变化，最终刷新Obx。
+
+    ```dart
+    // 通知管理器
+    mixin NotifyManager<T> {
+      // 被观察者，主题
+      GetStream<T> subject = GetStream<T>();
+    
+      // 所有的观察者
+      final _subscriptions = <GetStream, List<StreamSubscription>>{}; 
+      void addListener(GetStream<T> rxGetx) {
+        if (!_subscriptions.containsKey(rxGetx)) {
+          final subs = rxGetx.listen((data) {
+            if (!subject.isClosed) subject.add(data);
+          });
+          final listSubscriptions =
+              _subscriptions[rxGetx] ??= <StreamSubscription>[];
+          listSubscriptions.add(subs);
+        }
+      }
+    ```
+
+    
+
+    
 
 ###### 
 
@@ -521,7 +731,7 @@ class Rx<T> extends _RxImpl<T> {
 
 [控制反转和依赖注入的理解](https://blog.csdn.net/sinat_21843047/article/details/80297951)
 
-[[依赖注入的三种方式以及优缺点。](https://www.cnblogs.com/zoro-zero/p/13490459.html)
+[依赖注入的三种方式以及优缺点。](https://www.cnblogs.com/zoro-zero/p/13490459.html)
 
 [Flutter状态管理终极方案GetX第三篇——依赖注入](https://www.jianshu.com/p/62764349f9e1)
 
