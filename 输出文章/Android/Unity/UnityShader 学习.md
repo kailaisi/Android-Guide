@@ -262,4 +262,106 @@ Shader "Unlit/Shader2"
 
 ##### 顶点着色器/片元着色器通信
 
-在一些实践中，我们希望从顶点着色器中输出一些数据，然后传递给片元着色器。这就涉及到了二者之间的通信。
+在一些实践中，我们希望从顶点着色器中输出一些数据，然后传递给片元着色器。这就涉及到了二者之间的通信。这种情况下，我们需要声明一个新的结构体，用于在顶点着色器和片元着色器中进行通信。
+
+```glsl
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "Unlit/Shader3"
+{
+    Properties
+    {
+        _MainTex ("Texture", 2D) = "white" {}
+    }
+    SubShader
+    {
+
+
+        Pass
+        {
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            // 使用一个结构体来定义顶点着色器的输入。对于顶点着色器，Unity支持的语义有：POSITION, TANGENT，NORMAL，TEXCOORD0，TEXCOORD1，TEXCOORD2，TEXCOORD3，COLOR等。
+            // 这些具体的数据，是由使用该着色器的MeshRender来提供的。
+            struct a2v
+            {
+                float4 vertex : POSITION; // 用POSITION告诉unity，用模型空间的顶点坐标来填充vertex对象
+                float3 normal:NORMAL; //模型空间的法线方向NORMLAL来填充normal对象
+                float4 texcoord:TEXCOORD; //用模型的第一套纹理来填充texcoord对象
+            };
+
+
+            // 使用一个结构体来定义顶点着色器的输出。
+            struct v2f
+            {
+                float4 pos:SV_POSITION; // SV_POSITION告诉Unity，pos里面包含了顶点在裁剪空间中的位置信息
+                fixed3 color:COLOR0; //COLOR0语义可以用于存储颜色信息
+            };
+
+            // 这里定义的返回信息是v2f结构体
+            v2f vert(a2v v):SV_POSITION
+            {
+                v2f o;
+                o.pos = mul(UNITY_MATRIX_MVP, v.vertex); //将裁剪空间的位置信息赋值
+                // 下面的代码把分量范围映射到了[0.0,1.0],然后存储到o.color中传递给片元着色器
+                o.color = v.normal * 0.5 + fixed3(0.5, 0.5, 0.5);
+                return o;
+            }
+
+            // 没有输入，SV_TARGET是HLSL语言的语义。把用户的输出颜色存储到一个渲染目标
+            fixed4 frag(v2f i):SV_TARGET
+            {
+                // 将差值后的i.color显示到屏幕上
+                return fixed4(i.color, 1.0);
+            }
+            ENDCG
+        }
+    }
+}
+```
+
+要注意，**在顶点着色器的输出结构中，必须要包含SV_POSITION，否则渲染器无法得到裁剪空间中的顶点坐标。**
+
+##### 属性的使用
+
+材质是和Unity Shader紧密相连的。在一些情况下我们需要材质提供一些参数，来方便的调节控制Unity Shader中的参数，通过参数就可以随时（包括代码中）来调整材质的效果。这些参数需要写在Properties中，并且在Pass代码中配置一样的变量
+
+```glsl
+Shader "Unlit/Shader4"
+{
+    Properties
+    {
+        // 声明一个Color类型的属性，在面板中展示的名称是"Color Tint"
+        _Color ("Color Tint", Color) = (1.0,1.0,1.0,1.0)
+    }
+    SubShader
+    {
+
+        Pass
+        {
+            CGPROGRAM
+            ...
+            // 在Cg代码中，需要定义一个与属性名称和类型都匹配的变量。
+            fixed4 _Color;
+          	...
+            // 没有输入，SV_TARGET是HLSL语言的语义。把用户的输出颜色存储到一个渲染目标
+            fixed4 frag(v2f i):SV_TARGET
+            {
+                fixed3 c = i.color;
+                // 使用_Color属性来控制输出的颜色
+                c *= _Color.rgb;
+                // 将差值后的i.color显示到屏幕上
+                return fixed4(c, 1.0);
+            }
+            ENDCG
+        }
+    }
+}
+```
+
+需要注意的是：**在Cg代码中，我们需要提前定义一个新的变量，并且这个变量的名称和类型必须和Properties语义块中的属性定义相匹配**。
+
+![image-20220406092325249](http://cdn.qiniu.kailaisii.com/typora/image-20220406092325249.png)
+
+### 基础光照
