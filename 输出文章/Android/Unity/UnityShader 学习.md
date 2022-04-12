@@ -378,8 +378,41 @@ Shader "Unlit/Shader4"
 
 标准光照模型包括了四部分：
 
-* 自发光
-* 高反射光
-* 漫反射
-* 环境光
+##### 自发光
+
+<img src="http://cdn.qiniu.kailaisii.com/typora/222.png" alt="img" style="zoom: 33%;" />
+
+##### 高反射光
+
+计算高光反射需要的信息比较多。如“表面法线、视角方向、光源方向、反射方向等”
+
+<img src="http://csdn-ebook-resources.oss-cn-beijing.aliyuncs.com/images/7eeb7df3b448463eae5cf2b7c751fbb4/226.png" alt="img"  /> 
+
+我们一般使用Phong模型计算高光反射。在4个矢量中，我们实际上只需要知道其中3个矢量即可。而第四个可以通过其他3个信息计算获得。
+
+<img src="http://csdn-ebook-resources.oss-cn-beijing.aliyuncs.com/images/7eeb7df3b448463eae5cf2b7c751fbb4/227.png" alt="img" style="zoom:33%;" />
+
+这样我们就可以通过Phong模型来计算高光反射的部分。
+
+<img src="http://csdn-ebook-resources.oss-cn-beijing.aliyuncs.com/images/7eeb7df3b448463eae5cf2b7c751fbb4/228.png" alt="img" style="zoom:33%;" />
+
+##### 漫反射
+
+<img src="http://cdn.qiniu.kailaisii.com/typora/223.png" alt="img" style="zoom: 33%;" />
+
+“其中，n是表面法线，是指向光源的单位矢量，mdiffuse是材质的漫反射颜色，clight是光源颜色。”
+
+##### 环境光（ambient）
+
+<img src="http://cdn.qiniu.kailaisii.com/typora/221.png" alt="img" style="zoom: 33%;" />
+
+
+
+##### 逐像素VS逐顶点
+
+在片元着色器中计算，被称为**逐像素光照**；在顶点着色器中计算，被称为**逐顶点光照**。
+
+由于顶点数目远小于像素树木，因此逐顶点的计算量要小于逐像素的。但是逐顶点的话，会根据顶点通过线性插值得到像素光照，所以在一些情况下会出现问题，导致渲染图元内部的颜色总是暗于顶点处的最高颜色值，某些情况下会产生明显的菱角现象。
+
+
 
