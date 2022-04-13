@@ -398,9 +398,11 @@ Shader "Unlit/Shader4"
 
 ##### 漫反射
 
+漫反射光照是用于对那些被物体表面随机散射到各个方向的辐射度进行建模。
+
 <img src="http://cdn.qiniu.kailaisii.com/typora/223.png" alt="img" style="zoom: 33%;" />
 
-“其中，n是表面法线，是指向光源的单位矢量，mdiffuse是材质的漫反射颜色，clight是光源颜色。”
+“其中，n是表面法线，l是指向光源的单位矢量，mdiffuse是材质的漫反射颜色，clight是光源颜色。”在计算法线和光源之间的点积时，二者需要在同一坐标空间之下。
 
 ##### 环境光（ambient）
 
