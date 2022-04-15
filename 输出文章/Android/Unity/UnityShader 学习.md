@@ -410,13 +410,264 @@ Shader "Unlit/Shader4"
 
 
 
-##### 逐像素VS逐顶点
+#### 逐像素VS逐顶点
 
 在片元着色器中计算，被称为**逐像素光照**；在顶点着色器中计算，被称为**逐顶点光照**。
 
 由于顶点数目远小于像素树木，因此逐顶点的计算量要小于逐像素的。但是逐顶点的话，会根据顶点通过线性插值得到像素光照，所以在一些情况下会出现问题，导致渲染图元内部的颜色总是暗于顶点处的最高颜色值，某些情况下会产生明显的菱角现象。
 
 逐像素模型，在光照无法达到的区域，模型的外观是全黑的，没有任何敏感变化，使得模型的背光区域看起来就像是一个平面一样，失去模型细节表现。
+
+##### 漫反射代码
+
+我们采用光照模型中的方式来计算漫反射。
+
+逐顶点：
+
+```glsl
+// Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+/// 逐顶点的漫反射光照效果。会发现在背光面和向光面的交界处有一些锯齿
+Shader "Unlit/Chapter6-DiffuseVertexLevel"
+{
+    Properties
+    {
+        // 定义一个Color类型的属性，初始值为白色
+        _Diffuse("DIffuse",Color)=(1,1,1,1)
+    }
+    SubShader
+    {
+
+        Pass
+        {
+            Tags
+            {
+                "LightMode"="ForwardBase"
+            }// 定义该Pass在Unity的光照流水线中的角色。
+
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            // make fog work
+            #pragma multi_compile_fog
+            // 引入一些内置的变量
+            #include "Lighting.cginc"
+
+            fixed4 _Diffuse;
+
+            struct a2v
+            {
+                float4 vertex : POSITION;
+                float3 normal : NORMAL; //  将法线信息存储到normal变量中。
+            };
+
+            struct v2f
+            {
+                float4 pos:SV_POSITION;
+                fixed3 color:COLOR; //将顶点着色器中计算得到的光照颜色传递给片元着色器
+            };
+
+            v2f vert(a2v v)
+            {
+                v2f o;
+                // 计算顶点位置。将顶点坐标从模型空间转移到裁剪空间。
+                o.pos = UnityObjectToClipPos(v.vertex);
+                // 得到环境光
+                fixed3 ambient = UNITY_LIGHTMODEL_AMBIENT.xyz;
+                // 计算物体在世界空间中的位置
+                float3 worldNormal = normalize(mul(v.normal, (float3x3)unity_WorldToObject));
+                // 得到世界空间中的光照方向
+                fixed3 worldLight = normalize(_WorldSpaceLightPos0.xyz);
+                // 计算漫反射光。
+                // _Diffuse是漫反射颜色；
+                // _LightColor0用来访问该Pass处理的光照的光源颜色和强度信息（需要设置合理的LightModel标签）
+                // _WorldSpaceLightPos0可以获取光源方向
+                // 在这里我们假设只有一个光源且光源是平行光。
+                // 在计算法线和光源之间的点积时，二者需要在同一坐标空间之下。为了防止出现负值，通过saturate将参数截取到【0。1】范围内
+                fixed3 diffuse = _LightColor0.rgb * _Diffuse.rgb * saturate(dot(worldNormal, worldLight));
+                // 最终的光照结果=环境光+漫反射光
+                o.color = ambient + diffuse;
+                return o;
+            }
+
+            fixed4 frag(v2f i) : SV_Target
+            {
+                return fixed4(i.color, 1.0);
+            }
+            ENDCG
+        }
+    }
+    Fallback "Diffuse"
+}
+```
+
+逐像素代码实现方式
+
+```glsl
+// Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
+
+// Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+/// 逐像素的漫反射光照效果
+Shader "Unlit/Chapter6-DiffusePixelLevel"
+{
+    Properties
+    {
+        // 定义一个Color类型的属性，初始值为白色
+        _Diffuse("DIffuse",Color)=(1,1,1,1)
+    }
+    SubShader
+    {
+
+        Pass
+        {
+            Tags
+            {
+                "LightMode"="ForwardBase"
+            }// 定义该Pass在Unity的光照流水线中的角色。
+
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            // make fog work
+            #pragma multi_compile_fog
+            // 引入一些内置的变量
+            #include "Lighting.cginc"
+
+            fixed4 _Diffuse;
+
+            struct a2v
+            {
+                float4 vertex : POSITION;
+                float3 normal : NORMAL; //  将法线信息存储到normal变量中。
+            };
+
+            struct v2f
+            {
+                float4 pos:SV_POSITION;
+                fixed3 worldNormal:TEXCOORD0; //将世界空间下的法线传递给片元着色器即可
+            };
+
+            v2f vert(a2v v)
+            {
+                v2f o;
+                // 计算顶点位置。将顶点坐标从模型空间转移到裁剪空间。
+                o.pos = UnityObjectToClipPos(v.vertex);
+                o.worldNormal = mul(v.normal, (float3x3)unity_WorldToObject);
+                return o;
+            }
+
+            fixed4 frag(v2f i) : SV_Target
+            {
+                // 在片元着色器中计算漫反射光照模型
+                // 得到环境光
+                fixed3 ambient = UNITY_LIGHTMODEL_AMBIENT.xyz;
+                // 计算物体在世界空间中的位置
+                float3 worldNormal = normalize(i.worldNormal);
+                // 得到世界空间中的光照方向
+                fixed3 worldLightDir = normalize(_WorldSpaceLightPos0.xyz);
+                // 计算漫反射光。
+                // _Diffuse是漫反射颜色；
+                // _LightColor0用来访问该Pass处理的光照的光源颜色和强度信息（需要设置合理的LightModel标签）
+                // _WorldSpaceLightPos0可以获取光源方向
+                // 在这里我们假设只有一个光源且光源是平行光。
+                // 在计算法线和光源之间的点积时，二者需要在同一坐标空间之下。为了防止出现负值，通过saturate将参数截取到【0。1】范围内
+                fixed3 diffuse = _LightColor0.rgb * _Diffuse.rgb * saturate(dot(worldNormal, worldLightDir));
+                // 最终的光照结果=环境光+漫反射光
+                fixed3 color = ambient + diffuse;
+                return fixed4(color, 1.0);
+            }
+            ENDCG
+        }
+    }
+    Fallback "Diffuse"
+}
+```
+
+##### 高光反射模型
+
+逐顶点光照
+
+```glsl
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "Unlit/SpecularVertexLevelMat"
+{
+    Properties
+    {
+        _Diffuse("Diffuse",Color)=(1,1,1,1)
+        _Specular("Specular",Color)=(1,1,1,1) //用于控制材质的高光反射颜色
+        _Gloss("Gloss",Range(9.0,256))=20 // 用于控制高光区域的大小
+    }
+    SubShader
+    {
+        Tags
+        {
+            "LightModel"="ForwardBase"
+        }
+
+        Pass
+        {
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+
+            #include "Lighting.cginc"
+
+            fixed4 _Diffuse;
+            fixed4 _Specular;
+            fixed _Gloss;
+
+            struct a2v
+            {
+                float4 vertex : POSITION;
+                float2 normal : NORMAL;
+            };
+
+            struct v2f
+            {
+                float4 pos : SV_POSITION;
+                fixed3 color:COLOR;
+            };
+
+            sampler2D _MainTex;
+            float4 _MainTex_ST;
+
+            v2f vert(a2v v)
+            {
+                v2f o;
+                o.pos = UnityObjectToClipPos(v.vertex);
+                // 得到环境光
+                fixed3 ambient = UNITY_LIGHTMODEL_AMBIENT.xyz;
+                // 计算物体在世界空间中的位置
+                float3 worldNormal = normalize(mul(v.normal, (float3x3)unity_WorldToObject));
+                // 得到世界空间中的光照方向
+                fixed3 worldLight = normalize(_WorldSpaceLightPos0.xyz);
+                // 计算漫反射光线
+                fixed3 diffuse = _LightColor0.rgb * _Diffuse.rgb * saturate(dot(worldNormal, worldLight));
+                // 入射方向关于表面法线的反射方向。由于Cg的reflect函数的入射方向要求是由光源指向交点处的，因此我们需要对worldLightDir取反后再传给reflect函数
+                fixed3 reflectDir = normalize(reflect(-worldLight, worldNormal));
+                // 我们通过_WorldSpaceCameraPos得到了世界空间中的摄像机位置，再把顶点位置从模型空间变换到世界空间下，再通过和_WorldSpaceCameraPos相减即可得到世界空间下的视角方向
+                fixed3 viewDir = normalize(_WorldSpaceCameraPos.xyz - mul(unity_ObjectToWorld, v.vertex).xyz);
+                fixed3 specular = _LightColor0.rgb * _Specular.rgb * pow(saturate(dot(reflectDir, viewDir)), _Gloss);
+                // 将环境光、漫反射光+高光进行叠加
+                o.color = ambient + diffuse + specular;
+                return o;
+            }
+
+            fixed4 frag(v2f i) : SV_Target
+            {
+                return fixed4(i.color, 1.0);
+            }
+            ENDCG
+        }
+    }
+}
+```
+
+
 
 #### 半兰伯特模型
 
