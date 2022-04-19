@@ -675,3 +675,129 @@ Shader "Unlit/SpecularVertexLevelMat"
 
 <img src="http://cdn.qiniu.kailaisii.com/typora/239.png" alt="img" style="zoom:33%;" />
 
+
+
+### 基础纹理
+
+纹理最初的目的是使用一张图片来控制模型的外观。通过纹理映射技术，把一张图片黏在模型表面，逐纹素的控制模型的颜色。
+
+#### 单张纹理
+
+我们可以使用一张纹理来代替物体的漫反射颜色
+
+```
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
+Shader "Unlit/Chapter7-SingleTexture"
+{
+    Properties
+    {
+        _Color("Main Color", Color) = (1,1,1,1)
+        _MainTex("Main Tex", 2D) = "white" {} //_MainTex纹理，white是内置纹理名称
+        _Specular("Specular", Color) = (1,1,1,1)
+        _Gloss("Gloss", Range(9.0,256)) = 20
+    }
+    SubShader
+    {
+        Pass
+        {
+            Tags
+            {
+                "LightMode"="ForwardBase"
+            }// 定义该Pass在Unity的光照流水线中的角色。
+
+
+            CGPROGRAM
+            #pragma vertex vert_img
+            #pragma fragment frag
+            #include "Lighting.cginc"
+
+            fixed4 _Color;
+            sampler2D _MainTex;
+            // 定义一个纹理类型的属性。
+            // 需要使用纹理名_ST方式来声明纹理的属性。
+            // “ST是缩放（scale）和平移（translation）的缩写。
+            // _MainTex_ST可以让我们得到该纹理的缩放和平移（偏移）值，_MainTex_ST.xy存储的是缩放值，而_MainTex_ST.zw存储的是偏移值。这些值可以在材质面板的纹理属性中调节”
+            float4 _MainTex_ST;
+            float4 _Specular;
+            float _Gloss;
+
+            struct a2v
+            {
+                float4 vertex : POSITION;
+                float3 normal : NORMAL; //  将法线信息存储到normal变量中。
+                float4 texcoord:TEXCOORD0; //unity会将模型的第一组纹理坐标存储到该变量
+            };
+
+            struct v2f
+            {
+                float4 pos:SV_POSITION;
+                float3 worldNormal:TEXCOORD0;
+                float3 worldPos:TEXCOORD1;
+                float2 uv:TEXCOORD2; //用于存储纹理坐标
+            };
+
+            v2f vert(a2v v)
+            {
+                v2f o;
+                // 计算顶点位置。将顶点坐标从模型空间转移到裁剪空间。
+                o.pos = UnityObjectToClipPos(v.vertex);
+                // 得到环境光
+                fixed3 ambient = UNITY_LIGHTMODEL_AMBIENT.xyz;
+                // 计算物体在世界空间中的位置
+                o.worldNormal = UnityObjectToWorldNormal(v.normal);
+                o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
+                // 对顶点纹理坐标进行变化，得到最终的纹理坐标。先通过_MainTex_ST.xy对其进行缩放，然后在使用偏移属性_MainTex_ST.zw对结果进行偏移。
+                o.uv = v.texcoord.xy * _MainTex_ST.xy + _MainTex_ST.zw;
+                return o;
+            }
+
+            fixed4 frag(v2f i) : SV_Target
+            {
+                fixed3 worldNormal = normalize(i.worldNormal);
+                // 根据pos来获取世界坐标中的光照方向
+                fixed3 worldLightDir = normalize(UnityWorldSpaceLightDir(i.worldPos));
+                // 对纹理进行采样。第一个是被采样的纹理，第二个参数是纹理坐标。返回计算得到的纹素值。
+                fixed3 albedo = tex2D(_MainTex, i.uv).rgb * _Color.rgb;
+                // 反射率
+                fixed3 ambient = UNITY_LIGHTMODEL_AMBIENT.xyz * albedo;
+                // 
+                fixed3 diffuse = _LightColor0.rgb * albedo * max(0, dot(worldNormal, worldLightDir));
+
+                fixed3 viewDir = normalize(UnityWorldSpaceViewDir(i.worldPos));
+                fixed3 halfDir = normalize(worldLightDir + viewDir);
+                fixed3 specular = _LightColor0.rgb * _Specular.rgb * pow(max(0, dot(worldNormal, halfDir)), _Gloss);
+
+                return fixed4(ambient + diffuse + specular, 1.0);
+            }
+            ENDCG
+        }
+    }
+    Fallback "Specular"
+}
+```
+
+##### 纹理属性
+
+wrapmode ：设置纹理超过[0,1]之后如何被平铺。repeat或者clamp模式。
+
+Filter Mode：纹理由于变换而产生拉伸时将会采用哪种滤波模式。Point,Bilinear,Trilinear模式三种
+
+#### 凹凸映射
+
+凹凸映射的目的是为了使用一张纹理来修改模型表面的法线，以便为模型提供更多的细节。这种方法不会改变模型的顶点位置，知识让模型看起来像是“凹凸不平”的。
+
+凹凸映射的两种方法：
+
+* 使用一张**高度纹理**来模拟表面位移，然后得到一个修改后的法线值。
+* 使用一张**法线纹理**来直接存储表面法线。
+
+##### 高度纹理
+
+**高度图中存储的是强度值，用于表示模型表面局部的海拔高度。颜色越浅表明该位置的表面越向外凸起，而颜色越深表明该位置越向里凹。**
+
+缺点是：计算更加复杂，是实时计算时不能直接得到表面法线，而是需要由像素的灰度值计算而得到，因此需要消耗更多的性能。
+
+![img](http://csdn-ebook-resources.oss-cn-beijing.aliyuncs.com/images/7eeb7df3b448463eae5cf2b7c751fbb4/260.png)
+
+高度图通常会和法线映射一起使用，用于给出表面凹凸的额外信息。也就是说，我们通常会使用法线映射来修改光照。
