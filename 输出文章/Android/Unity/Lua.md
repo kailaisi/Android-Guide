@@ -51,7 +51,7 @@ print(mytable[7])
 
 ###### __newIndex
 
-当修改表数据的时候，使用的方法。只有原来的键不存在的时候，才会调用改方法，如果原来的key存在，则不会调用
+当修改表数据的时候，使用的方法。只有原来的键不存在的时候，才会调用改方法，如果原来的key存在，则不会调用。如果不设置的话，会修改原来的表结构，而不会修改元表
 
 ```lua
 mytable={"Lua","Java","C++"}
@@ -76,7 +76,7 @@ Lua
 mytable={"Lua","Java","C++"}
 newtable={}
 mymetatable={
-    __newindex=newtable
+    __newindex=newtable   -- 这样当设置不存在的key的数据的时候，会把数据保存到newtable中
 }
 mytable=setmetatable(mytable,mymetatable)
 mytable[1]="C#"
@@ -94,6 +94,7 @@ Lua
 ##### add元方法
 可以通过add方法，定义两个表的加法运算
 其中两个相加的表设置了add元方法即可。
+
 ```lua
 mytable={"Lua","C#","PHP"}
 mymetatable={
@@ -125,3 +126,83 @@ end
 当把table作为方法调用的时候 ，使用的方法
 ##### tostring方法
 当print表的时候，回调用string方法。
+
+#### 协同
+
+可以理解为让某个function在半路暂停（挂起），然后在需要的时候继续执行。
+
+```lua
+-- 定义协同函数
+co=coroutine.create(
+    function (a,b)
+        print(a+b)
+    end
+)
+-- 启动协同函数
+coroutine.resume(co,30,20)
+```
+
+#### 面向对象
+
+通过table中的属性和方法来实现面向对象的功能。但是对于具有相同属性和方法的对象，不能直接使用多个table的创建来处理。
+
+##### 封装
+
+这时候可以通过创建构造函数，用于构造拥有相同属性和函数的对象。
+
+```lua
+-- 面向对象编程。使用table+function
+person={name="person",age=12}
+function person:eat()
+    print(self.name.."在吃饭")
+end
+
+-- 创建一个构造函数
+
+function person:new()
+    -- 创建一个新的表。使用local，防止外部访问
+    local t={}
+    -- 将index设置为self，调用一个属性的时候，如果t中不存在，那么就会在self所制定的table中查找，也就是self
+    -- 这里的self就是person表数据。从而能够实现person中的name和age是可以获取到的
+    setmetatable(t,{__index=self}) 
+    return t
+end
+-- 创建新对象
+person1=person:new()
+-- 创建新对象
+person2=person:new()
+-- __index只影响获取值的时候的处理。当我们设置name的值的时候，会把name放入到t中，而不是元表中。所以不会互相影响
+person1.name="person1"
+print(person1.name)   -- 打印出来的是“person1”
+print(person2.name)   -- 打印出来的仍然是“person”
+```
+
+##### 继承实现
+
+```lua
+-- 面向对象编程。使用table+function
+person={name="person",age=12}
+function person:eat()
+    print(self.name.."在吃饭")
+end
+
+-- 创建一个构造函数
+
+function person:new()
+    -- 创建一个新的表。使用local，防止外部访问
+    local t={}
+    -- 将index设置为self，调用一个属性的时候，如果t中不存在，那么就会在self所制定的table中查找，也就是self
+    -- 这里的self就是person表数据。从而能够实现person中的name和age是可以获取到的
+    setmetatable(t,{__index=self}) 
+    return t
+end
+-- Student的元表是person。
+Student=person.new()
+-- 在person基础上扩展了grade属性。
+Student.grade=1
+-- student里面是没有new方法的，所以会调用元表里面的new方法。
+-- 这里调用的new方法，里面使用的self，其实是Student，所以创建的是Student类
+-- stu1的元表是Student，Student的元表是person。
+stu1=Student:new()
+```
+
