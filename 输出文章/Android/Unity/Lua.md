@@ -91,3 +91,37 @@ nil
 Lua
 ```
 
+##### add元方法
+可以通过add方法，定义两个表的加法运算
+其中两个相加的表设置了add元方法即可。
+```lua
+mytable={"Lua","C#","PHP"}
+mymetatable={
+    __add=function(tab,newtab)
+        local mi=0
+        for k, v in pairs(tab) do
+            if k > mi then
+                mi=k
+            end
+        end
+        for k, v in pairs(newtab) do
+            mi=mi+1
+            table.insert(tab,mi,v)
+        end
+        return tab
+    end
+}
+mytable=setmetatable(mytable,mymetatable)
+newtable={"LUA","Python"}
+v=mytable+newtable
+v2=newtable+mytable
+for i, v in pairs(v) do
+    print(k,v)
+end
+```
+
+
+##### call元方法
+当把table作为方法调用的时候 ，使用的方法
+##### tostring方法
+当print表的时候，回调用string方法。
