@@ -125,6 +125,8 @@
 
 ##### Unity URP
 
+* [技术没数入门系列](https://space.bilibili.com/43644141/channel/seriesdetail?sid=299912)
+
 ##### Unity Material
 
 ##### UGUI
