@@ -206,3 +206,26 @@ Student.grade=1
 stu1=Student:new()
 ```
 
+#### 垃圾回收
+
+lua采用自动内存管理。lua运行了一个**垃圾收集器**来收集所有死对象来完成自动内存管理工作。
+
+lua实现了增量标记-扫描收集器。 
+
+```lua
+mytable={"apple","orange","banana"}
+-- 打印当前程序占用的内存空间
+print(collectgarbage("count"))
+mytable=nil
+print(collectgarbage("count"))
+-- 强制执行垃圾回收
+print(collectgarbage("collect"))
+print(collectgarbage("count"))
+
+====>输出
+72.47265625
+72.5078125
+0
+45.384765625
+```
+
