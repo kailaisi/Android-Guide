@@ -1,4 +1,7 @@
-学习路程Android-Guide。包括各种待学习知识以及对应的文章输出
+学习路程Android-Guide。
+
+包括各种待学习知识以及对应的文章输出
+
 ### 学习路程Android-Guide
 
 ### 计算机基础
@@ -112,35 +115,6 @@
 * 实战篇：
   * [Compose挑战](https://developer.android.com/dev-challenge)
     * https://mp.weixin.qq.com/s?__biz=MzAwODY4OTk2Mg==&mid=2652077913&idx=1&sn=0c292249ce6930519fb0185e8a3ff88a&scene=21#wechat_redirect
-
-### Unity
-
-##### Unity 粒子特效
-
-* [Unity2021入门教程 100级后](https://www.bilibili.com/video/BV1WK411V7dn?spm_id_from=333.337.search-card.all.click)
-
-* #### [Unity粒子系统入门](https://www.bilibili.com/video/BV1VJ411M7Fu?spm_id_from=333.337.search-card.all.click)
-
-##### Unity Shader
-
-##### Unity URP
-
-* [技术没数入门系列](https://space.bilibili.com/43644141/channel/seriesdetail?sid=299912)
-
-##### Unity Material
-
-##### UGUI
-
-##### Lua
-
-* Unity 133 Lua编程
-* 
-
-##### 整体视频
-
-[mmo_arpg]()
-
-入门篇：
 
 ### 软技能(进行中)
 
