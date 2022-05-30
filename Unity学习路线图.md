@@ -14,7 +14,7 @@ Unity 粒子特效
 
 * [2022 Unity Shader Graph教程](https://www.bilibili.com/video/BV1AS4y167B1/?spm_id_from=333.788)
 
-* [技术参数入门系列](https://space.bilibili.com/43644141/channel/seriesdetail?sid=299912)
+* [Unity2022系列181-209课](https://space.bilibili.com/43644141/channel/seriesdetail?sid=299912)
 
 ##### Unity Material
 
