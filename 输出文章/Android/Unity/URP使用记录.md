@@ -20,9 +20,7 @@ Mesh Renderer 组件是您指定如何渲染网格的地方。
 
 由 Autodesk® 3ds Max® 和 Maya® 或 Blender® 等建模应用程序制作的网格会生成它们自己的称为**UV 坐标的 2D 坐标集**。UV 坐标类似于常规 2D 空间中的 XY 坐标，但它们被称为 UV 以将它们与环境坐标系 (XYZ) 区分开来。UV 坐标相对于网格，而不是场景中的 3D 空间。
 
-https://connect-prd-cdn.unity.com/20211122/learn/images/7b0e005e-a171-4abf-947f-fcf0eb5f6f5f_EllenUnwrap.gif._gif_.mp4
 
-##### 
 
 #### 透明效果
 
@@ -69,3 +67,13 @@ Metallic：调整具体值
 #### 溶解特效
 
 使用Alpha。在Graph Setting中勾选Alpha Clip。那么会在Fragment中增加Alpha(设置透明度)，AlphaClip(裁剪阈值)，如果在fragment上，Alpha的值比Alpha的值大，那么就保留，小的话则裁剪
+
+
+
+
+
+#### Till And Offset
+
+offset是显示框的偏移量。
+
+Tiling是显示框的缩放量。

@@ -11,8 +11,8 @@ Unity 粒子特效
 ##### Unity Shader
 
 * [Store 项目](https://learn.unity.com/project/make-a-flag-move-with-shadergraph)
-
 * [官网说明](https://docs.unity3d.com/Packages/com.unity.shadergraph@10.7/manual/index.html)
+* [美术相关](https://gitee.com/chutianshu1981/AwesomeUnityTutorial/tree/main/%E5%9B%BE%E5%BD%A2-%E6%8A%80%E6%9C%AF%E7%BE%8E%E5%B7%A5%E7%9B%B8%E5%85%B3)
 
 ##### Unity URP
 
