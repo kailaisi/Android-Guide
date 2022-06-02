@@ -77,3 +77,29 @@ Metallic：调整具体值
 offset是显示框的偏移量。
 
 Tiling是显示框的缩放量。
+
+
+
+#### Postion
+
+位置节点，像国旗的飘动，树叶飘动等，可以通过对position+sin来处理
+
+##### Blend：
+
+混合模式，会将两种值进行叠加、正片叠底、加强、衰减等处理，类似于PS中的图层处理方式
+
+##### Gradient 
+
+渐变用于着色器中的许多事情，例如淡化透明度，允许随着时间的推移在两种或多种颜色之间转换，或者添加晕影。这些只是可能涉及渐变的一些事情。在 Shader Graph 中，您需要熟悉两个渐变节点。
+
+Gradident：渐变色。
+
+Sample Gradient：渐变色样式。输入Time用于从Gradient中获取某个位置的颜色
+
+![image-20220602220141284](http://cdn.qiniu.kailaisii.com/typora/20220602220141-663032.png)
+
+
+
+##### TextTure
+
+Texture 2D 和Sample Texture 2D。这些节点允许您在 Unity 项目中引用图像，以将它们带入您正在创建的着色器中。
