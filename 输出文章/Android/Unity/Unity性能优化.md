@@ -23,3 +23,6 @@ Rendering中的DrawCall。
 
 
 [走近DrawCall](https://zhuanlan.zhihu.com/p/26386905)
+
+[深入浅出聊优化：从Draw Calls到GC](http://www.360doc.com/content/17/0424/11/40005136_648190034.shtml)
+
