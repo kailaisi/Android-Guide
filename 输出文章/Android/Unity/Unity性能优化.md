@@ -60,9 +60,77 @@ Rendering中的DrawCall。
 
 https://www.uwa4d.com/
 
+#### GPU
 
+##### CPU GPU分工
+CPU负责计算，GPU负责渲染工作。
+GPU适合大量可以并行的简单任务。比如说场景渲染，光照处理等。
+CPU用于一些树枝计算，比如说上海，随机数，敌人的AI等等。
+##### LOD层级渲染
+对于同一个模型，可以准备不同面数的文件。同一个事物，如果离得比较远的情况下，不需要太多的面数，使用粗糙的模型，离得近的情况下，可以使用面数比较精细的模型。
+使用方式：增加LOD Group组建，支持设置不同的模型
 
+##### 遮挡剔除
+只渲染在视野内的游戏物体，视野外的不渲染，可以极大的优化渲染性能。
+所有的游戏物体，选择static下拉箭头=> Occluder Static.
 
+##### 光照贴图
+
+多个**点光源**时，实时计算的情况下，比较消耗性能。可以通过将光源进行烘培，生成光照贴图，然后将
+
+设置方式：
+
+* Light的mode设置为：Backed
+* Windows-Rendering-Lighting
+
+##### Mesh合并
+
+[Mesh](https://so.csdn.net/so/search?q=Mesh&spm=1001.2101.3001.7020)网格合并通常是优化中常用的小手段，目的是为了减少drawcall，大量的drawcall会造成CPU的性能瓶颈。可以通过代码来合并Mesh操作。如果**多个重复的模型，其材质完全一样**，则可以采用Mesh合并来优化。
+
+```c#
+    [MenuItem("Plugins/合并选择mesh")]
+    static void CombineMesh()
+    {
+        GameObject[] objs = Selection.gameObjects;
+        for (int j = 0; j < objs.Length; j++)
+        {
+            MeshFilter[] meshfilters = objs[j].GetComponentsInChildren<MeshFilter>();
+
+            CombineInstance[] combine = new CombineInstance[meshfilters.Length];
+
+			//世界转局部坐标的矩阵，乘以世界坐标可以得到局部坐标
+            Matrix4x4 matrix = objs[j].transform.worldToLocalMatrix;
+
+            for (int i = 0; i < meshfilters.Length; i++)
+            {
+                MeshFilter mf = meshfilters[i];
+
+                MeshRenderer mr = mf.GetComponent<MeshRenderer>();
+
+                if (mr == null) continue;
+
+                combine[i].mesh = mf.sharedMesh;
+				
+				//子mesh坐标转父mesh坐标的矩阵
+				//先通过子mesh转世界矩阵，得到世界坐标，然后通过世界转父mesh坐标的矩阵，得到父mesh坐标
+                combine[i].transform = matrix * mf.transform.localToWorldMatrix;
+            }
+            Mesh mesh = new Mesh();
+
+            mesh.name = objs[j].name;
+
+            mesh.CombineMeshes(combine, true);
+
+            string path = @"Assets/CombineEditor   /Model/Combinemesh/" + mesh.name + ".asset";
+
+            AssetDatabase.CreateAsset(mesh, path);
+        }
+        AssetDatabase.Refresh();
+
+        EditorUtility.DisplayDialog("CombineMesh", "Combine successfully!", "OK", "");
+    }
+
+```
 
 [走近DrawCall](https://zhuanlan.zhihu.com/p/26386905)
 
