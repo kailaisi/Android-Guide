@@ -109,6 +109,7 @@
   * [谷歌官网-中文](https://developer.android.google.cn/jetpack/compose/tutorial?hl=zh_cn)（已完成）
   * [仍物线介绍](https://www.sohu.com/a/433487805_611601>https://ke.qq.com/course/3102992?taid=10361930727250192)(已完成)
   * [官网demo](https://github.com/android/compose-samples)
+  * [动脑学院公开课](https://www.bilibili.com/video/BV1ob4y1a7ad/?p=3&spm_id_from=pageDriver&vd_source=b38728710b4adef2e5e44759e038a66d)
   * [官网简介]（已完成）
     * https://zhuanlan.zhihu.com/p/267250784
     * https://www.jianshu.com/p/ffc2745c5e71
